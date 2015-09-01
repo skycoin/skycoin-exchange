@@ -23,13 +23,37 @@ import (
 
 /*
 	The server gets events from the client and processes them
-	- get balance
+	- get balance/status
 	- get deposit addresses
 	- withdrawl bitcoin
-	- etc
-
-
+	- withdrawl skycoin
+	- add bid
+	- add ask
+	- get order book
 */
+
+//get status
+type GetStatus struct {}
+
+type ResponseStatus struct {
+	BTC_balance uint64
+	SKY_balance uint64
+
+	//list of orders unexecuted?
+	//bid orders?
+	//ask orders?
+
+	Bitcoin_deposit_address string
+	Skycoin_deposit_address string
+}
+
+func (self *server) GetStatusHandler(m MsgAuth) {
+	//m.Address for user
+	
+}
+
+
+
 
 //raw event is authed event with a response handler
 //is designed for playback for testing
@@ -42,7 +66,7 @@ type RawEvent struct {
 
 type event_handler func(string) error
 
-var handlers map[string]handle {
+var handlers map[string]event_handler {
 	"test" : func(v string) {return nil},
 }
 
@@ -64,10 +88,13 @@ func (self *Server) eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	_ = value
 
-	
 }
 
+/*
+	
 
+
+*/
 
 func (self *Server) Init() {
 
@@ -163,13 +190,12 @@ type UserState struct {
 
 	BitcoinBalance uint64 //Bitcoin balance in satoshis
 	SkycoinBalance uint64 //Skycoin balance in drops
-}
 
+	BitcoinDepositAddresses []string
+	BitcoinOutputsDeposited []string //do not credit twice
 
-type BitcoinDepositAddress struct {
-	BitcoinAddress string
-	Owner          UserId
-	Created time.Time
+	SkycoinDepositAddresses []string
+	SkycoinOutputsDeposited []string //do not credit twice
 }
 
 /*
