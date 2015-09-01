@@ -12,9 +12,13 @@ import (
 	"net/http"
 	//"regexp"
 	"github.com/skycoin/skycoin/src/cipher"
+	//"github.com/skycoin/skycoin/src/daemon/gnet"
 	"os"
+	"net/http"
 )
 
+
+//Context *gnet.MessageContext
 
 
 /*
@@ -36,14 +40,31 @@ type RawEvent struct {
 	Msg []byte
 }
 
+type event_handler func(string) error
+
+var handlers map[string]handle {
+	"test" : func(v string) {return nil},
+}
+
+
+
 //handle events
 func (self *Server) eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	auth := r.URL.Query()["MsgAuth"]
 	msg_type := r.URL.Query()["msg_type"]
 	msg := r.URL.Query()["msg"]
-	
 
+
+	value, ok := handlers[msg_type] // return value if found or ok=false if not found
+
+	if !ok {
+		HttpError(w, http.StatusBadRequest, "request type does not exist", nil)
+	}
+
+	_ = value
+
+	
 }
 
 
@@ -151,3 +172,12 @@ type BitcoinDepositAddress struct {
 	Created time.Time
 }
 
+/*
+Events
+- bitcoin deposit event
+- skycoin deposit event
+
+Events
+- 
+
+*/
