@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>go server example</title>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+   <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+<script type="text/javascript">
+
+ $(document).ready(function() {
+     $('#button1').click(function() {
+        
+  console.log("request");
+
+  $.ajax({ 
+    url: 'request', 
+    data: {data:"test"},
+    dataType: 'text',
+    success: function (data) 
+    {
+      $("#textOut").val(data); 
+    }
+  });
+})
+
+ });   
+
+    </script>
+</head>
+<body>
+<h1>Sign</h1>
+
+
+<form action="">
+
+<textarea name="TextBox1" cols="80" rows="6" >
+Enter some text...
+</textarea>
+<br />
+
+<textarea name="TextBox2" cols="80" rows="6" id="TextBox2">
+{{ .Text }}
+</textarea>
+<br />
+
+<input id="button1" type="submit" />
+</form>
+
+
+
+</body>
+</html>
