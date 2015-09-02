@@ -27,3 +27,18 @@ All responses from the server are json
 
 Each Bid/Ask has a unique id that is incremented
 Bid/Asks are each cleared each tick, which is incrememented
+
+Components
+- Server
+-- runs order book, takes in events, responds to events, exposes RPC
+- Client
+-- polls server, exposes JSON/html interface, has local web-interface
+- Accounts Manager
+-- handles coin withdrawls and deposits. Credits and debits accounts
+
+=== Statistics
+
+Keep track of 
+- exchange balance net, in/out
+- how many Bitcoin/Skycoin flow into/out of the exchange (total in, total out)
+- how many coins flow between each other (capital flows)
