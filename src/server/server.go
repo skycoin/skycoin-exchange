@@ -84,6 +84,21 @@ func (self *server) HandleWithdrawl(in PingStatus, out *PongStatus) {
 	//send to account manager
 }
 
+//Add bid/ask
+
+type PingOrder struct {
+	Auth      MsgAuth
+	OrderType string //"bid" or "ask"
+	CoinPair  string //"SKY/BTC"
+	price     uint64
+	quantity  uint64
+}
+
+type PongOrder struct {
+	Err     string //error?
+	OrderId uint64
+}
+
 //raw event is authed event with a response handler
 //is designed for playback for testing
 type RawEvent struct {
