@@ -36,6 +36,13 @@ Components
 - Accounts Manager
 -- handles coin withdrawls and deposits. Credits and debits accounts
 
+=== Authentication
+
+Must have public key to identify server
+- self-describing RPC
+
+Should operate over IRC like network
+
 === Statistics
 
 Keep track of 
