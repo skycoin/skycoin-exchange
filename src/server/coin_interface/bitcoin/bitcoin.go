@@ -1,13 +1,15 @@
 package bitcoin_interface
 
 import (
-	"errors"
+	//"errors"
 	"fmt"
-	"github.com/skycoin/skycoin/src/cipher"
-	"http"
-	"sort"
-	"strings"
-	"time"
+	//"github.com/skycoin/skycoin/src/cipher"
+	"net/http"
+	//"sort"
+	//"strings"
+	//"time"
+	//"bytes"
+	"log"
 )
 
 /*
@@ -38,7 +40,7 @@ func AddressValid(address string) error {
 	return nil
 }
 
-type UnspentOutput1JSONResponse struct {
+type UnspentOutputJSONResponse struct {
 	UnspentOutputArray []UnspentOutputJSON `json:"unspent_outputs"`
 }
 
@@ -64,23 +66,42 @@ func (a ByHash) Less(i, j int) bool { return a[i].Age < a[j].Age }
 
 //https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
 
-func GetUnspentOutputs(addr string) {
+func GetUnspentOutputs(addr string) []UnspentOutputJSON {
 
 	if AddressValid(addr) != nil {
 		log.Fatal("Address is invalid")
 	}
 
-	url := strings.Sprintf
-	req := fmt.Sprint("https://blockchain.info/unspent?active=%s", addr)
+	//b := bytes.NewBuffer()
 
+	//url := strings.Sprint
+	fmt.Printf("Address= %s\n", addr)
+	req := fmt.Sprintf("https://blockchain.info/unspent?active=%s", addr)
+
+	fmt.Printf("req= %s\n", req)
 	//reader := strings.NewReader(`{"active":123}`)
-	request, err := http.NewRequest("GET", req)
+	request, err := http.NewRequest("GET", req, nil)
 	// TODO: check err
+
+	fmt.Printf("request= %s\n", request)
+
+	if err != nil {
+		log.Fatal("request failed 1")
+	}
+
 	client := &http.Client{}
 	resp, err := client.Do(request)
 	// TODO: check err
 
-	fmt.Printf()
+	if err != nil {
+		log.Fatal("request failed 2")
+	}
+
+	fmt.Printf("resp: %s \n", resp)
+
+	//FIX, parse JSON
+	return make([]UnspentOutputJSON, 0)
+
 }
 
 type Manager struct {
@@ -94,16 +115,17 @@ type UxMap map[string]UnspentOutputJSON
 func (self *Manager) UpdateOutputs() {
 
 	//get all unspent outputs for all watch addresses
-	var list []UnspentOutputJSONResponse
-	for addr := range self.WatchAddresses {
-		list = append(list, GetUnspentOutputs(addr))
+	var list []UnspentOutputJSON
+	for _, addr := range self.WatchAddresses {
+		ux := GetUnspentOutputs(addr)
+		list = append(list, ux...)
 	}
 	var uxMap map[string]UnspentOutputJSON
 
 	//do diff
 	for _, j := range list {
-		id = fmt.Sprint("%s:%i", j.Tx_hash, j.Tx_index)
-		fmt.Printf("ID = id\n")
+		id := fmt.Sprint("%s:%i", j.Tx_hash, j.Tx_index)
+		fmt.Printf("ID = %x\n", id)
 		uxMap[id] = j
 	}
 
@@ -112,7 +134,7 @@ func (self *Manager) UpdateOutputs() {
 
 	//check existing state, compare to new state
 	for i, j := range self.UxStateMap {
-		val, ok := uxMap[i]
+		_, ok := uxMap[i]
 		if !ok {
 			//new unspent output found
 			NewUx[i] = j
@@ -129,8 +151,9 @@ func (self *Manager) UpdateOutputs() {
 	// TODO: output should still exist, even if not spendable
 	var DisappearingUx map[string]UnspentOutputJSON
 
-	for i, j := range UxMap {
-		val, ok := self.UxStateMap[i]
+	for i, j := range uxMap {
+		_ = j
+		_, ok := self.UxStateMap[i]
 		if !ok {
 			//output disappeared
 			//means it has been spent
@@ -140,9 +163,22 @@ func (self *Manager) UpdateOutputs() {
 		}
 	}
 
-	self.UxStateMap = UxMap
+	self.UxStateMap = uxMap
+}
+
+func (self *Manager) Init() {
+	//UxStateMap     map[string]UnspentOutputJSON
+	self.WatchAddresses = make([]string, 0)
+	self.UxStateMap = make(map[string]UnspentOutputJSON)
+}
+
+func (self *Manager) AddWatchAddress(addr string) {
+	if AddressValid(addr) != nil {
+		log.Fatal("Address being added to watch list, must be valid")
+	}
+	self.WatchAddresses = append(self.WatchAddresses, addr)
 }
 
 func (self *Manager) Tick() {
-	UpdateOutputs()
+	self.UpdateOutputs()
 }
