@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	// "github.com/btcsuite/btcd/wire"
 	"io/ioutil"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcrpcclient"
 	"github.com/btcsuite/btcutil"
 	"github.com/deiwin/interact"
@@ -97,8 +99,8 @@ func ConvertToString(r reflect.Value) string {
 	return "not reachable"
 }
 
-func ConvertToValue(param_type reflect.Kind, param string) (reflect.Value, error) {
-	switch param_type {
+func ConvertToValue(param_type reflect.Type, param string) (reflect.Value, error) {
+	switch param_type.Kind() {
 	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
 		i, err := strconv.Atoi(param)
 		return reflect.ValueOf(i), err
@@ -108,6 +110,15 @@ func ConvertToValue(param_type reflect.Kind, param string) (reflect.Value, error
 	case reflect.Float32, reflect.Float64:
 		f, err := strconv.ParseFloat(param, 64)
 		return reflect.ValueOf(f), err
+	case reflect.Interface:
+		switch param_type.Name() {
+		case "Address":
+			a, err := btcutil.DecodeAddress(param, &chaincfg.MainNetParams)
+			return reflect.ValueOf(a), err
+		default:
+			return reflect.ValueOf(nil), errors.New(fmt.Sprintf("Unhandled interface %s", param_type.Name()))
+		}
+
 	case reflect.String:
 		return reflect.ValueOf(param), nil
 	default:
@@ -153,38 +164,49 @@ func Run() {
 			case "btwallet":
 				current = reflect.ValueOf(btwallet)
 			}
-		case "ListAccounts":
-			accounts, e := btwallet.ListAccounts()
-			if e != nil {
-				fmt.Println("Error", e)
-				continue
-			}
-			for k, v := range accounts {
-				fmt.Printf("%s = %s\n", k, v.String())
-			}
-		case "CheckBalance":
-		case "Spend":
 		default:
 			//in := []reflect.Value{reflect.ValueOf(nil)}
-			method := current.MethodByName(command)
+
+			tokens := strings.Split(strings.TrimSpace(command), " ")
+			pkg_cmd := strings.Split(tokens[0], ".")
+			cmd := tokens[0]
+			if len(pkg_cmd) > 1 {
+				switch pkg_cmd[0] {
+				case "btcd":
+					current = reflect.ValueOf(btcd)
+				case "btwallet":
+					current = reflect.ValueOf(btwallet)
+				}
+				cmd = pkg_cmd[1]
+			}
+
+			method := current.MethodByName(cmd)
 			if !method.IsValid() {
-				fmt.Printf("Method %s not found\n", command)
+				fmt.Printf("Method %s not found\n", tokens[0])
 				continue
 			}
+			args := tokens[1:]
 			method_value := method.Interface()
 			method_type := reflect.TypeOf(method_value)
+
 			fmt.Println(method_type)
 
 			in := []reflect.Value{}
 
 			for i := 0; i < method_type.NumIn(); i++ {
 				param_type := method_type.In(i)
-				param, err := actor.Prompt(fmt.Sprintf("%s", param_type))
-				if err != nil {
-					fmt.Printf("Invalid input %s\n", err)
-					continue
+				var param string
+				if i < len(args) {
+					param = args[i]
+				} else {
+					param, err = actor.Prompt(fmt.Sprintf("%s (%s)", param_type, param_type.Kind()))
+					if err != nil {
+						fmt.Printf("Invalid input %s\n", err)
+						continue
+					}
 				}
-				value, err := ConvertToValue(param_type.Kind(), param)
+
+				value, err := ConvertToValue(param_type, param)
 				if err != nil {
 					fmt.Printf("Could not parse: %s because %s\n", param, err)
 					break
