@@ -97,6 +97,24 @@ func ConvertToString(r reflect.Value) string {
 	return "not reachable"
 }
 
+func ConvertToValue(param_type reflect.Kind, param string) (reflect.Value, error) {
+	switch param_type {
+	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
+		i, err := strconv.Atoi(param)
+		return reflect.ValueOf(i), err
+	case reflect.Bool:
+		b, err := strconv.ParseBool(param)
+		return reflect.ValueOf(b), err
+	case reflect.Float32, reflect.Float64:
+		f, err := strconv.ParseFloat(param, 64)
+		return reflect.ValueOf(f), err
+	case reflect.String:
+		return reflect.ValueOf(param), nil
+	default:
+		return reflect.ValueOf(nil), errors.New(fmt.Sprintf("Unhandled type %s", param_type))
+	}
+}
+
 func Run() {
 	help := `
 	This is the help.
@@ -166,32 +184,13 @@ func Run() {
 					fmt.Printf("Invalid input %s\n", err)
 					continue
 				}
-				switch param_type.Kind() {
-				case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-					converted, err := strconv.Atoi(param)
-					if err != nil {
-						fmt.Printf("Invalid input %s\n", err)
-						continue
-					}
-					in = append(in, reflect.ValueOf(converted).Convert(param_type))
-				case reflect.Bool:
-					converted, err := strconv.ParseBool(param)
-					if err != nil {
-						fmt.Printf("Invalid input %s\n", err)
-						continue
-					}
-					in = append(in, reflect.ValueOf(converted).Convert(param_type))
-				case reflect.Float32, reflect.Float64:
-					converted, err := strconv.ParseFloat(param, 64)
-					if err != nil {
-						fmt.Printf("Invalid input %s\n", err)
-						continue
-					}
-					in = append(in, reflect.ValueOf(converted).Convert(param_type))
-				default:
-					in = append(in, reflect.ValueOf(param).Convert(param_type))
+				value, err := ConvertToValue(param_type.Kind(), param)
+				if err != nil {
+					fmt.Printf("Could not parse: %s because %s\n", param, err)
+					break
 				}
-
+				converted := value.Convert(param_type)
+				in = append(in, converted)
 			}
 
 			return_values := method.Call(in)
