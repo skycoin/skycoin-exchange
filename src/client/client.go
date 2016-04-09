@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -20,23 +22,23 @@ import (
 	//ui "github.com/gizak/termui" // <- ui shortcut, optional
 )
 
-var (
-	checkNotEmpty = func(input string) error {
-		// note that the inputs provided to these checks are already trimmed
-		if input == "" {
-			return errors.New("Input should not be empty!")
-		}
-		return nil
-	}
-	checkIsAPositiveNumber = func(input string) error {
-		if n, err := strconv.Atoi(input); err != nil {
-			return err
-		} else if n < 0 {
-			return errors.New("The number can not be negative!")
-		}
-		return nil
-	}
-)
+// var (
+// 	checkNotEmpty = func(input string) error {
+// 		// note that the inputs provided to these checks are already trimmed
+// 		if input == "" {
+// 			return errors.New("Input should not be empty!")
+// 		}
+// 		return nil
+// 	}
+// 	checkIsAPositiveNumber = func(input string) error {
+// 		if n, err := strconv.Atoi(input); err != nil {
+// 			return err
+// 		} else if n < 0 {
+// 			return errors.New("The number can not be negative!")
+// 		}
+// 		return nil
+// 	}
+// )
 
 func GetCerts(app string) []byte {
 	homeDir := btcutil.AppDataDir(app, false)
@@ -47,7 +49,7 @@ func GetCerts(app string) []byte {
 	return certs
 }
 
-func BtClient(certs []byte, host string) *btcrpcclient.Client {
+func BtClient(username string, password string, certs []byte, host string) *btcrpcclient.Client {
 	// Only override the handlers for notifications you care about.
 	// Also note most of these handlers will only be called if you register
 	// for notifications.  See the documentation of the btcrpcclient
@@ -63,8 +65,8 @@ func BtClient(certs []byte, host string) *btcrpcclient.Client {
 	connCfg := &btcrpcclient.ConnConfig{
 		Host:         host,
 		Endpoint:     "ws",
-		User:         "skycoin",
-		Pass:         "skycoin2016",
+		User:         username,
+		Pass:         password,
 		Certificates: certs,
 	}
 	client, err := btcrpcclient.New(connCfg, &ntfnHandlers)
@@ -86,17 +88,6 @@ func BtClient(certs []byte, host string) *btcrpcclient.Client {
 	log.Printf("Block count: %d", blockCount)
 
 	return client
-}
-
-func ConvertToString(r reflect.Value) string {
-	switch r.Kind() {
-	case reflect.Uint64:
-		return fmt.Sprintf("%d", r)
-	default:
-		log.Fatal("Unsupported kind", r.Kind())
-	}
-	log.Fatal("Unsupported kind", r.Kind())
-	return "not reachable"
 }
 
 func ConvertToValue(param_type reflect.Type, param string) (reflect.Value, error) {
@@ -126,33 +117,121 @@ func ConvertToValue(param_type reflect.Type, param string) (reflect.Value, error
 	}
 }
 
+const help = `
+Usage example:
+	go run ./cmd/client/client.go -u $RPCUSER -p $RPCPASS -f ./examples/example.cdsl -d  WALLET_PASSPHRASE=$WALLET_PASSPHRASE
+
+Assumes
+	btcd.conf is setup
+	btcwallet.conf is setup
+	btcd is running
+	btwallet is running
+	~/go/bin/btcwallet -u $RPCUSER -P $RPCPASS --create
+
+TODO:
+
+deposit skycoin 1
+	Prompts for type of coin
+	Prompts for value
+	Generate and return address for deposit
+withdraw skycoin 1
+	Prompts for type of coin
+	Prompts for value
+	Prompts for destination
+bid skycoin 1 bitcoin 10
+	Prompts for type of coin from
+	Prompts for coin source quantity
+	Prompts for type of coin to
+	Prompts for coin target quantity
+`
+
+func LoadCommands(inputFile string) []string {
+	inputs, err := ioutil.ReadFile(inputFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return strings.Split(string(inputs), "\n")
+}
+
 func Run() {
-	help := `
-	This is the help.
 
-	Deposit
-		Prompts for type of coin
-		Prompts for value
-		Generate and return address for deposit
-	Withdraw
-		Prompts for type of coin
-		Prompts for value
-		Prompts for destination
+	username := flag.String("u", "skycoin", `specify the username for btcd/btwallet`)
+	password := flag.String("p", "skycoin", `specify the password for btcd/btwallet`)
+	filename := flag.String("f", "", `specify the input command-file to slurp`)
+	defines := flag.String("d", "", `specify list of defines NAME1=VALUE1,NAME2=VALUE2`)
+	verbose_flag := flag.Bool("v", false, `verbose flag`)
 
-	`
-	btcd := BtClient(GetCerts("btcd"), "localhost:8334")
-	btwallet := BtClient(GetCerts("btcwallet"), "localhost:8332")
-	current := reflect.ValueOf(btwallet)
-	actor := interact.NewActor(os.Stdin, os.Stdout)
+	flag.Parse()
 
-	for {
-		command, err := actor.Prompt("command")
-		if err != nil {
-			log.Fatal(err)
+	commands := []string{}
+	counter := 0
+	filename_s := string(*filename)
+	if filename_s != "" {
+		commands = append(commands, LoadCommands(filename_s)...)
+	}
+
+	username_s := string(*username)
+	password_s := string(*password)
+	variable_to_value := make(map[string]string)
+	if *defines != "" {
+		for _, kv := range strings.Split(string(*defines), ",") {
+			p := strings.Split(kv, "=")
+			variable_to_value[p[0]] = p[1]
 		}
-		switch command {
+	}
+
+	btcd := BtClient(username_s, password_s, GetCerts("btcd"), "localhost:8334")
+	btwallet := BtClient(username_s, password_s, GetCerts("btcwallet"), "localhost:8332")
+	default_current := reflect.ValueOf(btwallet)
+	actor := interact.NewActor(os.Stdin, os.Stdout)
+	verbose := *verbose_flag
+
+	rvars := regexp.MustCompile(`\$\w+`)
+	for {
+		err := error(nil)
+		command := ""
+
+		if len(commands) > counter {
+			command = commands[counter]
+			counter++
+		} else {
+			command, err = actor.Prompt("command")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		trimmed := strings.TrimSpace(command)
+		if trimmed == "" {
+			continue
+		}
+
+		subbed := rvars.ReplaceAllStringFunc(trimmed, func(s string) string {
+			return variable_to_value[s[1:]]
+		})
+		fmt.Println(subbed)
+
+		tokens := strings.Split(subbed, " ")
+		cmd := tokens[0]
+
+		switch cmd {
 		case "help":
 			fmt.Println(help)
+
+		case "verbose":
+			verbose = !verbose
+
+		case "load":
+			if len(tokens) > 1 {
+				filename_s = tokens[1]
+			} else {
+				filename_s, err = actor.Prompt("filename")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			commands = append(commands, LoadCommands(filename_s)...)
+
 		case "use":
 			target, err := actor.Prompt("target")
 			if err != nil {
@@ -160,16 +239,14 @@ func Run() {
 			}
 			switch target {
 			case "btcd":
-				current = reflect.ValueOf(btcd)
+				default_current = reflect.ValueOf(btcd)
 			case "btwallet":
-				current = reflect.ValueOf(btwallet)
+				default_current = reflect.ValueOf(btwallet)
 			}
-		default:
-			//in := []reflect.Value{reflect.ValueOf(nil)}
 
-			tokens := strings.Split(strings.TrimSpace(command), " ")
+		default:
 			pkg_cmd := strings.Split(tokens[0], ".")
-			cmd := tokens[0]
+			current := default_current
 			if len(pkg_cmd) > 1 {
 				switch pkg_cmd[0] {
 				case "btcd":
@@ -182,14 +259,16 @@ func Run() {
 
 			method := current.MethodByName(cmd)
 			if !method.IsValid() {
-				fmt.Printf("Method %s not found\n", tokens[0])
+				fmt.Printf("Method '%s' not found\n", tokens[0])
 				continue
 			}
 			args := tokens[1:]
 			method_value := method.Interface()
 			method_type := reflect.TypeOf(method_value)
 
-			fmt.Println(method_type)
+			if verbose {
+				fmt.Println(method_type)
+			}
 
 			in := []reflect.Value{}
 
@@ -216,9 +295,13 @@ func Run() {
 			}
 
 			return_values := method.Call(in)
-			for _, r := range return_values {
-				fmt.Printf("%s: ", r.Kind())
-				fmt.Println(r)
+			for i, r := range return_values {
+				if verbose {
+					fmt.Printf("%s: $%d=%s\n", r.Kind(), i, fmt.Sprint(r))
+				} else {
+					fmt.Println(r)
+				}
+				variable_to_value[fmt.Sprint(i)] = fmt.Sprint(r)
 			}
 		}
 	}

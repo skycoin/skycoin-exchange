@@ -1,0 +1,12 @@
+btwallet.Ping
+btcd.Ping
+ListUnspent
+ListAccounts
+
+WalletPassphrase $WALLET_PASSPHRASE 360
+CreateNewAccount SourceAccount
+GetBalance SourceAccount
+
+CreateNewAccount TargetAccount
+GetAccountAddress TargetAccount
+SendFrom SourceAccount $0 0
