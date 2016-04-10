@@ -4,41 +4,20 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"reflect"
-	"strings"
-	// "github.com/btcsuite/btcd/wire"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcrpcclient"
 	"github.com/btcsuite/btcutil"
 	"github.com/deiwin/interact"
-	// "time"
-	//ui "github.com/gizak/termui" // <- ui shortcut, optional
 )
-
-// var (
-// 	checkNotEmpty = func(input string) error {
-// 		// note that the inputs provided to these checks are already trimmed
-// 		if input == "" {
-// 			return errors.New("Input should not be empty!")
-// 		}
-// 		return nil
-// 	}
-// 	checkIsAPositiveNumber = func(input string) error {
-// 		if n, err := strconv.Atoi(input); err != nil {
-// 			return err
-// 		} else if n < 0 {
-// 			return errors.New("The number can not be negative!")
-// 		}
-// 		return nil
-// 	}
-// )
 
 func GetCerts(app string) []byte {
 	homeDir := btcutil.AppDataDir(app, false)
@@ -50,18 +29,7 @@ func GetCerts(app string) []byte {
 }
 
 func BtClient(config *Config, certs []byte, host string) *btcrpcclient.Client {
-	// Only override the handlers for notifications you care about.
-	// Also note most of these handlers will only be called if you register
-	// for notifications.  See the documentation of the btcrpcclient
-	// NotificationHandlers type for more details about each handler.
-	ntfnHandlers := btcrpcclient.NotificationHandlers{
-	// OnBlockConnected: func(hash *wire.ShaHash, height int32, time time.Time) {
-	// 	log.Printf("Block connected: %v (%d) %v", hash, height, time)
-	// },
-	// OnBlockDisconnected: func(hash *wire.ShaHash, height int32, time time.Time) {
-	// 	log.Printf("Block disconnected: %v (%d) %v", hash, height, time)
-	// },
-	}
+	ntfnHandlers := btcrpcclient.NotificationHandlers{}
 	connCfg := &btcrpcclient.ConnConfig{
 		Host:         host,
 		Endpoint:     "ws",
