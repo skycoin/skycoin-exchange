@@ -49,7 +49,7 @@ func GetCerts(app string) []byte {
 	return certs
 }
 
-func BtClient(username string, password string, certs []byte, host string) *btcrpcclient.Client {
+func BtClient(config *Config, certs []byte, host string) *btcrpcclient.Client {
 	// Only override the handlers for notifications you care about.
 	// Also note most of these handlers will only be called if you register
 	// for notifications.  See the documentation of the btcrpcclient
@@ -65,8 +65,8 @@ func BtClient(username string, password string, certs []byte, host string) *btcr
 	connCfg := &btcrpcclient.ConnConfig{
 		Host:         host,
 		Endpoint:     "ws",
-		User:         username,
-		Pass:         password,
+		User:         config.username,
+		Pass:         config.password,
 		Certificates: certs,
 	}
 	client, err := btcrpcclient.New(connCfg, &ntfnHandlers)
@@ -125,7 +125,7 @@ Assumes
 	btcd.conf is setup
 	btcwallet.conf is setup
 	btcd is running
-	btwallet is running
+	btcwallet is running
 	~/go/bin/btcwallet -u $RPCUSER -P $RPCPASS --create
 
 TODO:
@@ -153,38 +153,63 @@ func LoadCommands(inputFile string) []string {
 	return strings.Split(string(inputs), "\n")
 }
 
-func Run() {
+type Config struct {
+	username       string
+	password       string
+	filename       string
+	defines        string
+	verbose        bool
+	testnet        bool
+	btcd_host      string
+	btcwallet_host string
+}
 
-	username := flag.String("u", "skycoin", `specify the username for btcd/btwallet`)
-	password := flag.String("p", "skycoin", `specify the password for btcd/btwallet`)
-	filename := flag.String("f", "", `specify the input command-file to slurp`)
-	defines := flag.String("d", "", `specify list of defines NAME1=VALUE1,NAME2=VALUE2`)
-	verbose_flag := flag.Bool("v", false, `verbose flag`)
+func Run() {
+	var config Config = Config{
+		username:       "skycoin",
+		password:       "skycoin",
+		filename:       "",
+		defines:        "",
+		verbose:        false,
+		testnet:        false,
+		btcd_host:      "localhost:8334",
+		btcwallet_host: "localhost:8332",
+	}
+
+	flag.StringVar(&config.username, "u", config.username, `specify the username for btcd/btcwallet`)
+	flag.StringVar(&config.password, "p", config.password, `specify the password for btcd/btcwallet`)
+	flag.StringVar(&config.filename, "f", config.filename, `specify the input command-file to slurp`)
+	flag.StringVar(&config.defines, "d", config.defines, `specify list of defines NAME1=VALUE1,NAME2=VALUE2`)
+	flag.StringVar(&config.btcd_host, "b", config.btcd_host, `btcd host`)
+	flag.StringVar(&config.btcwallet_host, "w", config.btcwallet_host, `btcwallet host`)
+	flag.BoolVar(&config.verbose, "v", config.verbose, `verbose flag`)
+	flag.BoolVar(&config.testnet, "t", config.verbose, `testnet flag`)
 
 	flag.Parse()
 
-	commands := []string{}
-	counter := 0
-	filename_s := string(*filename)
-	if filename_s != "" {
-		commands = append(commands, LoadCommands(filename_s)...)
+	if config.testnet {
+		config.btcd_host = "localhost:18334"
+		config.btcwallet_host = "localhost:18332"
 	}
 
-	username_s := string(*username)
-	password_s := string(*password)
+	commands := []string{}
+	counter := 0
+	if config.filename != "" {
+		commands = append(commands, LoadCommands(config.filename)...)
+	}
+
 	variable_to_value := make(map[string]string)
-	if *defines != "" {
-		for _, kv := range strings.Split(string(*defines), ",") {
+	if config.defines != "" {
+		for _, kv := range strings.Split(string(config.defines), ",") {
 			p := strings.Split(kv, "=")
 			variable_to_value[p[0]] = p[1]
 		}
 	}
 
-	btcd := BtClient(username_s, password_s, GetCerts("btcd"), "localhost:8334")
-	btwallet := BtClient(username_s, password_s, GetCerts("btcwallet"), "localhost:8332")
-	default_current := reflect.ValueOf(btwallet)
+	btcd := BtClient(&config, GetCerts("btcd"), config.btcd_host)
+	btcwallet := BtClient(&config, GetCerts("btcwallet"), config.btcwallet_host)
+	default_current := reflect.ValueOf(btcwallet)
 	actor := interact.NewActor(os.Stdin, os.Stdout)
-	verbose := *verbose_flag
 
 	rvars := regexp.MustCompile(`\$\w+`)
 	for {
@@ -219,18 +244,19 @@ func Run() {
 			fmt.Println(help)
 
 		case "verbose":
-			verbose = !verbose
+			config.verbose = !config.verbose
 
 		case "load":
+			var filename string
 			if len(tokens) > 1 {
-				filename_s = tokens[1]
+				filename = tokens[1]
 			} else {
-				filename_s, err = actor.Prompt("filename")
+				filename, err = actor.Prompt("filename")
 				if err != nil {
 					log.Fatal(err)
 				}
 			}
-			commands = append(commands, LoadCommands(filename_s)...)
+			commands = append(commands, LoadCommands(filename)...)
 
 		case "use":
 			target, err := actor.Prompt("target")
@@ -240,8 +266,8 @@ func Run() {
 			switch target {
 			case "btcd":
 				default_current = reflect.ValueOf(btcd)
-			case "btwallet":
-				default_current = reflect.ValueOf(btwallet)
+			case "btcwallet":
+				default_current = reflect.ValueOf(btcwallet)
 			}
 
 		default:
@@ -251,8 +277,8 @@ func Run() {
 				switch pkg_cmd[0] {
 				case "btcd":
 					current = reflect.ValueOf(btcd)
-				case "btwallet":
-					current = reflect.ValueOf(btwallet)
+				case "btcwallet":
+					current = reflect.ValueOf(btcwallet)
 				}
 				cmd = pkg_cmd[1]
 			}
@@ -266,7 +292,7 @@ func Run() {
 			method_value := method.Interface()
 			method_type := reflect.TypeOf(method_value)
 
-			if verbose {
+			if config.verbose {
 				fmt.Println(method_type)
 			}
 
@@ -296,7 +322,7 @@ func Run() {
 
 			return_values := method.Call(in)
 			for i, r := range return_values {
-				if verbose {
+				if config.verbose {
 					fmt.Printf("%s: $%d=%s\n", r.Kind(), i, fmt.Sprint(r))
 				} else {
 					fmt.Println(r)

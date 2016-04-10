@@ -5,6 +5,7 @@ ListAccounts
 
 WalletPassphrase $WALLET_PASSPHRASE 360
 CreateNewAccount SourceAccount
+GetAccountAddress SourceAccount
 GetBalance SourceAccount
 
 CreateNewAccount TargetAccount
