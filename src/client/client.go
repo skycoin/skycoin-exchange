@@ -17,6 +17,7 @@ import (
 	"github.com/btcsuite/btcrpcclient"
 	"github.com/btcsuite/btcutil"
 	"github.com/deiwin/interact"
+	"github.com/skycoin/skycoin-exchange/src/skyclient"
 )
 
 func GetCerts(app string) []byte {
@@ -56,6 +57,10 @@ func BtClient(config *Config, certs []byte, host string) *btcrpcclient.Client {
 	log.Printf("Block count: %d", blockCount)
 
 	return client
+}
+
+func SkyClient(config *Config, host string) (*skyclient.Client, error) {
+	return skyclient.New()
 }
 
 func ConvertToValue(param_type reflect.Type, param string) (reflect.Value, error) {
@@ -176,7 +181,8 @@ func Run() {
 
 	btcd := BtClient(&config, GetCerts("btcd"), config.btcd_host)
 	btcwallet := BtClient(&config, GetCerts("btcwallet"), config.btcwallet_host)
-	default_current := reflect.ValueOf(btcwallet)
+	skycoin := SkyClient(&config, config.btcwallet_host)
+
 	actor := interact.NewActor(os.Stdin, os.Stdout)
 
 	rvars := regexp.MustCompile(`\$\w+`)
@@ -226,29 +232,23 @@ func Run() {
 			}
 			commands = append(commands, LoadCommands(filename)...)
 
-		case "use":
-			target, err := actor.Prompt("target")
-			if err != nil {
-				log.Fatal(err)
-			}
-			switch target {
-			case "btcd":
-				default_current = reflect.ValueOf(btcd)
-			case "btcwallet":
-				default_current = reflect.ValueOf(btcwallet)
-			}
-
 		default:
 			pkg_cmd := strings.Split(tokens[0], ".")
-			current := default_current
+			current := reflect.ValueOf(nil)
 			if len(pkg_cmd) > 1 {
 				switch pkg_cmd[0] {
 				case "btcd":
 					current = reflect.ValueOf(btcd)
 				case "btcwallet":
 					current = reflect.ValueOf(btcwallet)
+				case "skycoin":
+					current = reflect.ValueOf(skycoin)
+				default:
+					log.Fatal("Unsupported target ", pkg_cmd[0])
 				}
 				cmd = pkg_cmd[1]
+			} else {
+				log.Fatal("Most specify target for reflection ", tokens)
 			}
 
 			method := current.MethodByName(cmd)

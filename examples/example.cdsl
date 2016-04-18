@@ -1,13 +1,17 @@
-btwallet.Ping
+btcwallet.Ping
 btcd.Ping
-ListUnspent
-ListAccounts
+btcwallet.ListUnspent
+btcwallet.ListAccounts
 
-WalletPassphrase $WALLET_PASSPHRASE 360
-CreateNewAccount SourceAccount
-GetAccountAddress SourceAccount
-GetBalance SourceAccount
+btcwallet.WalletPassphrase $WALLET_PASSPHRASE 360
+btcwallet.CreateNewAccount SourceAccount
+btcwallet.GetAccountAddress SourceAccount
+btcwallet.GetBalance SourceAccount
 
-CreateNewAccount TargetAccount
-GetAccountAddress TargetAccount
-SendFrom SourceAccount $0 0
+btcwallet.CreateNewAccount TargetAccount
+btcwallet.GetAccountAddress TargetAccount
+btcwallet.SendFrom SourceAccount $0 0
+
+skycoin.CreateNewAccount TargetAccount
+skycoin.GetAccountAddress TargetAccount
+skycoin.SendFrom SourceAccount $0
