@@ -4,7 +4,7 @@ import (
 	"flag"
 	//"fmt"
 	//"skycoin/"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	bitcoin_interface "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 
 	"time"
 )
@@ -28,7 +28,7 @@ func main() {
 	btcd.Init()
 	btcd.AddWatchAddress(Addr)
 
-	for true {
+	for {
 		btcd.Tick()
 		time.Sleep(1 * time.Second)
 	}
