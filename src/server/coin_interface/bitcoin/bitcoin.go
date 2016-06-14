@@ -117,16 +117,16 @@ func (self *Manager) UpdateOutputs() {
 		ux := GetUnspentOutputs(addr)
 		list = append(list, ux...)
 	}
-	latesUxMap := make(map[string]UnspentOutputJSON)
+	latestUxMap := make(map[string]UnspentOutputJSON)
 	//do diff
 	for _, utxo := range list {
 		id := fmt.Sprintf("%s:%d", utxo.Tx_hash, utxo.Tx_index)
-		latesUxMap[id] = utxo
+		latestUxMap[id] = utxo
 	}
 
 	//get new
 	NewUx := make(map[string]UnspentOutputJSON)
-	for id, utxo := range latesUxMap {
+	for id, utxo := range latestUxMap {
 		if _, ok := self.UxStateMap[id]; !ok {
 			NewUx[id] = utxo
 			log.Printf("New output Found:%+v\n", utxo)
@@ -148,7 +148,7 @@ func (self *Manager) UpdateOutputs() {
 		}
 	}
 
-	self.UxStateMap = latesUxMap
+	self.UxStateMap = latestUxMap
 }
 
 func (self *Manager) Init() {
