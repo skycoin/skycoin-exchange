@@ -2,7 +2,9 @@ package bitcoin_interface
 
 import (
 	//"errors"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	//"github.com/skycoin/skycoin/src/cipher"
 	"net/http"
 	//"sort"
@@ -16,7 +18,7 @@ import (
 
 
 
-*/
+ */
 
 /*
 {
@@ -45,12 +47,15 @@ type UnspentOutputJSONResponse struct {
 }
 
 type UnspentOutputJSON struct {
-	Tx_age      uint64 `json:"tx_age"`
-	Tx_hash     string `json:"tx_hash"`
-	Tx_index    string `json:"tx_index"`
-	Tx_output_n uint64 `json:"tx_output_n"`
-	Script      string `json:"script"`
-	Value       uint64 `json:"value"`
+	// Tx_age      uint64 `json:"tx_age"`
+	Tx_hash            string `json:"tx_hash"` // the previous transaction id
+	Tx_hash_big_endian string `json:"tx_hash_big_endian"`
+	Tx_index           uint64 `json:"tx_index"`
+	Tx_output_n        uint64 `json:"tx_output_n"` // the output index of previous transaction
+	Script             string `json:"script"`      // pubkey script
+	Value              uint64 `json:"value"`       // the bitcoin amount in satoshis
+	Value_hex          string `json:"value_hex"`   // alisa the Value, in hex format.
+	Confirmations      uint64 `json:"confirmations"`
 }
 
 // ByAge implements sort.Interface for []Person based on
@@ -66,42 +71,34 @@ func (a ByHash) Less(i, j int) bool { return a[i].Age < a[j].Age }
 
 //https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
 
+// GetUnspentOutputs, using the API from blockchain.info to query the unspent outputs.
 func GetUnspentOutputs(addr string) []UnspentOutputJSON {
-
 	if AddressValid(addr) != nil {
 		log.Fatal("Address is invalid")
 	}
 
-	//b := bytes.NewBuffer()
-
 	//url := strings.Sprint
-	fmt.Printf("Address= %s\n", addr)
-	req := fmt.Sprintf("https://blockchain.info/unspent?active=%s", addr)
-
-	fmt.Printf("req= %s\n", req)
-	//reader := strings.NewReader(`{"active":123}`)
-	request, err := http.NewRequest("GET", req, nil)
-	// TODO: check err
-
-	fmt.Printf("request= %s\n", request)
-
+	// fmt.Printf("Address= %s\n", addr)
+	resp, err := http.Get(fmt.Sprintf("https://blockchain.info/unspent?active=%s", addr))
 	if err != nil {
-		log.Fatal("request failed 1")
+		log.Fatalf("Get url:%s fail, error:%s", addr, err)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	// TODO: check err
-
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("request failed 2")
+		log.Fatalf("Read data from resp body fail, error:%s", err)
+	}
+	resp.Body.Close()
+	// fmt.Println("data:", string(data))
+
+	// parse the JSON.
+	utxoResp := UnspentOutputJSONResponse{}
+	err = json.Unmarshal(data, &utxoResp)
+	if err != nil {
+		log.Fatalf("unmasharl fail, error:%s", err)
 	}
 
-	fmt.Printf("resp: %s \n", resp)
-
-	//FIX, parse JSON
-	return make([]UnspentOutputJSON, 0)
-
+	return utxoResp.UnspentOutputArray
 }
 
 type Manager struct {
@@ -113,32 +110,26 @@ type UxMap map[string]UnspentOutputJSON
 
 //does querry/update
 func (self *Manager) UpdateOutputs() {
-
+	log.Println("Update outputs...")
 	//get all unspent outputs for all watch addresses
 	var list []UnspentOutputJSON
 	for _, addr := range self.WatchAddresses {
 		ux := GetUnspentOutputs(addr)
 		list = append(list, ux...)
 	}
-	var uxMap map[string]UnspentOutputJSON
-
+	latesUxMap := make(map[string]UnspentOutputJSON)
 	//do diff
-	for _, j := range list {
-		id := fmt.Sprint("%s:%i", j.Tx_hash, j.Tx_index)
-		fmt.Printf("ID = %x\n", id)
-		uxMap[id] = j
+	for _, utxo := range list {
+		id := fmt.Sprintf("%s:%d", utxo.Tx_hash, utxo.Tx_index)
+		latesUxMap[id] = utxo
 	}
 
 	//get new
-	var NewUx map[string]UnspentOutputJSON
-
-	//check existing state, compare to new state
-	for i, j := range self.UxStateMap {
-		_, ok := uxMap[i]
-		if !ok {
-			//new unspent output found
-			NewUx[i] = j
-			log.Printf("New Output Found: %x", j)
+	NewUx := make(map[string]UnspentOutputJSON)
+	for id, utxo := range latesUxMap {
+		if _, ok := self.UxStateMap[id]; !ok {
+			NewUx[id] = utxo
+			log.Printf("New output Found:%+v\n", utxo)
 		}
 	}
 
@@ -146,24 +137,18 @@ func (self *Manager) UpdateOutputs() {
 	// make sure outputs that exist, never disappear, without being spent
 	// means theft or blockchain fork
 
-	//look for ux that disappeared
+	// look for ux that disappeared
 	// TODO: make sure output exists and has not disappeared, else panic mode
 	// TODO: output should still exist, even if not spendable
-	var DisappearingUx map[string]UnspentOutputJSON
-
-	for i, j := range uxMap {
-		_ = j
-		_, ok := self.UxStateMap[i]
-		if !ok {
-			//output disappeared
-			//means it has been spent
-			//ensure output never disappears!!!
-			DisappearingUx[i] = self.UxStateMap[i]
-			log.Printf("Output Disappeared: %x", self.UxStateMap[i])
+	DisappearingUx := make(map[string]UnspentOutputJSON)
+	for id, utxo := range self.UxStateMap {
+		if _, ok := self.UxStateMap[id]; !ok {
+			DisappearingUx[id] = utxo
+			log.Printf("Output Disappered: %+v\n", utxo)
 		}
 	}
 
-	self.UxStateMap = uxMap
+	self.UxStateMap = latesUxMap
 }
 
 func (self *Manager) Init() {
