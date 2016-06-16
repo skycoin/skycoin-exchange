@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
+	"github.com/skycoin/skycoin/src/cipher"
 	//"github.com/skycoin/skycoin/src/cipher"
 	"net/http"
 	//"sort"
@@ -35,6 +37,10 @@ import (
 }
 */
 
+var (
+	HideSeckey = true
+)
+
 //returns nil, if address is valid
 //returns error if the address is invalid
 func AddressValid(address string) error {
@@ -58,6 +64,12 @@ type UnspentOutputJSON struct {
 	Confirmations      uint64 `json:"confirmations"`
 }
 
+type AddressEntry struct {
+	Address string
+	Public  string
+	Secret  string
+}
+
 // ByAge implements sort.Interface for []Person based on
 // the Age field.
 
@@ -69,8 +81,46 @@ func (a ByHash) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByHash) Less(i, j int) bool { return a[i].Age < a[j].Age }
 */
 
-//https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
+// GenerateAddresses, generate bitcoin addresses.
+func GenerateAddresses(seed string, num int) []AddressEntry {
+	seckeys := cipher.GenerateDeterministicKeyPairs([]byte(seed), num)
+	entries := make([]AddressEntry, num)
+	for i, sec := range seckeys {
+		pub := cipher.PubKeyFromSecKey(sec)
+		entries[i] = getAddressEntry(pub, sec)
+	}
+	return entries
+}
 
+func getAddressEntry(pub cipher.PubKey, sec cipher.SecKey) AddressEntry {
+	//bitcoin address
+	e := AddressEntry{
+		Address: cipher.BitcoinAddressFromPubkey(pub),
+		Public:  pub.Hex(),
+		Secret:  cipher.BitcoinWalletImportFormatFromSeckey(sec),
+	}
+
+	//hide the secret key
+	if HideSeckey == true {
+		e.Secret = ""
+	}
+	return e
+}
+
+// GetBalance, query balance of address through the API of blockexplorer.com.
+func GetBalance(addr string) (string, error) {
+	if AddressValid(addr) != nil {
+		log.Fatal("Address is invalid")
+	}
+
+	data, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/addr/%s/balance", addr))
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
 // GetUnspentOutputs, using the API from blockchain.info to query the unspent outputs.
 func GetUnspentOutputs(addr string) []UnspentOutputJSON {
 	if AddressValid(addr) != nil {
@@ -149,6 +199,21 @@ func (self *Manager) UpdateOutputs() {
 	}
 
 	self.UxStateMap = latestUxMap
+}
+
+// getDataOfUrl, get data from specific URL.
+func getDataOfUrl(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, err
+	}
+	resp.Body.Close()
+	return data, nil
 }
 
 func (self *Manager) Init() {
