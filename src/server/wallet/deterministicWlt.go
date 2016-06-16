@@ -1,9 +1,10 @@
 package wallet
 
 import (
+	"fmt"
 	"sync"
 
-	"github.com/skycoin/skycoin/src/cipher"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 )
 
 // DeterministicWallet, generate and store addresses for various coin types.
@@ -19,14 +20,13 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) []Addr
 	switch coinType {
 	case Bitcoin:
 		addrEntries := make([]AddressEntry, num)
-		seckeys := cipher.GenerateDeterministicKeyPairs([]byte(self.Seed), num)
-		for i, sec := range seckeys {
-			addr := AddressEntry{}
-			pub := cipher.PubKeyFromSecKey(sec)
-			addr.Address = cipher.BitcoinAddressFromPubkey(pub)
-			addr.Pubkey = pub.Hex()
-			addr.Seckey = cipher.BitcoinWalletImportFormatFromSeckey(sec)
-			addrEntries[i] = addr
+		entries := bitcoin.GenerateAddresses(self.Seed, num)
+		for i, entry := range entries {
+			addrEntries[i] = AddressEntry{
+				CoinType: Bitcoin,
+				Address:  entry.Address,
+				Pubkey:   entry.Public,
+				Seckey:   entry.Secret}
 		}
 		self.addAddresses(coinType, addrEntries)
 		return addrEntries
@@ -35,8 +35,14 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) []Addr
 	return []AddressEntry{}
 }
 
-func (self *DeterministicWallet) GetBalance(addr string) (string, error) {
-	return "", nil
+// GetBalance of specific address.
+func (self *DeterministicWallet) GetBalance(addr AddressEntry) (string, error) {
+	switch addr.CoinType {
+	case Bitcoin:
+		return bitcoin.GetBalance(addr.Address)
+	default:
+		return "", fmt.Errorf("unknow coin type:%d", addr.CoinType)
+	}
 }
 
 func (self *DeterministicWallet) addAddresses(coinType CoinType, addrs []AddressEntry) {
