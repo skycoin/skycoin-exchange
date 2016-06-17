@@ -73,6 +73,10 @@ func TestNewAddress(t *testing.T) {
 	}
 }
 
+// func TestGetBalance(t *testing) {
+//
+// }
+
 func getDataOfUrl(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {

@@ -37,7 +37,6 @@ type Wallet interface {
 	SetID(id string)
 	GetID() string
 	NewAddresses(coinType CoinType, num int) []AddressEntry
-	GetBalance(addr string, coinType CoinType) (string, error)
 	Save(dir string) error
 }
 
