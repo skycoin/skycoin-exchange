@@ -43,6 +43,40 @@ func NewWallet(seed string) (Wallet, error) {
 	return GWallets.NewWallet(seed, Deterministic)
 }
 
+// NewAddresses, create addresses in specific wallet.
+func NewAddresses(wltID string, cointype CoinType, num int) ([]string, error) {
+	wlt, err := GWallets.GetWallet(wltID)
+	if err != nil {
+		return []string{}, err
+	}
+
+	addrEntries := wlt.NewAddresses(cointype, num)
+	addrs := make([]string, len(addrEntries))
+	for i, e := range addrEntries {
+		addrs[i] = e.Address
+	}
+	return addrs, nil
+}
+
+// GetBalance, query balance of specific address.
+// func GetBalance(addr string, cointype CoinType) (string, error) {
+// 	switch cointype {
+// 	case Bitcoin:
+// 		return bitcoin.GetBalance(addr)
+// 	default:
+// 		return "", fmt.Errorf("unknow cointype:%d", cointype)
+// 	}
+// }
+//
+// func GetUnspentOutputs(addr string, cointype CoinType) ([]bitcoin.UnspentOutputJSON, error) {
+// 	switch cointype {
+// 	case Bitcoin:
+// 		return bitcoin.GetUnspentOutputs(addr), nil
+// 	default:
+// 		return []bitcoin.UnspentOutputJSON{}, fmt.Errorf("unknow cointype:%d", cointype)
+// 	}
+// }
+
 // Create new wallet
 func (self *Wallets) NewWallet(seed string, wltType WalletType) (Wallet, error) {
 	for {
@@ -56,7 +90,7 @@ func (self *Wallets) NewWallet(seed string, wltType WalletType) (Wallet, error) 
 			// save wallet.
 			if err := wlt.Save(dataDir); err != nil {
 				// remove from wallets
-				self.RemoveWallet(id)
+				self.removeWallet(id)
 				return wlt, err
 			}
 			return wlt, nil
@@ -65,7 +99,17 @@ func (self *Wallets) NewWallet(seed string, wltType WalletType) (Wallet, error) 
 	}
 }
 
-func (self *Wallets) RemoveWallet(id string) {
+func (self *Wallets) GetWallet(id string) (Wallet, error) {
+	self.mtx.Lock()
+	defer self.mtx.Unlock()
+	if _, ok := self.wallets[id]; !ok {
+		return nil, fmt.Errorf("invalide wallet id:%s", id)
+	}
+	return self.wallets[id], nil
+}
+
+// removeWallet, this function should not be called manual.
+func (self *Wallets) removeWallet(id string) {
 	self.mtx.Lock()
 	delete(self.wallets, id)
 	self.mtx.Unlock()
