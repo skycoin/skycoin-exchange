@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -13,13 +15,22 @@ import (
 
 // test create wallets concurrently.
 func TestNewWallet(t *testing.T) {
-	num := 10000
+	defer func() {
+		// clear all the wallet files.
+		removeContents(dataDir)
+	}()
+
+	num := 10
 	wltChan := make(chan Wallet, num)
 	wg := sync.WaitGroup{}
 	for i := 0; i < num; i++ {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup) {
-			wlt := NewWallet("")
+			wlt, err := NewWallet("")
+			if err != nil {
+				t.Error(err)
+				return
+			}
 			wltChan <- wlt
 			// fmt.Printf("%+v\n", wlt)
 			wg.Done()
@@ -35,12 +46,20 @@ func TestNewWallet(t *testing.T) {
 }
 
 func TestNewAddress(t *testing.T) {
-	wlt := NewWallet("test")
-	addrs := wlt.NewAddresses(Bitcoin, 2)
-	// using the api from blockchain.info to validate the addresses.
+	// defer func() {
+	// 	removeContents(dataDir)
+	// }()
 	//
+	wlt, err := NewWallet("")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	addrs := wlt.NewAddresses(Bitcoin, 10)
+	// using the api from blockchain.info to validate the addresses.
 	addrList := []string{}
 	for _, addr := range addrs {
+		// fmt.Println(addr.Address)
 		addrList = append(addrList, addr.Address)
 	}
 	data, err := getDataOfUrl(fmt.Sprintf("https://blockchain.info/multiaddr?active=%s", strings.Join(addrList, "|")))
@@ -66,4 +85,23 @@ func getDataOfUrl(url string) ([]byte, error) {
 	}
 	resp.Body.Close()
 	return data, nil
+}
+
+func removeContents(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
