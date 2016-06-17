@@ -19,7 +19,6 @@ const WalletTimestampFormat = "2006_01_02"
 
 // Wallets, maintains all wallets in the server.
 type Wallets struct {
-	// dataDir string            // default directory used to store the wallet data.
 	wallets map[string]Wallet // key of the map is wallet id.
 	mtx     sync.Mutex        // protect concurrent access of the wallets.
 }
@@ -111,8 +110,8 @@ func newWallet(seed string, wltType WalletType) Wallet {
 	switch wltType {
 	case Deterministic:
 		return &DeterministicWallet{
-			Seed:           seed,
-			WalletType:     WalletTypeStr[Deterministic],
+			Seed: seed,
+			// WalletType:     WalletTypeStr[Deterministic],
 			AddressEntries: make(map[string][]AddressEntry)}
 	default:
 		panic(fmt.Sprintf("unknow wallet type:%d", wltType))
