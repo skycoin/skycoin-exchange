@@ -9,7 +9,8 @@ import (
 
 type CoinType int8
 type WalletType int8
-type MetaInfo int8
+
+// type MetaInfo int8
 
 const (
 	Bitcoin = iota
@@ -40,14 +41,13 @@ type Wallet interface {
 	Save(dir string) error
 }
 
-// WalletBase, the base info that a wallet contains.
+// WalletBase, used to serialise wallet into json, and unserialise wallet from json.
 type WalletBase struct {
 	Meta           map[string]string         `json:"meta"`
 	AddressEntries map[string][]AddressEntry `json:"addresses"` // key is coin type, value is address entry list.
 }
 
 type AddressEntry struct {
-	// CoinType string
 	Address string `json:"address"`
 	Public  string `json:"pubkey"`
 	Secret  string `json:"seckey"`
@@ -62,6 +62,7 @@ func loadWalletFromFile(filename string) (WalletBase, error) {
 	return w, nil
 }
 
+// newConcretWallet, create concret wallet base on the wallet type.
 func (self *WalletBase) newConcretWallet() (Wallet, error) {
 	if wltType, ok := self.Meta["wallet_type"]; ok {
 		switch wltType {
