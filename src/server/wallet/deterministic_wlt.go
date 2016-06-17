@@ -25,15 +25,15 @@ var DeterMetaStr = []string{
 // DeterministicWallet, generate and store addresses for various coin types.
 type DeterministicWallet struct {
 	// WalletBase
-	ID             string                    `json:"wallet_id"` // wallet id
-	Seed           string                    `json:"seed"`      // used to generate address
-	WalletType     string                    `json:"wallet_type"`
-	AddressEntries map[string][]AddressEntry `json:"addresses"`
-	addrLock       sync.Mutex                // a lock, for protecting the writing, reading of the Addresses in wallet.
-	fileLock       sync.Mutex                // lock for protecting wallet file.
+	ID   string // wallet id
+	Seed string // seed
+	// WalletType     string // wallet type
+	AddressEntries map[string][]AddressEntry
+	addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
+	fileLock       sync.Mutex // lock for protecting wallet file.
 }
 
-// GenerateAddress, generate new addresses base on the and coin type, and then store the address.
+// GenerateAddress, generate new addresses base on the coin type, and then store the address.
 func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) []AddressEntry {
 	switch coinType {
 	case Bitcoin:
@@ -86,7 +86,7 @@ func (self *DeterministicWallet) ToWalletBase() WalletBase {
 		Meta: map[string]string{
 			DeterMetaStr[DETER_META_ID]:          self.ID,
 			DeterMetaStr[DETER_META_SEED]:        self.Seed,
-			DeterMetaStr[DETER_META_WALLET_TYPE]: self.WalletType},
+			DeterMetaStr[DETER_META_WALLET_TYPE]: WalletTypeStr[Deterministic]},
 		AddressEntries: make(map[string][]AddressEntry),
 	}
 
@@ -102,10 +102,9 @@ func (self *DeterministicWallet) ToWalletBase() WalletBase {
 
 func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error) {
 	var (
-		id         string
-		seed       string
-		wallettype string
-		ok         bool
+		id   string
+		seed string
+		ok   bool
 	)
 
 	if id, ok = w.Meta[DeterMetaStr[DETER_META_ID]]; !ok {
@@ -116,14 +115,9 @@ func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error)
 		return nil, errors.New("invalid wallet meta info, empty seed")
 	}
 
-	if wallettype, ok = w.Meta[DeterMetaStr[DETER_META_WALLET_TYPE]]; !ok {
-		return nil, errors.New("invalid wallet meta info, empty wallettype")
-	}
-
 	wlt := &DeterministicWallet{
 		ID:             id,
 		Seed:           seed,
-		WalletType:     wallettype,
 		AddressEntries: make(map[string][]AddressEntry),
 	}
 
