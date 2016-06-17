@@ -55,16 +55,6 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) []Addr
 	return []AddressEntry{}
 }
 
-// GetBalance of specific address.
-func (self *DeterministicWallet) GetBalance(addr string, coinType CoinType) (string, error) {
-	switch coinType {
-	case Bitcoin:
-		return bitcoin.GetBalance(addr)
-	default:
-		return "", fmt.Errorf("unknow coin type:%d", coinType)
-	}
-}
-
 // save the wallet
 func (self *DeterministicWallet) Save(dir string) error {
 	w := self.ToWalletBase()
