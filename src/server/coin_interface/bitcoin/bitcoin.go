@@ -82,29 +82,18 @@ func (a ByHash) Less(i, j int) bool { return a[i].Age < a[j].Age }
 */
 
 // GenerateAddresses, generate bitcoin addresses.
-func GenerateAddresses(seed string, num int) []AddressEntry {
-	seckeys := cipher.GenerateDeterministicKeyPairs([]byte(seed), num)
+func GenerateAddresses(seed []byte, num int) (string, []AddressEntry) {
+	sd, seckeys := cipher.GenerateDeterministicKeyPairsSeed(seed, num)
 	entries := make([]AddressEntry, num)
 	for i, sec := range seckeys {
 		pub := cipher.PubKeyFromSecKey(sec)
-		entries[i] = getAddressEntry(pub, sec)
+		entries[i].Address = cipher.BitcoinAddressFromPubkey(pub)
+		entries[i].Public = pub.Hex()
+		if !HideSeckey {
+			entries[i].Secret = cipher.BitcoinWalletImportFormatFromSeckey(sec)
+		}
 	}
-	return entries
-}
-
-func getAddressEntry(pub cipher.PubKey, sec cipher.SecKey) AddressEntry {
-	//bitcoin address
-	e := AddressEntry{
-		Address: cipher.BitcoinAddressFromPubkey(pub),
-		Public:  pub.Hex(),
-		Secret:  cipher.BitcoinWalletImportFormatFromSeckey(sec),
-	}
-
-	//hide the secret key
-	if HideSeckey == true {
-		e.Secret = ""
-	}
-	return e
+	return fmt.Sprintf("%2x", sd), entries
 }
 
 // GetBalance, query balance of address through the API of blockexplorer.com.
