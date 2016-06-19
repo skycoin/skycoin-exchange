@@ -36,7 +36,7 @@ var CoinStr = []string{
 type Wallet interface {
 	SetID(id string)
 	GetID() string
-	NewAddresses(coinType CoinType, num int) []AddressEntry
+	NewAddresses(coinType CoinType, num int) ([]AddressEntry, error)
 	Save(dir string) error
 }
 

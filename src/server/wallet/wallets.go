@@ -50,7 +50,10 @@ func NewAddresses(wltID string, cointype CoinType, num int) ([]string, error) {
 		return []string{}, err
 	}
 
-	addrEntries := wlt.NewAddresses(cointype, num)
+	addrEntries, err := wlt.NewAddresses(cointype, num)
+	if err != nil {
+		return []string{}, err
+	}
 	addrs := make([]string, len(addrEntries))
 	for i, e := range addrEntries {
 		addrs[i] = e.Address
@@ -136,6 +139,7 @@ func loadWallets(dir string) (map[string]Wallet, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			concretWlt, err := w.newConcretWallet()
 			if err != nil {
 				return nil, err
@@ -154,8 +158,8 @@ func newWallet(seed string, wltType WalletType) Wallet {
 	switch wltType {
 	case Deterministic:
 		return &DeterministicWallet{
-			Seed: seed,
-			// WalletType:     WalletTypeStr[Deterministic],
+			Seed:           seed,
+			InitSeed:       seed,
 			AddressEntries: make(map[string][]AddressEntry)}
 	default:
 		panic(fmt.Sprintf("unknow wallet type:%d", wltType))
