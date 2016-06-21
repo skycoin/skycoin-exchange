@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"sync"
 
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin/src/util"
@@ -58,7 +57,7 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 		}
 		self.addAddresses(coinType, addrEntries)
 		// save automaticaly after new addressess are added.
-		self.Save(dataDir)
+		self.save(dataDir)
 		return addrEntries, nil
 	case Skycoin:
 	default:
@@ -67,7 +66,7 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 }
 
 // Save the wallet
-func (self *DeterministicWallet) Save(dir string) error {
+func (self *DeterministicWallet) save(dir string) error {
 	// self.fileLock.Lock()
 	// defer self.fileLock.Unlock()
 	w := self.toWalletBase()

@@ -83,19 +83,17 @@ func NewAddresses(wltID string, cointype CoinType, num int) ([]string, error) {
 // Create new wallet
 func (self *Wallets) NewWallet(seed string, wltType WalletType) (Wallet, error) {
 	for {
-		wlt := newWallet(seed, wltType)
+		// wlt := newWallet(seed, wltType)
 		id := newWalletID()
 		self.mtx.Lock()
 		if _, ok := self.wallets[id]; !ok {
-			wlt.SetID(id)
+			wlt, err := newWallet(id, seed, wltType)
+			if err != nil {
+				self.mtx.Unlock()
+				return nil, err
+			}
 			self.wallets[id] = wlt
 			self.mtx.Unlock()
-			// save wallet.
-			if err := wlt.Save(dataDir); err != nil {
-				// remove from wallets
-				self.removeWallet(id)
-				return wlt, err
-			}
 			return wlt, nil
 		}
 		self.mtx.Unlock()
@@ -150,7 +148,7 @@ func loadWallets(dir string) (map[string]Wallet, error) {
 	return wallets, nil
 }
 
-func newWallet(seed string, wltType WalletType) Wallet {
+func newWallet(id string, seed string, wltType WalletType) (Wallet, error) {
 	if seed == "" {
 		seed = cipher.SumSHA256(cipher.RandByte(1024)).Hex()
 	}
@@ -158,11 +156,12 @@ func newWallet(seed string, wltType WalletType) Wallet {
 	switch wltType {
 	case Deterministic:
 		return &DeterministicWallet{
+			ID:             id,
 			Seed:           seed,
 			InitSeed:       seed,
-			AddressEntries: make(map[string][]AddressEntry)}
+			AddressEntries: make(map[string][]AddressEntry)}, nil
 	default:
-		panic(fmt.Sprintf("unknow wallet type:%d", wltType))
+		return nil, fmt.Errorf("newWallet fail, unknow wallet type:%d", wltType)
 	}
 }
 
