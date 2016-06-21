@@ -25,18 +25,20 @@ var DeterMetaStr = []string{
 	DETER_META_WALLET_TYPE: "wallet_type",
 }
 
-// DeterministicWallet, generate and store addresses for various coin types.
+// DeterministicWallet generate and store addresses for various coin types.
+// This wallet is not thread safe.
 type DeterministicWallet struct {
-	// WalletBase
 	ID             string // wallet id
 	InitSeed       string // Init seed, used to recover the wallet.
 	Seed           string // seed used to create new address.
 	AddressEntries map[string][]AddressEntry
-	addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
-	fileLock       sync.Mutex // lock for protecting wallet file.
+	// addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
+	// fileLock       sync.Mutex // lock for protecting wallet file.
 }
 
-// GenerateAddress, generate new addresses base on the coin type, and then store the address.
+// NewAddresses generate new addresses base on the coin type, and then store the address.
+// NewAddress must be Sequential，cause the seed.
+// this function is not thread safe, should not be used concrrently.
 func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]AddressEntry, error) {
 	switch coinType {
 	case Bitcoin:
@@ -44,7 +46,7 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 		if self.Seed == self.InitSeed {
 			sd, entries := bitcoin.GenerateAddresses([]byte(self.Seed), num)
 			self.Seed = sd
-			AddressEntryCopy(&addrEntries, entries)
+			addressEntryCopy(&addrEntries, entries)
 		} else {
 			s, err := hex.DecodeString(self.Seed)
 			if err != nil {
@@ -52,7 +54,7 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 			}
 			sd, entries := bitcoin.GenerateAddresses(s, num)
 			self.Seed = sd
-			AddressEntryCopy(&addrEntries, entries)
+			addressEntryCopy(&addrEntries, entries)
 		}
 		self.addAddresses(coinType, addrEntries)
 		// save automaticaly after new addressess are added.
@@ -64,11 +66,11 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 	return []AddressEntry{}, nil
 }
 
-// save the wallet
+// Save the wallet
 func (self *DeterministicWallet) Save(dir string) error {
-	w := self.ToWalletBase()
-	self.fileLock.Lock()
-	defer self.fileLock.Unlock()
+	// self.fileLock.Lock()
+	// defer self.fileLock.Unlock()
+	w := self.toWalletBase()
 	return util.SaveJSON(filepath.Join(dir, self.GetID()), w, 0600)
 }
 
@@ -80,7 +82,7 @@ func (self *DeterministicWallet) GetID() string {
 	return self.ID
 }
 
-func (self *DeterministicWallet) ToWalletBase() WalletBase {
+func (self *DeterministicWallet) toWalletBase() WalletBase {
 	w := WalletBase{
 		Meta: map[string]string{
 			DeterMetaStr[DETER_META_ID]:          self.ID,
@@ -147,12 +149,12 @@ func validateWallet(wlt *DeterministicWallet) error {
 }
 
 func (self *DeterministicWallet) addAddresses(coinType CoinType, addrs []AddressEntry) {
-	self.addrLock.Lock()
+	// self.addrLock.Lock()
 	self.AddressEntries[CoinStr[coinType]] = append(self.AddressEntries[CoinStr[coinType]], addrs...)
-	self.addrLock.Unlock()
+	// self.addrLock.Unlock()
 }
 
-func AddressEntryCopy(dst *[]AddressEntry, src []bitcoin.AddressEntry) {
+func addressEntryCopy(dst *[]AddressEntry, src []bitcoin.AddressEntry) {
 	for i, e := range src {
 		(*dst)[i] = AddressEntry{
 			Address: e.Address,
