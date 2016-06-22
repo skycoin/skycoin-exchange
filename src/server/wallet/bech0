@@ -1,0 +1,3 @@
+PASS
+BenchmarkNewAddress-4	     200	   9297561 ns/op
+ok  	github.com/skycoin/skycoin-exchange/src/server/wallet	2.816s

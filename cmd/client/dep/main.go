@@ -82,11 +82,13 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/event", http.HandlerFunc(eventHandler))
+	mux.Handle("/", http.HandlerFunc(indexHandler))
+	mux.Handle("/request", http.HandlerFunc(requestHandler))
+	// mux.Handle("/event", http.HandlerFunc(eventHandler))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "")
-	})
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Fprintf(w, "")
+	// })
 
 	err := http.ListenAndServe(addr, mux)
 	fmt.Println(err.Error())

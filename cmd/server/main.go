@@ -1,20 +1,21 @@
+package main
+
+//"encoding/json"
+//"errors"
+// "fmt"
+//"github.com/go-goodies/go_oops"
+//"github.com/l3x/jsoncfgo"
+// "html/template"
+//"io/ioutil"
+// "log"
+// "net/http"
+//"regexp"
+// "github.com/skycoin/skycoin/src/cipher"
+// "os"
 
 import (
-	//"encoding/json"
-	//"errors"
-	"fmt"
-	//"github.com/go-goodies/go_oops"
-	//"github.com/l3x/jsoncfgo"
-	"html/template"
-	//"io/ioutil"
-	"log"
-	"net/http"
-	//"regexp"
-	"github.com/skycoin/skycoin/src/cipher"
-	"os"
-	"github.com/skycoin/skycoin-exchange"
+	skycoin_exchange "github.com/skycoin/skycoin-exchange/src/server"
 )
-
 
 func main() {
 
@@ -23,4 +24,3 @@ func main() {
 	server.Init()
 	server.Run()
 }
-
