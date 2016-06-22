@@ -1,9 +1,6 @@
 package skycoin_exchange
 
-import (
-	"github.com/skycoin/skycoin/src/cipher"
-	"time"
-)
+// "github.com/skycoin/skycoin/src/cipher"
 
 /*
 Manages withdrawls and deposits
