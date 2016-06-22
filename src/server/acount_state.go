@@ -2,6 +2,7 @@ package skycoin_exchange
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
@@ -9,18 +10,25 @@ import (
 )
 
 type AccountID cipher.Address
+type Balance uint64
 
 // set of all users
 type AccountManager struct {
 	Accounts map[AccountID]*AccountState
-	lck      sync.Mutex
+	mtx      sync.Mutex
 	//AccountMap map[cipher.Address]uint64
+}
+
+func NewAccountManager() *AccountManager {
+	return &AccountManager{
+		Accounts: make(map[AccountID]*AccountState)}
 }
 
 //store state of user on server
 type AccountState struct {
 	ID      AccountID
-	Balance map[string]uint64
+	balance map[wallet.CoinType]Balance // the balance should not be accessed directly.
+	mtx     sync.Mutex
 	//Bitcoin balance in satoshis
 	//Skycoin balance in drops
 
@@ -28,35 +36,60 @@ type AccountState struct {
 	//Inc2 uint64 //set to last change. Associatd with global event id
 }
 
+// SetBalance update the balanace of specific coin.
+func (self *AccountState) SetBalance(coinType wallet.CoinType, balance Balance) error {
+	self.mtx.Lock()
+	defer self.mtx.Unlock()
+	if _, ok := self.balance[coinType]; !ok {
+		return fmt.Errorf("the account does not have %s", coinType)
+	}
+	self.balance[coinType] = balance
+	return nil
+}
+
+func (self *AccountState) GetBalance(coinType wallet.CoinType) (Balance, error) {
+	self.mtx.Lock()
+	defer self.mtx.Unlock()
+	if b, ok := self.balance[coinType]; ok {
+		return b, nil
+	}
+	return 0, fmt.Errorf("the account does not have %s", coinType)
+}
+
+// GetBalanceMap return the balance map.
+func (self AccountState) GetBalanceMap() map[wallet.CoinType]Balance {
+	return self.balance
+}
+
 // GetAccount, return the copy value of speicific account.
 func (self *AccountManager) GetAccount(addr AccountID) (AccountState, error) {
-	self.lck.Lock()
-	self.lck.Unlock()
+	self.mtx.Lock()
+	defer self.mtx.Unlock()
 	if account, ok := self.Accounts[addr]; ok {
 		return *account, nil
 	} else {
-		return nil, errors.New("Account does not exist")
+		return AccountState{}, errors.New("Account does not exist")
 	}
 }
 
 func (self *AccountManager) CreateAccount(addr AccountID) (AccountState, error) {
-	self.lck.Lock()
-	self.lck.Unlock()
+	self.mtx.Lock()
+	defer self.mtx.Unlock()
 	if _, ok := self.Accounts[addr]; ok == true {
-		return nil, errors.New("Account already exists")
+		return AccountState{}, errors.New("Account already exists")
 	}
 
 	act := newAccount(addr)
-	self.Accounts[addr] = act
+	self.Accounts[addr] = &act
 	return act, nil
 }
 
-func newAccount(addr AccountID) *AccountState {
-	return &AccountState{
-		AccountID: addr,
-		Balance: map[string]uint64{
-			wallet.Bitcoin.String(): 0,
-			wallet.Skycoin.String(): 0,
+func newAccount(id AccountID) AccountState {
+	return AccountState{
+		ID: id,
+		balance: map[wallet.CoinType]Balance{
+			wallet.Bitcoin: 0,
+			wallet.Skycoin: 0,
 		}}
 }
 
