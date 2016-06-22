@@ -87,7 +87,7 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 			DeterMetaStr[DETER_META_ID]:          self.ID,
 			DeterMetaStr[DETER_META_SEED]:        self.Seed,
 			DeterMetaStr[DETER_META_INIT_SEED]:   self.InitSeed,
-			DeterMetaStr[DETER_META_WALLET_TYPE]: WalletTypeStr[Deterministic]},
+			DeterMetaStr[DETER_META_WALLET_TYPE]: Deterministic.String()},
 		AddressEntries: make(map[string][]AddressEntry),
 	}
 
@@ -149,7 +149,7 @@ func validateWallet(wlt *DeterministicWallet) error {
 
 func (self *DeterministicWallet) addAddresses(coinType CoinType, addrs []AddressEntry) {
 	// self.addrLock.Lock()
-	self.AddressEntries[CoinStr[coinType]] = append(self.AddressEntries[CoinStr[coinType]], addrs...)
+	self.AddressEntries[coinType.String()] = append(self.AddressEntries[coinType.String()], addrs...)
 	// self.addrLock.Unlock()
 }
 
