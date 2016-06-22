@@ -13,7 +13,7 @@ type WalletType int8
 // type MetaInfo int8
 
 const (
-	Bitcoin = iota
+	Bitcoin CoinType = iota
 	Skycoin
 	// Shellcoin
 	// Ethereum
@@ -21,16 +21,36 @@ const (
 )
 
 const (
-	Deterministic = iota // default wallet type
+	Deterministic WalletType = iota // default wallet type
 )
 
-var WalletTypeStr = []string{
+var walletTypeStr = []string{
 	Deterministic: "deterministic",
 }
 
-var CoinStr = []string{
+var coinStr = []string{
 	Bitcoin: "bitcoin",
 	Skycoin: "skycoin",
+}
+
+func (c CoinType) String() string {
+	switch c {
+	case Bitcoin:
+		return coinStr[c]
+	case Skycoin:
+		return coinStr[c]
+	default:
+		panic(fmt.Sprintf("unknow coin type:%d", c))
+	}
+}
+
+func (w WalletType) String() string {
+	switch w {
+	case Deterministic:
+		return walletTypeStr[w]
+	default:
+		panic(fmt.Sprintf("unknow wallet type:%d", w))
+	}
 }
 
 type Wallet interface {
@@ -64,7 +84,7 @@ func loadWalletFromFile(filename string) (WalletBase, error) {
 func (self *WalletBase) newConcretWallet() (Wallet, error) {
 	if wltType, ok := self.Meta["wallet_type"]; ok {
 		switch wltType {
-		case WalletTypeStr[Deterministic]:
+		case Deterministic.String():
 			wlt, err := newDeterministicWalletFromBase(self)
 			if err != nil {
 				return nil, err
