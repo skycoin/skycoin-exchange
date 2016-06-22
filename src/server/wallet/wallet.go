@@ -40,6 +40,7 @@ func (c CoinType) String() string {
 	case Skycoin:
 		return coinStr[c]
 	default:
+		// return fmt.Sprintf("unknow coin type:%d", c)
 		panic(fmt.Sprintf("unknow coin type:%d", c))
 	}
 }
@@ -49,6 +50,7 @@ func (w WalletType) String() string {
 	case Deterministic:
 		return walletTypeStr[w]
 	default:
+		// return fmt.Sprintf("unknow wallet type:%d", w)
 		panic(fmt.Sprintf("unknow wallet type:%d", w))
 	}
 }

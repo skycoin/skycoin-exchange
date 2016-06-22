@@ -1,8 +1,10 @@
 package skycoin_exchange
 
 import (
-	"github.com/skycoin/skycoin/src/cipher"
+	"fmt"
 	"net/http"
+
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 /*
@@ -10,27 +12,23 @@ import (
 	- this is the clients identity
 */
 
-
-
-	
 //get balance of client and deposit addresses
-func (self *client) GetStatus() {
+func (self *Client) GetStatus() {
 
 }
 
-func (fself )
+// func (fself )
 type Client struct {
 	Seckey cipher.SecKey
 	Server string //remote server to querry
 }
 
 //handle events
-func (self *Server) eventHandler(w http.ResponseWriter, r *http.Request) {
+func eventHandler(w http.ResponseWriter, r *http.Request) {
 
-
+}
 
 func (self *Client) RunWebserver() {
-
 	host := "localhost"
 	fmt.Printf("host: %v\n", host)
 

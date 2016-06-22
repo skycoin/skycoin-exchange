@@ -1,6 +1,8 @@
 package skycoin_exchange
 
 import (
+	"errors"
+
 	"github.com/skycoin/skycoin/src/aether/encoder"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -24,16 +26,16 @@ type MsgAuth struct {
 }
 
 func (self MsgAuth) CalcHash() cipher.SHA256 {
-	self.Signature = cipher.Signature{} //zero out
-	b1 := encoder.Serialize(self)       //body
+	self.Signature = cipher.Sig{} //zero out
+	b1 := encoder.Serialize(self) //body
 	return cipher.SumSHA256(b1)
 }
 
-//check user authentication for request
-func CheckMsgAuth(a MsgAuth, msg []byte) error {
+// check user authentication for request
+func CheckMsgAuth(a MsgAuth) error {
 	hash := a.CalcHash()
 	if hash != a.Hash {
-		return errors.error("hash does not match")
+		return errors.New("hash does not match")
 	}
 	//check if pubkey can be recovered from the signature
 	err := cipher.VerifySignedHash(a.Signature, a.Hash)
@@ -41,23 +43,20 @@ func CheckMsgAuth(a MsgAuth, msg []byte) error {
 		return err
 	}
 	//check signature
-	err = cipher.ChkSig(a.Address, a.Hash, a.Signatures)
-	if err != nil {
-		return nil
-	}
+	return cipher.ChkSig(a.Address, a.Hash, a.Signature)
 }
 
 //creates user authentication for json request
 //func CreateMsgAuth(seckey cipher.SecKey, msg []byte) (MsgAuth, error) {
 func CreateMsgAuth(seckey cipher.SecKey, a MsgAuth) (MsgAuth, error) {
 	a.Address = cipher.AddressFromSecKey(seckey)
-	a.Hash = cipher.CalcHash(msg)
-	A.Signature = cipher.SignHash(hash, seckey)
+	a.Hash = a.CalcHash()
+	a.Signature = cipher.SignHash(a.Hash, seckey)
 
-	err := CheckMsgAuth(auth)
+	err := CheckMsgAuth(a)
 	if err != nil {
 		return MsgAuth{}, err
 	}
 
-	return auth
+	return a, nil
 }

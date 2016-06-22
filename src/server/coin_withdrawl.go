@@ -1,10 +1,5 @@
 package skycoin_exchange
 
-import (
-	"github.com/skycoin/skycoin/src/cipher"
-	"time"
-)
-
 /*
 How can it be represented?
 - should use hashes?
@@ -19,18 +14,18 @@ How can it be represented?
 */
 
 type PendingOutgoing struct {
-	AccountId AccountIdentifier //Account id
-	Coin      string            //BTC, SKY
-	Address   string            //cipher.Address
-	Amount    uint64            //Satoshis or Drops
+	AccountId AccountID //Account id
+	Coin      string    //BTC, SKY
+	Address   string    //cipher.Address
+	Amount    uint64    //Satoshis or Drops
 }
 
 type CompletedOutgoing struct {
-	AccountId AccountIdentifier //Account id
-	Coin      string            //BTC, SKY
-	Address   string            //cipher.Address
-	Amount    uint64            //Satoshis or Drops
-	Tx        string            //transaction ID
+	AccountId AccountID //Account id
+	Coin      string    //BTC, SKY
+	Address   string    //cipher.Address
+	Amount    uint64    //Satoshis or Drops
+	Tx        string    //transaction ID
 }
 
 type OutgoingManager struct {

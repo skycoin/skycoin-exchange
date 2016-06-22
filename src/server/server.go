@@ -1,20 +1,18 @@
-package main
+package skycoin_exchange
 
 import (
 	//"encoding/json"
 	//"errors"
+
 	"fmt"
 	//"github.com/go-goodies/go_oops"
 	//"github.com/l3x/jsoncfgo"
-	"html/template"
+
 	//"io/ioutil"
-	"log"
+
 	"net/http"
 	//"regexp"
-	"github.com/skycoin/skycoin/src/cipher"
 	//"github.com/skycoin/skycoin/src/daemon/gnet"
-	"net/http"
-	"os"
 )
 
 //Context *gnet.MessageContext
@@ -53,16 +51,19 @@ type PongStatus struct {
 	//ask orders?
 }
 
-func (self *server) HandleStatus(in PingStatus, out *PongStatus) {
+func (self *Server) HandleStatus(in PingStatus, out *PongStatus) {
 	addr := in.Auth.Address //user ID
+	// get account id from the address.
 
-	account := self.AccountStates.GetAccount(addr)
-	if account != nil {
-		out.Err = "account does not exist"
+	account, err := self.AccountManager.GetAccount(AccountID(addr))
+	if err != nil {
+		out.Err = err.Error()
 		return
 	}
-
-	out.Balance = account.Balance
+	balanceMap := account.GetBalanceMap()
+	for ctp, bal := range balanceMap {
+		out.Balance[ctp.String()] = uint64(bal)
+	}
 	//out.SKY_balance = account.SKY_balance
 }
 
@@ -79,8 +80,8 @@ type PongWithdrawl struct {
 
 }
 
-func (self *server) HandleWithdrawl(in PingStatus, out *PongStatus) {
-	addr := in.Auth.Address //user ID
+func (self *Server) HandleWithdrawl(in PingStatus, out *PongStatus) {
+	// addr := in.Auth.Address //user ID
 	//send to account manager
 }
 
@@ -117,17 +118,17 @@ type RawEvent struct {
 //handle events
 func (self *Server) eventHandler(w http.ResponseWriter, r *http.Request) {
 
-	auth := r.URL.Query()["MsgAuth"]
-	msg_type := r.URL.Query()["msg_type"]
-	msg := r.URL.Query()["msg"]
+	// auth := r.URL.Query()["MsgAuth"]
+	// msg_type := r.URL.Query()["msg_type"]
+	// msg := r.URL.Query()["msg"]
 
-	value, ok := handlers[msg_type] // return value if found or ok=false if not found
-
-	if !ok {
-		HttpError(w, http.StatusBadRequest, "request type does not exist", nil)
-	}
-
-	_ = value
+	// value, ok := handlers[msg_type] // return value if found or ok=false if not found
+	//
+	// if !ok {
+	// 	HttpError(w, http.StatusBadRequest, "request type does not exist", nil)
+	// }
+	//
+	// _ = value
 
 }
 
@@ -135,10 +136,9 @@ func (self *Server) eventHandler(w http.ResponseWriter, r *http.Request) {
 
 
 
-*/
+ */
 
 func (self *Server) Init() {
-
 	host := "localhost"
 	fmt.Printf("host: %v\n", host)
 
@@ -171,96 +171,39 @@ func (self *Server) InjectEvent(e RawEvent) {
 }
 
 type Server struct {
-	AccountStates //anon, inherits methods/state
-
+	AccountManager  //anon, inherits methods/state
 	RawEventChannel chan RawEvent
 }
 
 //read in raw event into processing loop
-func (self *Server) RawEventToEvent(e) error {
-
+func (self *Server) RawEventToEvent(e RawEvent) error {
+	return nil
 }
 
 //begin event processing loop
 func (self *Server) Run(quit chan int) {
-
 	//takes in raw events and push the onto channel
 	go func() {
 		for {
 			select {
-
-			case e <- RawEventIn:
+			case e := <-self.RawEventChannel:
 				{
-					err := CheckMsgAuth(e)
+					err := CheckMsgAuth(e.MsgAuth)
 					if err == nil {
-
 						e.EventResponse <- "error invalid message"
 						break //ignore messages that are invalid
 						//return error to event channel
 					}
 					err = self.RawEventToEvent(e) //push onto event loops
-
 				}
 			}
 		}
-
 		//main:
-
 	}()
 }
 
 func (self *Server) Stop() {
 
-}
-
-//set of all users
-type AccountManager struct {
-	Accounts map[cipher.Address]*AccountState
-	//AccountMap map[cipher.Address]uint64
-}
-
-//store state of user on server
-type AccountState struct {
-
-	//AccountId  uint64
-	Address cipher.Address //Account id
-
-	Balance map[string]uint64
-	//Bitcoin balance in satoshis
-	//Skycoin balance in drops
-
-	//Inc1 uint64 //inc every write? Associated with local change
-	//Inc2 uint64 //set to last change. Associatd with global event id
-}
-
-func (self *AccountState) GetAccount(addr cipher.Address) (*AccountState, error) {
-	account, ok := self.Accounts[addr]
-	if !ok {
-		return nil, errors.New("Account does not exist")
-	}
-	return account
-}
-
-func (self *AccountState) CreateAccount(addr cipher.Address) error {
-	if _, ok := self.Accounts[addr]; ok == true {
-		return errors.New("Account already exists")
-	}
-
-	self.Accounts[addr] = AccountState{Address: addr}
-	self.Accounts.Balance = map[string]uint64{
-		"BTC": 0,
-		"SKY": 0,
-	}
-}
-
-//persistance to disc. Save as JSON
-func (self *AccountManager) Save() {
-
-}
-
-func (self *AccountManager) Load() {
-
-	//load accounts
 }
 
 /*

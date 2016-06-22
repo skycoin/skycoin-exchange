@@ -23,6 +23,7 @@ import (
 func GetCerts(app string) []byte {
 	homeDir := btcutil.AppDataDir(app, false)
 	certs, err := ioutil.ReadFile(filepath.Join(homeDir, "rpc.cert"))
+	fmt.Println(filepath.Join(homeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)
 	}
