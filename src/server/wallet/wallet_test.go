@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -46,36 +47,47 @@ func TestNewWallet(t *testing.T) {
 }
 
 func TestNewAddress(t *testing.T) {
-	// defer func() {
-	// 	removeContents(dataDir)
-	// }()
-	//
+	wlt, err := NewWallet("")
+	assert.Equal(t, err, nil)
+	addrList := []string{}
+	for i := 0; i < 10; i++ {
+		addrs, err := NewAddresses(wlt.GetID(), Bitcoin, 1)
+		addrList = append(addrList, addrs...)
+		assert.Equal(t, err, nil)
+	}
+
+	assert.Equal(t, validateAddress(addrList), nil)
+}
+
+func BenchmarkNewAddress(b *testing.B) {
 	wlt, err := NewWallet("")
 	if err != nil {
-		t.Error(err)
+		fmt.Println(err)
 		return
 	}
-	addrs := wlt.NewAddresses(Bitcoin, 10)
-	// using the api from blockchain.info to validate the addresses.
-	addrList := []string{}
-	for _, addr := range addrs {
-		// fmt.Println(addr.Address)
-		addrList = append(addrList, addr.Address)
-	}
-	data, err := getDataOfUrl(fmt.Sprintf("https://blockchain.info/multiaddr?active=%s", strings.Join(addrList, "|")))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	errAddr := "Invalid Bitcoin Address"
-	if string(data) == errAddr {
-		t.Error(errAddr)
+
+	for n := 0; n < b.N; n++ {
+		wlt.NewAddresses(Bitcoin, 1)
 	}
 }
 
-// func TestGetBalance(t *testing) {
-//
+// func TestStringBitcoinToAddress(t *testing.T) {
+// 	btcAddr := "156ua4hbst6TQ4x47yZPqLMRWQSkE8puvs"
+// 	addr := cipher.BitcoinMustDecodeBase58Address(btcAddr)
+// 	assert.Equal(t, validateAddress([]string{addr.BitcoinString()}), nil)
 // }
+
+func validateAddress(addrs []string) error {
+	data, err := getDataOfUrl(fmt.Sprintf("https://blockchain.info/multiaddr?active=%s", strings.Join(addrs, "|")))
+	if err != nil {
+		return err
+	}
+	errAddr := "Invalid Bitcoin Address"
+	if string(data) == errAddr {
+		return errors.New(errAddr)
+	}
+	return nil
+}
 
 func getDataOfUrl(url string) ([]byte, error) {
 	resp, err := http.Get(url)
