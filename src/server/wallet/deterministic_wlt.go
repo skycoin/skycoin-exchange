@@ -6,31 +6,35 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
 const (
 	DETER_META_ID = iota
-	DETER_META_SEED
 	DETER_META_INIT_SEED
+	DETER_META_BTC_SEED
+	DETER_META_SKY_SEED
 	DETER_META_WALLET_TYPE
 )
 
 var DeterMetaStr = []string{
 	DETER_META_ID:          "wallet_id",
-	DETER_META_SEED:        "seed",
 	DETER_META_INIT_SEED:   "init_seed",
+	DETER_META_BTC_SEED:    "btc_seed",
+	DETER_META_SKY_SEED:    "sky_seed",
 	DETER_META_WALLET_TYPE: "wallet_type",
 }
 
 // DeterministicWallet generate and store addresses for various coin types.
 // This wallet is not thread safe.
 type DeterministicWallet struct {
-	ID             string // wallet id
-	InitSeed       string // Init seed, used to recover the wallet.
-	Seed           string // seed used to create new address.
-	AddressEntries map[string][]AddressEntry
+	ID             string                    // wallet id
+	InitSeed       string                    // Init seed, used to recover the wallet.
+	Seed           map[CoinType]string       // key: coin type, value: used to track the latset seed
+	AddressEntries map[string][]AddressEntry // key: coin type, value: address entries.
 	// addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
 	// fileLock       sync.Mutex // lock for protecting wallet file.
 }
@@ -39,30 +43,44 @@ type DeterministicWallet struct {
 // NewAddress must be Sequential，cause the seed.
 // this function is not thread safe, should not be used concrrently.
 func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]AddressEntry, error) {
+	addrEntries := make([]AddressEntry, num)
+	seed := self.Seed[coinType]
 	switch coinType {
 	case Bitcoin:
-		addrEntries := make([]AddressEntry, num)
-		if self.Seed == self.InitSeed {
-			sd, entries := bitcoin.GenerateAddresses([]byte(self.Seed), num)
-			self.Seed = sd
+		if seed == self.InitSeed {
+			sd, entries := bitcoin.GenerateAddresses([]byte(seed), num)
+			self.Seed[Bitcoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		} else {
-			s, err := hex.DecodeString(self.Seed)
+			s, err := hex.DecodeString(seed)
 			if err != nil {
 				return []AddressEntry{}, err
 			}
 			sd, entries := bitcoin.GenerateAddresses(s, num)
-			self.Seed = sd
+			self.Seed[Bitcoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		}
-		self.addAddresses(coinType, addrEntries)
-		// save automaticaly after new addressess are added.
-		self.save(dataDir)
-		return addrEntries, nil
 	case Skycoin:
+		if seed == self.InitSeed {
+			sd, entries := skycoin.GenerateAddresses([]byte(seed), num)
+			self.Seed[Skycoin] = sd
+			addressEntryCopy(&addrEntries, entries)
+		} else {
+			s, err := hex.DecodeString(seed)
+			if err != nil {
+				return []AddressEntry{}, err
+			}
+			sd, entries := skycoin.GenerateAddresses(s, num)
+			self.Seed[Skycoin] = sd
+			addressEntryCopy(&addrEntries, entries)
+		}
 	default:
+		return addrEntries, fmt.Errorf("NewAddresses fail, unknow coin type:%d", coinType)
 	}
-	return []AddressEntry{}, nil
+	self.addAddresses(coinType, addrEntries)
+	// save automaticaly after new addressess are added.
+	self.save(dataDir)
+	return addrEntries, nil
 }
 
 // Save the wallet
@@ -85,8 +103,9 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 	w := WalletBase{
 		Meta: map[string]string{
 			DeterMetaStr[DETER_META_ID]:          self.ID,
-			DeterMetaStr[DETER_META_SEED]:        self.Seed,
 			DeterMetaStr[DETER_META_INIT_SEED]:   self.InitSeed,
+			DeterMetaStr[DETER_META_BTC_SEED]:    self.Seed[Bitcoin],
+			DeterMetaStr[DETER_META_SKY_SEED]:    self.Seed[Skycoin],
 			DeterMetaStr[DETER_META_WALLET_TYPE]: Deterministic.String()},
 		AddressEntries: make(map[string][]AddressEntry),
 	}
@@ -104,7 +123,8 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error) {
 	var (
 		id        string
-		seed      string
+		btc_seed  string
+		sky_seed  string
 		init_seed string
 		ok        bool
 	)
@@ -113,17 +133,22 @@ func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error)
 		return nil, errors.New("invalid wallet meta info, empty wallet_id")
 	}
 
-	if seed, ok = w.Meta[DeterMetaStr[DETER_META_SEED]]; !ok {
-		return nil, errors.New("invalid wallet meta info, empty seed")
-	}
-
 	if init_seed, ok = w.Meta[DeterMetaStr[DETER_META_INIT_SEED]]; !ok {
 		return nil, errors.New("invalid wallet meta info, empty init seed")
 	}
 
+	if btc_seed, ok = w.Meta[DeterMetaStr[DETER_META_BTC_SEED]]; !ok {
+		return nil, errors.New("invalid wallet meta info, empty btc seed")
+	}
+
+	if sky_seed, ok = w.Meta[DeterMetaStr[DETER_META_SKY_SEED]]; !ok {
+		return nil, errors.New("invalid wallet meta info, empty sky seed")
+	}
+
 	wlt := &DeterministicWallet{
-		ID:             id,
-		Seed:           seed,
+		ID: id,
+		Seed: map[CoinType]string{
+			Bitcoin: btc_seed, Skycoin: sky_seed},
 		InitSeed:       init_seed,
 		AddressEntries: make(map[string][]AddressEntry),
 	}
@@ -153,7 +178,7 @@ func (self *DeterministicWallet) addAddresses(coinType CoinType, addrs []Address
 	// self.addrLock.Unlock()
 }
 
-func addressEntryCopy(dst *[]AddressEntry, src []bitcoin.AddressEntry) {
+func addressEntryCopy(dst *[]AddressEntry, src []coin_interface.AddressEntry) {
 	for i, e := range src {
 		(*dst)[i] = AddressEntry{
 			Address: e.Address,
