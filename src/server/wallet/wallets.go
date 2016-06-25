@@ -157,7 +157,7 @@ func newWallet(id string, seed string, wltType WalletType) (Wallet, error) {
 	case Deterministic:
 		return &DeterministicWallet{
 			ID:             id,
-			Seed:           seed,
+			Seed:           map[CoinType]string{Bitcoin: seed, Skycoin: seed},
 			InitSeed:       seed,
 			AddressEntries: make(map[string][]AddressEntry)}, nil
 	default:
