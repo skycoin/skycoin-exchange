@@ -12,6 +12,8 @@ type AccountID cipher.PubKey
 type Balance uint64 // satoshis
 
 type Accounter interface {
+	GetWalletID() string                            // return the wallet id
+	GetAccountID() AccountID                        // return the account id
 	GetNewAddress(ct wallet.CoinType) string        // return new address for receiveing coins
 	GetBalance(ct wallet.CoinType) (Balance, error) // return the current balance.
 	// GetUnspentOutput(ct wallet.CoinType, minConf int) // return all unspent output of this account that confirms minConf times.
@@ -35,6 +37,14 @@ func newExchangeAccount(id AccountID, wltID string) ExchangeAccount {
 			wallet.Bitcoin: 0,
 			wallet.Skycoin: 0,
 		}}
+}
+
+func (self ExchangeAccount) GetAccountID() AccountID {
+	return self.ID
+}
+
+func (self ExchangeAccount) GetWalletID() string {
+	return self.wltID
 }
 
 // GetNewAddress generate new address for this account.
