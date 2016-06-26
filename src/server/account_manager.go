@@ -31,7 +31,7 @@ func NewExchangeAccountManager() AccountManager {
 // CreateAccount create new account, and bind a new wallet to this account,
 // generate pubkey/seckey pair, the pubkey will be stored in the account, and the
 // seckey will be returned.
-// Notice: for client, this is the only chance to get seckey!
+// Note: for client, this is the only chance to get seckey!
 func (self *ExchangeAccountManager) CreateAccount() (Accounter, cipher.SecKey, error) {
 	seed := cipher.SumSHA256(cipher.RandByte(1024)).Hex()
 	wlt, err := wallet.NewWallet(seed)
