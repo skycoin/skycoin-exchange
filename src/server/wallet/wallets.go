@@ -61,6 +61,10 @@ func NewAddresses(wltID string, cointype CoinType, num int) ([]string, error) {
 	return addrs, nil
 }
 
+func GetWallet(wltID string) (Wallet, error) {
+	return GWallets.GetWallet(wltID)
+}
+
 // GetBalance, query balance of specific address.
 // func GetBalance(addr string, cointype CoinType) (string, error) {
 // 	switch cointype {
