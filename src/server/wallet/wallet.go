@@ -9,6 +9,7 @@ import (
 
 type CoinType int8
 type WalletType int8
+type WalletID string
 
 // type MetaInfo int8
 
