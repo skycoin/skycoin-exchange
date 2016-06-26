@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
 	//"github.com/skycoin/skycoin/src/cipher"
 	"net/http"
@@ -64,11 +65,11 @@ type UnspentOutputJSON struct {
 	Confirmations      uint64 `json:"confirmations"`
 }
 
-type AddressEntry struct {
-	Address string
-	Public  string
-	Secret  string
-}
+// type AddressEntry struct {
+// 	Address string
+// 	Public  string
+// 	Secret  string
+// }
 
 // ByAge implements sort.Interface for []Person based on
 // the Age field.
@@ -82,9 +83,9 @@ func (a ByHash) Less(i, j int) bool { return a[i].Age < a[j].Age }
 */
 
 // GenerateAddresses, generate bitcoin addresses.
-func GenerateAddresses(seed []byte, num int) (string, []AddressEntry) {
+func GenerateAddresses(seed []byte, num int) (string, []coin_interface.AddressEntry) {
 	sd, seckeys := cipher.GenerateDeterministicKeyPairsSeed(seed, num)
-	entries := make([]AddressEntry, num)
+	entries := make([]coin_interface.AddressEntry, num)
 	for i, sec := range seckeys {
 		pub := cipher.PubKeyFromSecKey(sec)
 		entries[i].Address = cipher.BitcoinAddressFromPubkey(pub)
