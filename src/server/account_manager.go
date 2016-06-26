@@ -9,7 +9,7 @@ import (
 )
 
 type AccountManager interface {
-	CreateAccount() (Accounter, error)
+	CreateAccount() (Accounter, cipher.SecKey, error)
 	GetAccount(id AccountID) (Accounter, error)
 	Save()
 	Load()
@@ -28,14 +28,18 @@ func NewExchangeAccountManager() AccountManager {
 		Accounts: make(map[AccountID]Accounter)}
 }
 
-func (self *ExchangeAccountManager) CreateAccount() (Accounter, error) {
+// CreateAccount create new account, and bind a new wallet to this account,
+// generate pubkey/seckey pair, the pubkey will be stored in the account, and the
+// seckey will be returned.
+// Notice: for client, this is the only chance to get seckey!
+func (self *ExchangeAccountManager) CreateAccount() (Accounter, cipher.SecKey, error) {
 	seed := cipher.SumSHA256(cipher.RandByte(1024)).Hex()
-	p, _ := cipher.GenerateDeterministicKeyPair([]byte(seed))
 	wlt, err := wallet.NewWallet(seed)
 	if err != nil {
-		return nil, err
+		return nil, cipher.SecKey{}, err
 	}
 
+	p, s := cipher.GenerateDeterministicKeyPair([]byte(seed))
 	act := newExchangeAccount(AccountID(p), wlt.GetID())
 
 	self.mtx.Lock()
@@ -44,7 +48,7 @@ func (self *ExchangeAccountManager) CreateAccount() (Accounter, error) {
 	// add the account.
 	self.Accounts[AccountID(p)] = &act
 	self.mtx.Unlock()
-	return &act, nil
+	return &act, s, nil
 }
 
 // GetAccount return the account of specific id.
