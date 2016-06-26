@@ -1,4 +1,4 @@
-package skycoin-exchange
+package skycoin_exchange
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ type AccountID cipher.PubKey
 type Balance uint64 // satoshis
 
 type Accounter interface {
-	GetNewAddress(ct wallet.CoinType) string // return new address for receiveing coins
-	GetBalance(ct wallet.CoinType) string    // return the current balance.
+	GetNewAddress(ct wallet.CoinType) string        // return new address for receiveing coins
+	GetBalance(ct wallet.CoinType) (Balance, error) // return the current balance.
 	// GetUnspentOutput(ct wallet.CoinType, minConf int) // return all unspent output of this account that confirms minConf times.
 }
 
