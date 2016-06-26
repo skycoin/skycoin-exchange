@@ -4,32 +4,31 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
-	"github.com/skycoin/skycoin/src/wallet"
 )
 
 type AccountManager interface {
-	CreateAccount() (Account, error)
-	GetAccount(id AccountID) (Account, error)
+	CreateAccount() (Accounter, error)
+	GetAccount(id AccountID) (Accounter, error)
 	Save()
 	Load()
 }
 
 // AccountManager manage all the accounts in the server.
 type ExchangeAccountManager struct {
-	Accounts map[AccountID]account.Account
+	Accounts map[AccountID]Accounter
 	mtx      sync.RWMutex
 	//AccountMap map[cipher.Address]uint64
 }
 
 // NewAccountManager
-func NewAccountManager() AccountManager {
+func NewExchangeAccountManager() AccountManager {
 	return &ExchangeAccountManager{
-		Accounts: make(map[AccountID]Account)}
+		Accounts: make(map[AccountID]Accounter)}
 }
 
-func (self *ExchangeAccountManager) CreateAccount() (Account, error) {
+func (self *ExchangeAccountManager) CreateAccount() (Accounter, error) {
 	seed := cipher.SumSHA256(cipher.RandByte(1024)).Hex()
 	p, _ := cipher.GenerateDeterministicKeyPair([]byte(seed))
 	wlt, err := wallet.NewWallet(seed)
@@ -37,25 +36,25 @@ func (self *ExchangeAccountManager) CreateAccount() (Account, error) {
 		return nil, err
 	}
 
-	act := newAccountState(p, wlt.GetID)
+	act := newExchangeAccount(AccountID(p), wlt.GetID())
 
 	self.mtx.Lock()
 	// TODO: check duplicate account.
 
 	// add the account.
-	self.Accounts[p] = &act
+	self.Accounts[AccountID(p)] = &act
 	self.mtx.Unlock()
 	return &act, nil
 }
 
 // GetAccount return the account of specific id.
-func (self *ExchangeAccountManager) GetAccount(id AccountID) (Account, error) {
+func (self *ExchangeAccountManager) GetAccount(id AccountID) (Accounter, error) {
 	self.mtx.RLock()
 	defer self.mtx.RUnlock()
 	if account, ok := self.Accounts[id]; ok {
 		return account, nil
 	} else {
-		return nil{}, errors.New("account does not exist")
+		return nil, errors.New("account does not exist")
 	}
 }
 
