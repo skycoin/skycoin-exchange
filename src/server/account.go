@@ -11,14 +11,14 @@ import (
 type AccountID cipher.PubKey
 type Balance uint64 // satoshis
 
-type Account interface {
+type Accounter interface {
 	GetNewAddress(ct wallet.CoinType) string // return new address for receiveing coins
 	GetBalance(ct wallet.CoinType) string    // return the current balance.
 	// GetUnspentOutput(ct wallet.CoinType, minConf int) // return all unspent output of this account that confirms minConf times.
 }
 
-// AccountState maintains the account state
-type AccountState struct {
+// ExchangeAccount maintains the account state
+type ExchangeAccount struct {
 	ID          AccountID                   // account id
 	balance     map[wallet.CoinType]Balance // the balance should not be accessed directly.
 	wltID       string                      // wallet used to maintain the address, UTXOs, balance, etc.
@@ -26,8 +26,9 @@ type AccountState struct {
 	wlt_mtx     sync.Mutex                  // mutex used to protect the wallet's conncurrent read and write.
 }
 
-func newAccountState(id AccountID, wltID string) AccountState {
-	return AccountState{
+// newExchangeAccount helper function for generating and initialize ExchangeAccount
+func newExchangeAccount(id AccountID, wltID string) ExchangeAccount {
+	return ExchangeAccount{
 		ID:    id,
 		wltID: wltID,
 		balance: map[wallet.CoinType]Balance{
@@ -37,7 +38,7 @@ func newAccountState(id AccountID, wltID string) AccountState {
 }
 
 // GetNewAddress generate new address for this account.
-func (self *AccountState) GetNewAddress(ct wallet.CoinType) string {
+func (self *ExchangeAccount) GetNewAddress(ct wallet.CoinType) string {
 	// get the wallet.
 	wlt, err := wallet.GetWallet(self.wltID)
 	if err != nil {
@@ -54,7 +55,7 @@ func (self *AccountState) GetNewAddress(ct wallet.CoinType) string {
 }
 
 // Get the current recored balance.
-func (self *AccountState) GetBalance(coinType wallet.CoinType) (Balance, error) {
+func (self *ExchangeAccount) GetBalance(coinType wallet.CoinType) (Balance, error) {
 	self.balance_mtx.RLock()
 	defer self.balance_mtx.RUnlock()
 	if b, ok := self.balance[coinType]; ok {
@@ -64,7 +65,7 @@ func (self *AccountState) GetBalance(coinType wallet.CoinType) (Balance, error) 
 }
 
 // SetBalance update the balanace of specific coin.
-func (self *AccountState) setBalance(coinType wallet.CoinType, balance Balance) error {
+func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance Balance) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.balance[coinType]; !ok {
