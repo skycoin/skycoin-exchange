@@ -28,7 +28,22 @@ var (
 	dataDir  string = filepath.Join(util.UserHome(), ".skycoin-exchange/wallets")
 )
 
-func init() {
+// default init function, for test.
+// func init() {
+// 	util.InitDataDir(dataDir)
+// 	wallets, err := loadWallets(dataDir)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		os.Exit(1)
+// 	}
+// 	GWallets.wallets = wallets
+// }
+
+// Init Manual set the wallet data directory.
+func Init(datadir string) {
+	if datadir != "" {
+		dataDir = datadir
+	}
 	util.InitDataDir(dataDir)
 	wallets, err := loadWallets(dataDir)
 	if err != nil {
@@ -36,6 +51,16 @@ func init() {
 		os.Exit(1)
 	}
 	GWallets.wallets = wallets
+}
+
+// Reload reload the wallet from local disk.
+func Reload() {
+	GWallets.wallets = make(map[string]Wallet)
+	Init("")
+}
+
+func GetWalletDatadir() string {
+	return dataDir
 }
 
 // NewWallet, create deterministic wallet.
