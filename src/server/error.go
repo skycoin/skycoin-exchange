@@ -1,7 +1,7 @@
-package skycoin-exchange
+package server
 
-// RestErrorMsg Error message json for RESTfull API.
-type RestErrorMsg struct {
-  Code int `json:"code"`
-  Error string `json:"error"`
+// ErrorMsg Error message json for RESTfull API.
+type ErrorMsg struct {
+	Code  int    `json:"code"`
+	Error string `json:"error"`
 }
