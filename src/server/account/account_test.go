@@ -1,4 +1,4 @@
-package skycoin_exchange
+package account
 
 import (
 	"os"
@@ -10,11 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type funHandler func(ema AccountManager)
+type funcHandler func(ema AccountManager)
 
-func PrepareFunc(f funHandler) {
+func DataMaintainer(f funcHandler) {
 	// create
 	ema := NewExchangeAccountManager()
+	// do test work
 	f(ema)
 	// clean wallet data.
 	removeContents(wallet.GetWalletDatadir())
@@ -23,14 +24,14 @@ func PrepareFunc(f funHandler) {
 }
 
 func TestCreateAccountConcurrent(t *testing.T) {
-	PrepareFunc(func(eam AccountManager) {
+	DataMaintainer(func(eam AccountManager) {
 		wg := sync.WaitGroup{}
 		var count int = 10
 		ac := make(chan Accounter, count)
 		for i := 0; i < count; i++ {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {
-				a, err := eam.CreateAccount()
+				a, _, err := eam.CreateAccount()
 				assert.Nil(t, err)
 				ac <- a
 				wg.Done()
@@ -49,9 +50,9 @@ func TestCreateAccountConcurrent(t *testing.T) {
 
 // TestCreateNewBtcAddress create bitcoin address concurrently.
 func TestCreateNewBtcAddress(t *testing.T) {
-	PrepareFunc(func(eam AccountManager) {
+	DataMaintainer(func(eam AccountManager) {
 		// ema.CreateAccount()
-		a, err := eam.CreateAccount()
+		a, _, err := eam.CreateAccount()
 		id := a.GetAccountID()
 		assert.Nil(t, err)
 		wg := sync.WaitGroup{}
@@ -75,6 +76,21 @@ func TestCreateNewBtcAddress(t *testing.T) {
 		}
 		assert.Equal(t, count, len(addrMap))
 	})
+}
+
+func TestMsgAuth(t *testing.T) {
+	// DataMaintainer(func(am AccountManager) {
+	// 	_, s, err := am.CreateAccount()
+	// 	assert.Nil(t, err)
+	// 	addr := cipher.AddressFromSecKey(s)
+	//
+	// 	ma := CreateMsgAuth(s, MsgAuth{Msg: []byte{"hello world"}})
+	//
+	// 	CheckMsgAuth(ma)
+	//
+	//
+	// 	// cipher.a.GetAccountID()
+	// })
 }
 
 // func TestSetBalance(t *testing.T) {

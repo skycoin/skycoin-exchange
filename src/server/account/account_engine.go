@@ -1,4 +1,4 @@
-package skycoin_exchange
+package account
 
 // "github.com/skycoin/skycoin/src/cipher"
 
@@ -24,8 +24,8 @@ Overall
 */
 
 type AccountEngine struct {
-	IncomingManager IncomingManager
-	OutgoingManager OutgoingManager
+	// IncomingManager IncomingManager
+	// OutgoingManager OutgoingManager
 }
 
 func (self *AccountEngine) Save() {
