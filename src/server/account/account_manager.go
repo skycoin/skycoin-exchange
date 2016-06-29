@@ -10,7 +10,7 @@ import (
 
 type AccountManager interface {
 	CreateAccount() (Accounter, cipher.SecKey, error)
-	CreateAccountWithPubkey(AccountID) (Accounter, error)
+	CreateAccountWithPubkey(pk cipher.PubKey) (Accounter, error)
 	GetAccount(id AccountID) (Accounter, error)
 	Save()
 	Load()
