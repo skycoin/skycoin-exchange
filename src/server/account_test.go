@@ -2,14 +2,10 @@ package server
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -79,28 +75,6 @@ func (fs *FakeServer) GetAccount(id account.AccountID) (account.Accounter, error
 
 func (fs *FakeServer) Run() {
 
-}
-
-type CaseHandler func() (*httptest.ResponseRecorder, *http.Request)
-
-func MockServer(svr Server, fs CaseHandler) *httptest.ResponseRecorder {
-	gin.SetMode(gin.TestMode)
-	router := NewRouter(svr)
-	w, r := fs()
-	router.ServeHTTP(w, r)
-	return w
-}
-
-func HttpRequestCase(method string, url string, body io.Reader) CaseHandler {
-	return func() (*httptest.ResponseRecorder, *http.Request) {
-		w := httptest.NewRecorder()
-		r, err := http.NewRequest(method, url, body)
-		if err != nil {
-			panic(err)
-		}
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		return w, r
-	}
 }
 
 var pubkey string = "02c0a2e523be9234028874a08d001d422a1a191af910b8b4c315ab7fd59223726c"
