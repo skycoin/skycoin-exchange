@@ -1,9 +1,7 @@
 package server
 
 import (
-	"encoding/hex"
 	"fmt"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
@@ -22,30 +20,30 @@ type AddressRespJson struct {
 	Address  string `json:"address"`
 }
 
-type AccountRespJson struct {
-	RespJson
-	Seckey string `json:"seckey"`
-}
-
-func CreateAccount(svr *Server) gin.HandlerFunc {
+func CreateAccount(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		a, s, err := svr.AccountManager.CreateAccount()
+		pubkeyStr := c.PostForm("pubkey")
+		pubkey, err := cipher.PubKeyFromHex(pubkeyStr)
 		if err != nil {
-			log.Println(err)
-			c.JSON(501, ErrorMsg{Code: 501, Error: "Create Account Failed!"})
+			c.JSON(400, ErrorMsg{Code: 400, Error: "invalide pubkey"})
+			return
 		}
-		pubkey := a.GetAccountID()
-		c.JSON(201, AccountRespJson{
-			RespJson: RespJson{
-				Succress:  true,
-				AccountID: fmt.Sprintf("%x", pubkey),
-			},
-			Seckey: fmt.Sprintf("%x", s),
+
+		_, err = svr.CreateAccountWithPubkey(pubkey)
+		if err != nil {
+			c.JSON(501, ErrorMsg{Code: 501, Error: "create account failed!"})
+			return
+		}
+		c.JSON(201, RespJson{
+			Succress:  true,
+			AccountID: fmt.Sprintf("%x", pubkey),
 		})
 	}
 }
 
-func GetNewAddress(svr *Server) gin.HandlerFunc {
+// GetNewAddress create new address for specific account.
+// POST param: id, coin_type
+func GetNewAddress(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.PostForm("id")
 		coinType := c.PostForm("coin_type")
@@ -53,15 +51,12 @@ func GetNewAddress(svr *Server) gin.HandlerFunc {
 		fmt.Printf("account id:%s, len:%d\n", id, len(id))
 
 		// convert to cipher.PubKey
-		d, err := hex.DecodeString(id)
+		pubkey, err := cipher.PubKeyFromHex(id)
 		if err != nil {
 			c.JSON(400, ErrorMsg{Code: 400, Error: "error account id"})
 			return
 		}
-		pk := cipher.PubKey{}
-		copy(pk[:], d[:])
-
-		at, err := svr.GetAccount(account.AccountID(pk))
+		at, err := svr.GetAccount(account.AccountID(pubkey))
 		if err != nil {
 			c.JSON(404, ErrorMsg{Code: 404, Error: fmt.Sprintf("account id does not exist")})
 			return

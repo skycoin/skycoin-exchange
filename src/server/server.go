@@ -2,27 +2,23 @@ package server
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
-type Server struct {
-	cfg Config
-	account.AccountManager
+type Server interface {
+	Run()
+	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
+	GetAccount(id account.AccountID) (account.Accounter, error)
 }
 
+// Config store server's configuration.
 type Config struct {
 	Port          int
 	WalletDataDir string
-}
-
-func New(cfg Config) *Server {
-	s := &Server{
-		cfg:            cfg,
-		AccountManager: account.NewExchangeAccountManager(),
-	}
-	return s
 }
 
 /*
@@ -36,11 +32,24 @@ func New(cfg Config) *Server {
 	- get order book
 */
 
-func (self *Server) Run() {
+type ExchangeServer struct {
+	account.AccountManager
+	cfg Config
+}
+
+func New(cfg Config) Server {
+	s := &ExchangeServer{
+		cfg:            cfg,
+		AccountManager: account.NewExchangeAccountManager(),
+	}
+	return s
+}
+
+func (self *ExchangeServer) Run() {
 	// init the wallet package.
 	wallet.Init(self.cfg.WalletDataDir)
 
-	fmt.Println("skycoin-exchange server started, port:%d", self.cfg.Port)
+	log.Println("skycoin-exchange server started, port:", self.cfg.Port)
 
 	r := NewRouter(self)
 
