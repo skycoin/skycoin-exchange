@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -49,19 +50,6 @@ func (fa FakeAccount) GetBalance(ct wallet.CoinType) (account.Balance, error) {
 	return fa.Balance, nil
 }
 
-//
-// GetAccount(id AccountID) (Accounter, error)
-// Save()
-// Load()
-
-// func (fm *FakeAccountManager) CreateAccount() (Accounter, cipher.SecKey, error) {
-// 	return nil, cipher.SecKey{}, nil
-// }
-//
-// func (fm *FakeAccountManager) CreateAccountWithPubkey(pk cipher.PubKey) (Accounter, error) {
-//
-// }
-
 func (fs *FakeServer) CreateAccountWithPubkey(pk cipher.PubKey) (account.Accounter, error) {
 	if fs.A.GetWalletID() == "" {
 		return nil, fmt.Errorf("create wallet failed")
@@ -70,7 +58,10 @@ func (fs *FakeServer) CreateAccountWithPubkey(pk cipher.PubKey) (account.Account
 }
 
 func (fs *FakeServer) GetAccount(id account.AccountID) (account.Accounter, error) {
-	return fs.A, nil
+	if fs.A != nil {
+		return fs.A, nil
+	}
+	return nil, errors.New("account not found")
 }
 
 func (fs *FakeServer) Run() {
@@ -129,4 +120,60 @@ func TestCreateAccountFaildBindWallet(t *testing.T) {
 	form.Add("pubkey", pubkey) // invalid pubkey
 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account", strings.NewReader(form.Encode())))
 	assert.Equal(t, w.Code, 501)
+}
+
+func TestCreateAddress(t *testing.T) {
+	svr := FakeServer{
+		A: FakeAccount{
+			ID:      pubkey,
+			WltID:   "test.wlt",
+			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
+			Balance: account.Balance(0),
+		},
+	}
+
+	{ // success
+		form := url.Values{}
+		form.Add("id", pubkey)
+		form.Add("coin_type", "bitcoin")
+		w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
+		assert.Equal(t, w.Code, 201)
+	}
+
+	{ // invalid account id
+		form := url.Values{}
+		form.Add("id", errPubkey)
+		form.Add("coin_type", "bitcoin")
+		w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
+		assert.Equal(t, w.Code, 400)
+	}
+}
+
+func TestCreateAddressAccountNotExists(t *testing.T) {
+	svr := FakeServer{
+		A: nil,
+	}
+
+	form := url.Values{}
+	form.Add("id", pubkey)
+	form.Add("coin_type", "bitcoin")
+	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
+	assert.Equal(t, w.Code, 404)
+}
+
+func TestCreateAddressErrorBitcoinType(t *testing.T) {
+	svr := FakeServer{
+		A: FakeAccount{
+			ID:      pubkey,
+			WltID:   "test.wlt",
+			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
+			Balance: account.Balance(0),
+		},
+	}
+
+	form := url.Values{}
+	form.Add("id", pubkey)
+	form.Add("coin_type", "unknow")
+	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
+	assert.Equal(t, w.Code, 400)
 }
