@@ -1,62 +1,116 @@
-package skycoin_exchange
+package server
 
 import (
-	"errors"
+	"bytes"
+	"fmt"
+	"time"
 
-	"github.com/skycoin/skycoin/src/aether/encoder"
+	"github.com/gin-gonic/gin"
+	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-/*
-When sending request, client includes
-- their address (identifier)
-- hash of message
-- signs hash with their private key
-*/
-
-//send this with every request
-//
-type MsgAuth struct {
-	Address   cipher.Address
-	Hash      cipher.SHA256 //hash of the JSON message
-	Signature cipher.Sig    //set to zero
-	Type      uint16
-	Seq       uint64 //nonce, unix time, nanoseconds?
-	Msg       []byte
+type AuthRequest struct {
+	Pubkey string `json:"pubkey"`
 }
 
-func (self MsgAuth) CalcHash() cipher.SHA256 {
-	self.Signature = cipher.Sig{} //zero out
-	b1 := encoder.Serialize(self) //body
-	return cipher.SumSHA256(b1)
+type AuthResponse struct {
+	Pubkey string `json:"pubkey"`
 }
 
-// check user authentication for request
-func CheckMsgAuth(a MsgAuth) error {
-	hash := a.CalcHash()
-	if hash != a.Hash {
-		return errors.New("hash does not match")
-	}
-	//check if pubkey can be recovered from the signature
-	err := cipher.VerifySignedHash(a.Signature, a.Hash)
-	if err != nil {
-		return err
-	}
-	//check signature
-	return cipher.ChkSig(a.Address, a.Hash, a.Signature)
+type ContentRequest struct {
+	AccountID string `json:"account_id"`
+	Data      []byte `json:"data"`
 }
 
-//creates user authentication for json request
-//func CreateMsgAuth(seckey cipher.SecKey, msg []byte) (MsgAuth, error) {
-func CreateMsgAuth(seckey cipher.SecKey, a MsgAuth) (MsgAuth, error) {
-	a.Address = cipher.AddressFromSecKey(seckey)
-	a.Hash = a.CalcHash()
-	a.Signature = cipher.SignHash(a.Hash, seckey)
+type ContentResponse struct {
+	Success bool   `json:"success"`
+	Data    []byte `json:"data"`
+}
 
-	err := CheckMsgAuth(a)
-	if err != nil {
-		return MsgAuth{}, err
+// Authorize generate a nonce pubkey/seckey pairs, do ECDH to generate
+// NonceKey, store the key into the account and return the pubkey
+// to client.
+func Authorize(svr Server) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		r := AuthRequest{}
+		if c.BindJSON(&r) == nil {
+			pubkey, err := cipher.PubKeyFromHex(r.Pubkey)
+			if err != nil {
+				c.JSON(400, ErrorMsg{Code: 400, Error: "invalide pubkey"})
+				return
+			}
+
+			a, err := svr.GetAccount(account.AccountID(pubkey))
+			if err != nil {
+				c.JSON(404, ErrorMsg{Code: 404, Error: err.Error()})
+				return
+			}
+
+			p, s := cipher.GenerateKeyPair()
+			nk := account.NonceKey{
+				Value:     cipher.ECDH(pubkey, s),
+				Expire_at: time.Now().Add(svr.GetNonceKeyLifetime()),
+			}
+
+			// set the nonce key of the account.
+			a.SetNonceKey(nk)
+
+			c.JSON(200, AuthRequest{Pubkey: fmt.Sprintf("%x", p)})
+			return
+		}
+		c.JSON(400, ErrorMsg{Code: 400, Error: "error request"})
 	}
+}
 
-	return a, nil
+// AuthRequired middleware for check the authorization of client, and
+// decrypt the data, set the data in rawdata.
+func AuthRequired(svr Server) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		r := ContentRequest{}
+		if c.BindJSON(&r) == nil {
+			// check the existence of this account.
+			pubkey, err := cipher.PubKeyFromHex(r.AccountID)
+			if err != nil {
+				c.JSON(400, ErrorMsg{Code: 400, Error: "invalide account id"})
+				c.Abort()
+			}
+
+			// find the account.
+			id := account.AccountID(pubkey)
+			a, err := svr.GetAccount(id)
+			if err != nil {
+				c.JSON(404, ErrorMsg{Code: 404, Error: err.Error()})
+				c.Abort()
+			}
+
+			// check the existence of the nonce key.
+			if len(a.GetNonceKey().Value) == 0 {
+				c.JSON(401, ErrorMsg{Code: 401, Error: "unauthorized"})
+				c.Abort()
+			}
+
+			// check if the nonce key is expired.
+			if a.IsExpired() {
+				c.JSON(401, ErrorMsg{Code: 401, Error: "key is expired"})
+				c.Abort()
+			}
+
+			// update the nonce key expire time.
+			t := time.Now().Add(svr.GetNonceKeyLifetime())
+			a.UpdateNonceKeyExpireTime(t)
+
+			// decrypt the data.
+			d, err := a.Decrypt(bytes.NewBuffer(r.Data))
+			if err != nil {
+				c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
+				c.Abort()
+			}
+			c.Set("id", r.AccountID)
+			c.Set("rawdata", d)
+			return
+		}
+		c.JSON(400, ErrorMsg{Code: 400, Error: "bad request"})
+		c.Abort()
+	}
 }
