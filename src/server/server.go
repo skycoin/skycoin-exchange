@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
@@ -13,12 +14,14 @@ type Server interface {
 	Run()
 	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
 	GetAccount(id account.AccountID) (account.Accounter, error)
+	GetNonceKeyLifetime() time.Duration
 }
 
 // Config store server's configuration.
 type Config struct {
-	Port          int
-	WalletDataDir string
+	Port             int
+	WalletDataDir    string
+	NonceKeyLifetime time.Duration
 }
 
 /*
@@ -54,4 +57,8 @@ func (self *ExchangeServer) Run() {
 	r := NewRouter(self)
 
 	r.Run(fmt.Sprintf(":%d", self.cfg.Port))
+}
+
+func (self ExchangeServer) GetNonceKeyLifetime() time.Duration {
+	return self.cfg.NonceKeyLifetime
 }
