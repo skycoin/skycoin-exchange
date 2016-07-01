@@ -9,11 +9,15 @@ func NewRouter(svr Server) *gin.Engine {
 
 	v1 := r.Group("/api/v1")
 	{
+		v1.POST("/accounts", CreateAccount(svr)) // create account
 
-		v1.POST("/account", CreateAccount(svr)) // create account
+		v1.POST("/authorization", Authorize(svr)) // authorize account
 
-		v1.POST("/account/deposit", GetNewAddress(svr)) // get new address from account.
+		authorized := v1.Group("/account", AuthRequired(svr))
+		{
+			authorized.POST("/deposit_address", GetNewAddress(svr)) // get new address from account.
+		}
+
 	}
-
 	return r
 }
