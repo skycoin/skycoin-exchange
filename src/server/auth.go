@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -61,7 +63,7 @@ func Authorize(svr Server) gin.HandlerFunc {
 			c.JSON(200, AuthResponse{Pubkey: fmt.Sprintf("%x", p), Nonce: fmt.Sprintf("%x", nk.Nonce)})
 			return
 		}
-		c.JSON(400, ErrorMsg{Code: 400, Error: "error request"})
+		c.JSON(400, ErrorMsg{Code: 400, Error: "bad request"})
 	}
 }
 
@@ -76,6 +78,7 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 			if err != nil {
 				c.JSON(400, ErrorMsg{Code: 400, Error: "invalide account id"})
 				c.Abort()
+				return
 			}
 
 			// find the account.
@@ -84,6 +87,7 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 			if err != nil {
 				c.JSON(404, ErrorMsg{Code: 404, Error: err.Error()})
 				c.Abort()
+				return
 			}
 
 			// check the existence of the nonce key.
@@ -91,20 +95,32 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 			if len(nk.Key) == 0 {
 				c.JSON(401, ErrorMsg{Code: 401, Error: "unauthorized"})
 				c.Abort()
+				return
 			}
 
 			// check if the nonce key is expired.
 			if a.IsExpired() {
 				c.JSON(401, ErrorMsg{Code: 401, Error: "key is expired"})
 				c.Abort()
+				return
 			}
 
 			// decrypt the data.
-			d, err := Decrypt(r.Data, nk.Key, nk.Nonce)
+			d, err := a.Decrypt(bytes.NewBuffer(r.Data))
 			if err != nil {
 				c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
 				c.Abort()
+				return
 			}
+
+			// start with {" and end with }.
+			match, _ := regexp.MatchString(`^{".*}$`, string(d))
+			if !match {
+				c.JSON(401, ErrorMsg{Code: 401, Error: "bad encrypt key"})
+				c.Abort()
+				return
+			}
+
 			c.Set("id", r.AccountID)
 			c.Set("rawdata", d)
 
