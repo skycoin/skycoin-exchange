@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"time"
 
@@ -16,6 +15,7 @@ type AuthRequest struct {
 
 type AuthResponse struct {
 	Pubkey string `json:"pubkey"`
+	Nonce  string `json:"nonce"`
 }
 
 type ContentRequest struct {
@@ -25,6 +25,7 @@ type ContentRequest struct {
 
 type ContentResponse struct {
 	Success bool   `json:"success"`
+	Nonce   string `json:"nonce"`
 	Data    []byte `json:"data"`
 }
 
@@ -49,14 +50,15 @@ func Authorize(svr Server) gin.HandlerFunc {
 
 			p, s := cipher.GenerateKeyPair()
 			nk := account.NonceKey{
-				Value:     cipher.ECDH(pubkey, s),
+				Key:       cipher.ECDH(pubkey, s),
+				Nonce:     cipher.RandByte(8),
 				Expire_at: time.Now().Add(svr.GetNonceKeyLifetime()),
 			}
 
 			// set the nonce key of the account.
 			a.SetNonceKey(nk)
 
-			c.JSON(200, AuthRequest{Pubkey: fmt.Sprintf("%x", p)})
+			c.JSON(200, AuthResponse{Pubkey: fmt.Sprintf("%x", p), Nonce: fmt.Sprintf("%x", nk.Nonce)})
 			return
 		}
 		c.JSON(400, ErrorMsg{Code: 400, Error: "error request"})
@@ -85,7 +87,8 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 			}
 
 			// check the existence of the nonce key.
-			if len(a.GetNonceKey().Value) == 0 {
+			nk := a.GetNonceKey()
+			if len(nk.Key) == 0 {
 				c.JSON(401, ErrorMsg{Code: 401, Error: "unauthorized"})
 				c.Abort()
 			}
@@ -96,18 +99,20 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 				c.Abort()
 			}
 
-			// update the nonce key expire time.
-			t := time.Now().Add(svr.GetNonceKeyLifetime())
-			a.UpdateNonceKeyExpireTime(t)
-
 			// decrypt the data.
-			d, err := a.Decrypt(bytes.NewBuffer(r.Data))
+			d, err := Decrypt(r.Data, nk.Key, nk.Nonce)
 			if err != nil {
 				c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
 				c.Abort()
 			}
 			c.Set("id", r.AccountID)
 			c.Set("rawdata", d)
+
+			// update the key expire time, and nonce value.
+			t := time.Now().Add(svr.GetNonceKeyLifetime())
+			nk.Expire_at = t
+			nk.Nonce = cipher.RandByte(8)
+			a.SetNonceKey(nk)
 			return
 		}
 		c.JSON(400, ErrorMsg{Code: 400, Error: "bad request"})

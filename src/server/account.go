@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -105,31 +104,33 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 			panic(err)
 		}
 
-		resp, err := at.Encrypt(bytes.NewBuffer(d))
+		nk := at.GetNonceKey()
+		resp, err := Encrypt(d, nk.Key, nk.Nonce)
 		if err != nil {
 			panic(err)
 		}
 
 		c.JSON(201, ContentResponse{
 			Success: true,
+			Nonce:   fmt.Sprintf("%x", at.GetNonceKey().Nonce),
 			Data:    resp,
 		})
 	}
 }
 
-func Encrypt(key []byte, data []byte) []byte {
-	return data
-}
-
-func (dar DepositAddressRequest) MustToContentRequest(key []byte) ContentRequest {
+func (dar DepositAddressRequest) MustToContentRequest(key []byte, nonce []byte) ContentRequest {
 	d, err := json.Marshal(dar)
+	if err != nil {
+		panic(err)
+	}
+
+	data, err := Encrypt(d, key, nonce)
 	if err != nil {
 		panic(err)
 	}
 
 	return ContentRequest{
 		AccountID: dar.AccountID,
-		Data:      d,
+		Data:      data,
 	}
-
 }
