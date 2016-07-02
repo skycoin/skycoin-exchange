@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -64,7 +65,7 @@ func (fa FakeAccount) Encrypt(r io.Reader) ([]byte, error) {
 	return d, nil
 }
 
-func (fa FakeAccount) Decrypt(r io.Reader) (interface{}, error) {
+func (fa FakeAccount) Decrypt(r io.Reader) ([]byte, error) {
 	d, _ := ioutil.ReadAll(r)
 	return d, nil
 }
@@ -184,8 +185,8 @@ func TestAuthorize(t *testing.T) {
 	json.Unmarshal(d, &ar)
 	pk, err := cipher.PubKeyFromHex(ar.Pubkey)
 	assert.Nil(t, err)
-	nonce := cipher.ECDH(pk, s)
-	assert.Equal(t, bytes.Equal(svr.A.GetNonceKey().Value, nonce), true)
+	key := cipher.ECDH(pk, s)
+	assert.Equal(t, bytes.Equal(svr.A.GetNonceKey().Key, key), true)
 }
 
 func TestAuthorizeInvalidPubkey(t *testing.T) {
@@ -234,7 +235,7 @@ func TestGetDepositAddressWithoutAuth(t *testing.T) {
 		AccountID: pubkey,
 		CoinType:  "bitcoin",
 	}
-	cr := dar.MustToContentRequest([]byte(""))
+	cr := dar.MustToContentRequest(make([]byte, 32), make([]byte, 8))
 	d, _ := json.Marshal(cr)
 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit_address", bytes.NewBuffer(d)))
 	assert.Equal(t, w.Code, 401)
@@ -273,7 +274,11 @@ func TestCreateAddress(t *testing.T) {
 		AccountID: pubkey,
 		CoinType:  "bitcoin",
 	}
-	ct := dar.MustToContentRequest(key)
+
+	nonce, err := hex.DecodeString(ar.Nonce)
+	assert.Nil(t, err)
+	ct := dar.MustToContentRequest(key, nonce)
+
 	ctd, err := json.Marshal(ct)
 	assert.Nil(t, err)
 	w = MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit_address", bytes.NewBuffer(ctd)))
