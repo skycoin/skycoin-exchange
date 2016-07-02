@@ -458,33 +458,3 @@ func PrintResponse(w *httptest.ResponseRecorder) {
 	d, _ := ioutil.ReadAll(w.Body)
 	fmt.Println(string(d))
 }
-
-//
-// func TestCreateAddressAccountNotExists(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: nil,
-// 	}
-//
-// 	form := url.Values{}
-// 	form.Add("id", pubkey)
-// 	form.Add("coin_type", "bitcoin")
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
-// 	assert.Equal(t, w.Code, 404)
-// }
-//
-// func TestCreateAddressErrorBitcoinType(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &FakeAccount{
-// 			ID:      pubkey,
-// 			WltID:   "test.wlt",
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: account.Balance(0),
-// 		},
-// 	}
-//
-// 	form := url.Values{}
-// 	form.Add("id", pubkey)
-// 	form.Add("coin_type", "unknow")
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/account/deposit", strings.NewReader(form.Encode())))
-// 	assert.Equal(t, w.Code, 400)
-// }
