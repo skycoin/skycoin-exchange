@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -83,6 +82,7 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 	}
 }
 
+// Withdraw api handler for generating withdraw transaction.
 func Withdraw(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		wr, err := newWithdrawRequest(c)
@@ -108,7 +108,7 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
 		}
-		tx, err := at.GenerateWithdrawTx(wr.Coins, ct)
+		tx, err := a.GenerateWithdrawTx(wr.Coins, ct)
 		if err != nil {
 			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
@@ -122,6 +122,8 @@ func Withdraw(svr Server) gin.HandlerFunc {
 	}
 }
 
+// newWithdrawRequest create WithdrawRequest from rawdata, which has been decrypted
+// in AuthRequired middleware.
 func newWithdrawRequest(c *gin.Context) (WithdrawRequest, error) {
 	rawdata := c.MustGet("rawdata").([]byte)
 	// unmarshal rawdata
@@ -134,39 +136,9 @@ func newWithdrawRequest(c *gin.Context) (WithdrawRequest, error) {
 	return wr, nil
 }
 
+// AuthReply set the code and response in gin, the gin Security middleware
+// will encrypt the response, and send the encryped response to client.
 func AuthReply(c *gin.Context, code int, r interface{}) {
 	c.Set("code", code)
 	c.Set("response", r)
-}
-
-func (wr WithdrawResponse) MustToContentResponse(a account.Accounter) ContentResponse {
-	d, err := json.Marshal(wr)
-	if err != nil {
-		panic(err)
-	}
-
-	data, _ := a.Encrypt(bytes.NewBuffer(d))
-
-	return ContentResponse{
-		Success: true,
-		Data:    data,
-	}
-}
-
-// MustToContentRequest convert DepositAddressRequest to ContentRequest
-func (dar DepositAddressRequest) MustToContentRequest(key []byte, nonce []byte) ContentRequest {
-	d, err := json.Marshal(dar)
-	if err != nil {
-		panic(err)
-	}
-
-	data, err := Encrypt(d, key, nonce)
-	if err != nil {
-		panic(err)
-	}
-
-	return ContentRequest{
-		AccountID: dar.AccountID,
-		Data:      data,
-	}
 }
