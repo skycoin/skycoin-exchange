@@ -50,6 +50,7 @@ func Authorize(svr Server) gin.HandlerFunc {
 
 // AuthRequired middleware for check the authorization of client, and
 // decrypt the data, set the data in rawdata.
+// encrypt the response data, send it back to client.
 func AuthRequired(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		r := ContentRequest{}
@@ -71,6 +72,8 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 				return
 			}
 
+			c.Set("id", r.AccountID)
+
 			// check the existence of the nonce key.
 			nk := a.GetNonceKey()
 			if len(nk.Key) == 0 {
@@ -86,36 +89,11 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 				return
 			}
 
-			// decrypt the data.
-			d, err := a.Decrypt(bytes.NewBuffer(r.Data))
-			if err != nil {
-				c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
-				c.Abort()
-				return
-			}
-
-			// start with {" and end with }.
-			match, _ := regexp.MatchString(`^{".*}$`, string(d))
-			if !match {
-				c.JSON(401, ErrorMsg{Code: 401, Error: "bad encrypt key"})
-				c.Abort()
-				return
-			}
-
-			c.Set("id", r.AccountID)
-			c.Set("rawdata", d)
 			// update the key expire time, and nonce value.
 			t := time.Now().Add(svr.GetNonceKeyLifetime())
 			nk.Expire_at = t
 			nk.Nonce = cipher.RandByte(8)
 			a.SetNonceKey(nk)
-
-			c.Next()
-
-			// get the response and encrypt the data.
-			rsp := c.MustGet("response")
-			code := c.MustGet("code")
-			MustToContentResponse(a, c, code.(int), rsp)
 			return
 		}
 		c.JSON(400, ErrorMsg{Code: 400, Error: "bad request"})
@@ -123,6 +101,45 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 	}
 }
 
+// Security
+func Security(svr Server) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		r := ContentRequest{}
+		c.BindJSON(&r)
+
+		// find the account.
+		id := c.MustGet("id").(account.AccountID)
+		a, _ := svr.GetAccount(id)
+
+		// decrypt the data.
+		d, err := a.Decrypt(bytes.NewBuffer(r.Data))
+		if err != nil {
+			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
+			c.Abort()
+			return
+		}
+
+		// start with {" and end with }.
+		match, _ := regexp.MatchString(`^{".*}$`, string(d))
+		if !match {
+			c.JSON(401, ErrorMsg{Code: 401, Error: "bad encrypt key"})
+			c.Abort()
+			return
+		}
+
+		c.Set("rawdata", d)
+
+		c.Next()
+
+		// get the response and encrypt the data.
+		rsp := c.MustGet("response")
+		code := c.MustGet("code")
+		MustToContentResponse(a, c, code.(int), rsp)
+	}
+}
+
+// MustToContentResponse marshal and encrypt the response object,
+// generate the ContentResponse object.
 func MustToContentResponse(a account.Accounter, c *gin.Context, code int, rsp interface{}) {
 	d, err := json.Marshal(rsp)
 	if err != nil {
