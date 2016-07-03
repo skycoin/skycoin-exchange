@@ -46,6 +46,17 @@ func (c CoinType) String() string {
 	}
 }
 
+func ConvertCoinType(ct string) (CoinType, error) {
+	switch ct {
+	case "bitcoin":
+		return Bitcoin, nil
+	case "skycoin":
+		return Skycoin, nil
+	default:
+		return -1, fmt.Errorf("unknow coin type:%s", ct)
+	}
+}
+
 func (w WalletType) String() string {
 	switch w {
 	case Deterministic:
