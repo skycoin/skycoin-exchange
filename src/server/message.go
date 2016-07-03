@@ -1,6 +1,12 @@
 package server
 
-import "time"
+import (
+	"bytes"
+	"encoding/json"
+	"time"
+
+	"github.com/skycoin/skycoin-exchange/src/server/account"
+)
 
 type AuthRequest struct {
 	Pubkey string `json:"pubkey"`
@@ -52,5 +58,37 @@ type WithdrawRequest struct {
 
 type WithdrawResponse struct {
 	AccountID string `json:"account_id"`
-	Tx        string `json:"tx"` // signed transaction
+	Tx        []byte `json:"tx"` // signed transaction
+}
+
+func (wr WithdrawResponse) MustToContentResponse(a account.Accounter) ContentResponse {
+	d, err := json.Marshal(wr)
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ := a.Encrypt(bytes.NewBuffer(d))
+
+	return ContentResponse{
+		Success: true,
+		Data:    data,
+	}
+}
+
+// MustToContentRequest convert DepositAddressRequest to ContentRequest
+func (dar DepositAddressRequest) MustToContentRequest(key []byte, nonce []byte) ContentRequest {
+	d, err := json.Marshal(dar)
+	if err != nil {
+		panic(err)
+	}
+
+	data, err := Encrypt(d, key, nonce)
+	if err != nil {
+		panic(err)
+	}
+
+	return ContentRequest{
+		AccountID: dar.AccountID,
+		Data:      data,
+	}
 }
