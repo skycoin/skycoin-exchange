@@ -23,30 +23,30 @@ func DataMaintainer(f funcHandler) {
 	wallet.Reload()
 }
 
-func TestCreateAccountConcurrent(t *testing.T) {
-	DataMaintainer(func(eam AccountManager) {
-		wg := sync.WaitGroup{}
-		var count int = 10
-		ac := make(chan Accounter, count)
-		for i := 0; i < count; i++ {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup) {
-				a, _, err := eam.CreateAccount()
-				assert.Nil(t, err)
-				ac <- a
-				wg.Done()
-			}(&wg)
-		}
-
-		wg.Wait()
-		close(ac)
-		actMap := make(map[AccountID]bool, count)
-		for a := range ac {
-			actMap[a.GetAccountID()] = true
-		}
-		assert.Equal(t, len(actMap), count)
-	})
-}
+// func TestCreateAccountConcurrent(t *testing.T) {
+// 	DataMaintainer(func(eam AccountManager) {
+// 		wg := sync.WaitGroup{}
+// 		var count int = 10
+// 		ac := make(chan Accounter, count)
+// 		for i := 0; i < count; i++ {
+// 			wg.Add(1)
+// 			go func(wg *sync.WaitGroup) {
+// 				a, _, err := eam.CreateAccount()
+// 				assert.Nil(t, err)
+// 				ac <- a
+// 				wg.Done()
+// 			}(&wg)
+// 		}
+//
+// 		wg.Wait()
+// 		close(ac)
+// 		actMap := make(map[AccountID]bool, count)
+// 		for a := range ac {
+// 			actMap[a.GetAccountID()] = true
+// 		}
+// 		assert.Equal(t, len(actMap), count)
+// 	})
+// }
 
 // TestCreateNewBtcAddress create bitcoin address concurrently.
 func TestCreateNewBtcAddress(t *testing.T) {
