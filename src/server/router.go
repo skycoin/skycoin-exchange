@@ -16,6 +16,8 @@ func NewRouter(svr Server) *gin.Engine {
 		authorized := v1.Group("/account", AuthRequired(svr))
 		{
 			authorized.POST("/deposit_address", GetNewAddress(svr)) // get new address from account.
+			authorized.POST("/withdraw", Withdraw(svr))
+
 		}
 
 	}
