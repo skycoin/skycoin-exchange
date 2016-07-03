@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,27 +12,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
-
-type CreateAccountRequest struct {
-	Pubkey string `json:"pubkey"`
-	Data   []byte `json:"data"`
-}
-
-type CreateAccountResponse struct {
-	Succress  bool      `json:"success"`
-	AccountID string    `json:"account_id"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type DepositAddressRequest struct {
-	AccountID string `json:"account_id"`
-	CoinType  string `json:"coin_type"`
-}
-
-type DepositAddressResponse struct {
-	AccountID   string `json:"account_id"`
-	DepositAddr string `json:"deposit_address"`
-}
 
 // CreateAccount create account with specific pubkey,
 func CreateAccount(svr Server) gin.HandlerFunc {
@@ -66,8 +46,7 @@ func CreateAccount(svr Server) gin.HandlerFunc {
 // GetNewAddress account create new address for depositing.
 func GetNewAddress(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		irawdata, _ := c.Get("rawdata")
-		rawdata := irawdata.([]byte)
+		rawdata := c.MustGet("rawdata").([]byte)
 
 		// unmarshal rawdata
 		dar := DepositAddressRequest{}
@@ -100,21 +79,77 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 			AccountID:   dar.AccountID,
 			DepositAddr: addr,
 		}
-		d, err := json.Marshal(ds)
+		AuthReply(c, 201, ds)
+	}
+}
+
+func Withdraw(svr Server) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		wr, err := newWithdrawRequest(c)
 		if err != nil {
-			panic(err)
+			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
+			return
 		}
 
-		resp, err := at.Encrypt(bytes.NewBuffer(d))
+		// convert to cipher.PubKey
+		pubkey, err := cipher.PubKeyFromHex(wr.AccountID)
 		if err != nil {
-			panic(err)
+			c.JSON(400, ErrorMsg{Code: 400, Error: "error account id"})
+			return
+		}
+		a, err := svr.GetAccount(account.AccountID(pubkey))
+		if err != nil {
+			c.JSON(404, ErrorMsg{Code: 404, Error: fmt.Sprintf("account id does not exist")})
+			return
 		}
 
-		c.JSON(201, ContentResponse{
-			Success: true,
-			Nonce:   fmt.Sprintf("%x", at.GetNonceKey().Nonce),
-			Data:    resp,
-		})
+		ct, err := wallet.ConvertCoinType(wr.CoinType)
+		if err != nil {
+			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
+			return
+		}
+		tx, err := at.GenerateWithdrawTx(wr.Coins, ct)
+		if err != nil {
+			c.JSON(400, ErrorMsg{Code: 400, Error: err.Error()})
+			return
+		}
+
+		resp := WithdrawResponse{
+			AccountID: wr.AccountID,
+			Tx:        tx,
+		}
+		AuthReply(c, 200, resp)
+	}
+}
+
+func newWithdrawRequest(c *gin.Context) (WithdrawRequest, error) {
+	rawdata := c.MustGet("rawdata").([]byte)
+	// unmarshal rawdata
+	wr := WithdrawRequest{}
+	err := json.Unmarshal(rawdata, &wr)
+	if err != nil {
+		return WithdrawRequest{}, errors.New("bad withdraw request")
+	}
+
+	return wr, nil
+}
+
+func AuthReply(c *gin.Context, code int, r interface{}) {
+	c.Set("code", code)
+	c.Set("response", r)
+}
+
+func (wr WithdrawResponse) MustToContentResponse(a account.Accounter) ContentResponse {
+	d, err := json.Marshal(wr)
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ := a.Encrypt(bytes.NewBuffer(d))
+
+	return ContentResponse{
+		Success: true,
+		Data:    data,
 	}
 }
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"time"
@@ -10,26 +11,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin/src/cipher"
 )
-
-type AuthRequest struct {
-	Pubkey string `json:"pubkey"`
-}
-
-type AuthResponse struct {
-	Pubkey string `json:"pubkey"`
-	Nonce  string `json:"nonce"`
-}
-
-type ContentRequest struct {
-	AccountID string `json:"account_id"`
-	Data      []byte `json:"data"`
-}
-
-type ContentResponse struct {
-	Success bool   `json:"success"`
-	Nonce   string `json:"nonce"`
-	Data    []byte `json:"data"`
-}
 
 // Authorize generate a nonce pubkey/seckey pairs, do ECDH to generate
 // NonceKey, store the key into the account and return the pubkey
@@ -123,15 +104,39 @@ func AuthRequired(svr Server) gin.HandlerFunc {
 
 			c.Set("id", r.AccountID)
 			c.Set("rawdata", d)
-
 			// update the key expire time, and nonce value.
 			t := time.Now().Add(svr.GetNonceKeyLifetime())
 			nk.Expire_at = t
 			nk.Nonce = cipher.RandByte(8)
 			a.SetNonceKey(nk)
+
+			c.Next()
+
+			// get the response and encrypt the data.
+			rsp := c.MustGet("response")
+			code := c.MustGet("code")
+			MustToContentResponse(a, c, code.(int), rsp)
 			return
 		}
 		c.JSON(400, ErrorMsg{Code: 400, Error: "bad request"})
 		c.Abort()
 	}
+}
+
+func MustToContentResponse(a account.Accounter, c *gin.Context, code int, rsp interface{}) {
+	d, err := json.Marshal(rsp)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := a.Encrypt(bytes.NewBuffer(d))
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(code, ContentResponse{
+		Success: true,
+		Nonce:   fmt.Sprintf("%x", a.GetNonceKey().Nonce),
+		Data:    resp,
+	})
 }

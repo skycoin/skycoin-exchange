@@ -26,7 +26,7 @@ type FakeAccount struct {
 	WltID   string
 	Addr    string
 	Nk      account.NonceKey
-	Balance account.Balance
+	Balance uint64
 }
 
 // FakeServer for mocking various server status.
@@ -50,8 +50,8 @@ func (fa FakeAccount) GetNewAddress(ct wallet.CoinType) string {
 	return fa.Addr
 }
 
-func (fa FakeAccount) GetBalance(ct wallet.CoinType) (account.Balance, error) {
-	return fa.Balance, nil
+func (fa FakeAccount) GetBalance(ct wallet.CoinType) uint64 {
+	return fa.Balance
 }
 
 func (fa *FakeAccount) SetNonceKey(nk account.NonceKey) {
@@ -129,7 +129,7 @@ func TestCreateAccountSuccess(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 	jsonStr := fmt.Sprintf(`{"pubkey": "%s"}`, pubkey)
@@ -143,7 +143,7 @@ func TestCreateAccountBadRequest(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 	jsonStr := fmt.Sprintf(``)
@@ -158,7 +158,7 @@ func TestCreateAccountInvalidPubkey(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -174,7 +174,7 @@ func TestCreateAccountFaildBindWallet(t *testing.T) {
 			ID:      "02c0a2e523be9234028874a08d001d422a1a191af910b8b4c315ab7fd59223726c",
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -191,7 +191,7 @@ func TestAuth(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -214,7 +214,7 @@ func TestAuthInvalidPubkey(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -231,7 +231,7 @@ func TestAuthUnknowID(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -248,7 +248,7 @@ func TestAuthReqRequest(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -291,7 +291,7 @@ func TestUnAuth(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
@@ -418,7 +418,7 @@ func TestCreateAddress(t *testing.T) {
 			ID:      pubkey,
 			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: account.Balance(0),
+			Balance: uint64(0),
 		},
 	}
 
