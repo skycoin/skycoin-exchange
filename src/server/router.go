@@ -7,18 +7,12 @@ func NewRouter(svr Server) *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	v1 := r.Group("/api/v1")
+	// the Authorize middle will decrypt the request, and encrypt the response.
+	v1 := r.Group("/api/v1", Authorize(svr))
 	{
 		v1.POST("/accounts", CreateAccount(svr)) // create account
-
-		v1.POST("/authorization", Authorize(svr)) // authorize account
-
-		authorized := v1.Group("/account", AuthRequired(svr), Security(svr))
-		{
-			authorized.POST("/deposit_address", GetNewAddress(svr)) // get new address from account.
-			authorized.POST("/withdraw", Withdraw(svr))
-		}
-
+		v1.POST("/deposit_address", GetNewAddress(svr))
+		v1.GET("/account/withdraw", Withdraw(svr))
 	}
 	return r
 }
