@@ -123,7 +123,7 @@ func (fa FakeAccount) GetBalance(ct wallet.CoinType) uint64 {
 // 	return d >= 0
 // }
 
-func (fa FakeAccount) GenerateWithdrawTx(coins uint64, coinType wallet.CoinType) ([]byte, error) {
+func (fa FakeAccount) GenerateWithdrawTx(coins uint64, coinType wallet.CoinType, outAddr string) ([]byte, error) {
 	return []byte{}, nil
 }
 
