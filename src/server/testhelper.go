@@ -80,49 +80,6 @@ func (fa FakeAccount) GetBalance(ct wallet.CoinType) uint64 {
 	return fa.Balance
 }
 
-// func (fa *FakeAccount) SetNonceKey(nk account.NonceKey) {
-// 	fa.Nk = nk
-// }
-//
-// func (fa FakeAccount) GetNonceKey() account.NonceKey {
-// 	return fa.Nk
-// }
-//
-// func (fa FakeAccount) Encrypt(r io.Reader) ([]byte, error) {
-// 	d, err := ioutil.ReadAll(r)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-//
-// 	data := make([]byte, len(d))
-// 	c, err := chacha20.New(fa.Nk.Key, fa.Nk.Nonce)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-// 	c.XORKeyStream(data, d)
-// 	return data, nil
-// }
-//
-// func (fa FakeAccount) Decrypt(r io.Reader) ([]byte, error) {
-// 	d, err := ioutil.ReadAll(r)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-//
-// 	data := make([]byte, len(d))
-// 	c, err := chacha20.New(fa.Nk.Key, fa.Nk.Nonce)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-// 	c.XORKeyStream(data, d)
-// 	return data, nil
-// }
-//
-// func (fa FakeAccount) IsExpired() bool {
-// 	d := time.Now().Unix() - fa.Nk.Expire_at.Unix()
-// 	return d >= 0
-// }
-
 func (fa FakeAccount) GenerateWithdrawTx(coins uint64, coinType wallet.CoinType, outAddr string) ([]byte, error) {
 	return []byte{}, nil
 }
