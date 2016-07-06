@@ -113,7 +113,7 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
 		}
-		tx, err := a.GenerateWithdrawTx(wr.Coins, ct)
+		tx, err := a.GenerateWithdrawTx(wr.Coins, ct, wr.OutputAddress)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
