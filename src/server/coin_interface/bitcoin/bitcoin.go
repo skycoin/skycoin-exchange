@@ -6,22 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"log"
+	"net/http"
+
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
-	//"github.com/skycoin/skycoin/src/cipher"
-	"net/http"
-	//"sort"
-	//"strings"
-	//"time"
-	//"bytes"
-	"log"
 )
-
-/*
-
-
-
- */
 
 /*
 {
@@ -47,6 +37,14 @@ var (
 func AddressValid(address string) error {
 	//return errors.New("Address is invalid")
 	return nil
+}
+
+type UnspentOutput interface {
+	GetTxid() string
+	GetVout() uint32
+	GetAmount() int64
+	GetAddress() string
+	GetConfirms() int64
 }
 
 type UnspentOutputJSONResponse struct {
