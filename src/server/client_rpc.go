@@ -1,4 +1,4 @@
-package skycoin_exchange
+package server
 
 import (
 	"fmt"

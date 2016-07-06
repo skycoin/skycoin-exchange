@@ -1,1 +1,1 @@
-package skycoin_exchange
+package server
