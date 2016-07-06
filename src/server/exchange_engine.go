@@ -1,4 +1,4 @@
-package skycoin_exchange
+package server
 
 /*
 Handles Bid/Ask

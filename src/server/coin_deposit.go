@@ -1,4 +1,6 @@
-package skycoin_exchange
+package server
+
+import "github.com/skycoin/skycoin-exchange/src/server/account"
 
 // "github.com/skycoin/skycoin/src/cipher"
 
@@ -14,25 +16,25 @@ package skycoin_exchange
 */
 
 type DepositAddress struct {
-	AccountId AccountID //Account id
-	Coin      string    //BTC,SKY
-	Address   string    //address for deposit
-	Tx        string    //transaction ID
+	AccountId account.AccountID //Account id
+	Coin      string            //BTC,SKY
+	Address   string            //address for deposit
+	Tx        string            //transaction ID
 }
 
 type PendingReceivedCoins struct {
-	AccountId AccountID //Account id
-	Coin      string    //BTC,SKY
-	Address   string    //address for deposit
-	Tx        string    //transaction ID
+	AccountId account.AccountID //Account id
+	Coin      string            //BTC,SKY
+	Address   string            //address for deposit
+	Tx        string            //transaction ID
 }
 
 //do not receive/credit coins until required number of confirmations
 type ReceivedCoins struct {
-	AccountId AccountID //Account id
-	Coin      string    //BTC,SKY
-	Address   string    //address for deposit
-	Tx        string    //transaction ID
+	AccountId account.AccountID //Account id
+	Coin      string            //BTC,SKY
+	Address   string            //address for deposit
+	Tx        string            //transaction ID
 }
 
 //manage incoming outputs and deposits
