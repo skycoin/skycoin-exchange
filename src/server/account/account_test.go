@@ -53,7 +53,7 @@ func TestCreateNewBtcAddress(t *testing.T) {
 	DataMaintainer(func(eam AccountManager) {
 		// ema.CreateAccount()
 		a, _, err := eam.CreateAccount()
-		id := a.GetAccountID()
+		id := a.GetID()
 		assert.Nil(t, err)
 		wg := sync.WaitGroup{}
 		var count int = 10
