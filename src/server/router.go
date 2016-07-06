@@ -12,7 +12,7 @@ func NewRouter(svr Server) *gin.Engine {
 	{
 		v1.POST("/accounts", CreateAccount(svr)) // create account
 		v1.POST("/deposit_address", GetNewAddress(svr))
-		v1.GET("/account/withdraw", Withdraw(svr))
+		v1.POST("/account/withdraw", Withdraw(svr))
 	}
 	return r
 }
