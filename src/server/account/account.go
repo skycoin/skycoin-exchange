@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -13,11 +14,11 @@ import (
 type AccountID cipher.PubKey
 
 type Accounter interface {
-	GetWalletID() string                                                                 // return the wallet id.
-	GetID() AccountID                                                                    // return the account id.
-	GetNewAddress(ct wallet.CoinType) string                                             // return new address for receiveing coins.
-	GetBalance(ct wallet.CoinType) uint64                                                // return the current balance.
-	GenerateWithdrawTx(coins uint64, ct wallet.CoinType, outAddr string) ([]byte, error) // account generate withdraw transaction.
+	GetWalletID() string                                                               // return the wallet id.
+	GetID() AccountID                                                                  // return the account id.
+	GetNewAddress(ct wallet.CoinType) string                                           // return new address for receiveing coins.
+	GetBalance(ct wallet.CoinType) uint64                                              // return the current balance.
+	GenerateWithdrawTx(ct wallet.CoinType, outAddrs []bitcoin.OutAddr) ([]byte, error) // account generate withdraw transaction.
 }
 
 // ExchangeAccount maintains the account state
@@ -91,14 +92,50 @@ func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64
 	return nil
 }
 
-func (self ExchangeAccount) GenerateWithdrawTx(coins uint64, coinType wallet.CoinType, outAddr string) ([]byte, error) {
+// GenerateWithdrawTx
+func (self ExchangeAccount) GenerateWithdrawTx(coinType wallet.CoinType, outAddrs []bitcoin.OutAddr) ([]byte, error) {
 	// check if balance sufficient
 	bla := self.GetBalance(coinType)
-	if bla < coins {
+	var allCoins int64
+	for _, out := range outAddrs {
+		allCoins += out.Value
+	}
+
+	if bla < uint64(allCoins) {
 		return []byte{}, errors.New("balance is not sufficient")
 	}
 
-	// get all unspent outputs of this account.
+	addrs, err := self.getAddressEntries(coinType)
+	if err != nil {
+		return []byte{}, err
+	}
 
-	return []byte{}, nil
+	// get utxos
+	utxos := []bitcoin.UtxoWithkey{}
+	switch coinType {
+	case wallet.Bitcoin:
+		for _, addrEntry := range addrs {
+			us := bitcoin.GetUnspentOutputsBlkChnInfo(addrEntry.Address)
+			for _, u := range us {
+				usk := bitcoin.BlkchnUtxoWithkey{
+					BlkChnUtxo: u,
+					Privkey:    addrEntry.Secret,
+				}
+				utxos = append(utxos, usk)
+			}
+		}
+		return bitcoin.NewTransaction(utxos, outAddrs)
+	default:
+		return []byte{}, errors.New("unknow coin type")
+	}
+}
+
+func (self ExchangeAccount) getAddressEntries(coinType wallet.CoinType) ([]wallet.AddressEntry, error) {
+	// get address list of this account
+	wlt, err := wallet.GetWallet(self.wltID)
+	if err != nil {
+		return []wallet.AddressEntry{}, fmt.Errorf("account get wallet faild, wallet id:%s", self.wltID)
+	}
+	addresses := wlt.GetAddressEntries(coinType)
+	return addresses, nil
 }
