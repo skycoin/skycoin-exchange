@@ -29,19 +29,16 @@ func TestNewRawTransaction(t *testing.T) {
 	err = json.Unmarshal(d, &td)
 	assert.Nil(t, err)
 
-	utxos := GetUnspentOutputsBlkChnInfo(td.Address)
+	utxos := GetUnspentOutputs(td.Address)
 	outAddr := make([]OutAddr, len(td.OutAddr))
 	for i, o := range td.OutAddr {
 		outAddr[i].Addr = o.Addr
 		outAddr[i].Value = int64(o.Value)
 	}
 
-	utks := make([]BlkChnUtxoWithkey, len(utxos))
+	utks := make([]UtxoWithkey, len(utxos))
 	for i, utxo := range utxos {
-		bk := BlkChnUtxoWithkey{
-			BlkChnUtxo: utxo,
-			Privkey:    td.Key,
-		}
+		bk := NewUtxoWithKey(utxo, td.Key)
 		utks[i] = bk
 	}
 

@@ -49,7 +49,7 @@ func (bk BlkChnUtxoWithkey) GetPrivKey() string {
 
 // GetUnspentOutputsBlkChnInfo get unspent outputs from blockchain.info
 // https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
-func GetUnspentOutputsBlkChnInfo(addr string) []BlkChnUtxo {
+func getUnspentOutputsBlkChnInfo(addr string) []Utxo {
 	if AddressValid(addr) != nil {
 		log.Fatal("Address is invalid")
 	}
@@ -74,5 +74,10 @@ func GetUnspentOutputsBlkChnInfo(addr string) []BlkChnUtxo {
 	if err != nil {
 		log.Fatalf("unmasharl fail, error:%s", err)
 	}
-	return utxoResp.Utxos
+
+	utxos := make([]Utxo, len(utxoResp.Utxos))
+	for i, u := range utxoResp.Utxos {
+		utxos[i] = u
+	}
+	return utxos
 }
