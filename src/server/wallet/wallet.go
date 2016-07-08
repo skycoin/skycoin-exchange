@@ -3,7 +3,10 @@ package wallet
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -11,7 +14,10 @@ type CoinType int8
 type WalletType int8
 type WalletID string
 
-// type MetaInfo int8
+var (
+	// GWallets Wallets
+	WltDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/wallets")
+)
 
 const (
 	Bitcoin CoinType = iota
@@ -84,6 +90,48 @@ type AddressEntry struct {
 	Address string `json:"address"`
 	Public  string `json:"pubkey"`
 	Secret  string `json:"seckey"`
+}
+
+// New create a new wallet, and save it to local disk.
+func New(name string, wltType WalletType, seed string) (Wallet, error) {
+	if seed == "" {
+		seed = cipher.SumSHA256(cipher.RandByte(1024)).Hex()
+	}
+
+	switch wltType {
+	case Deterministic:
+		wlt := &DeterministicWallet{
+			ID:             name,
+			Seed:           map[CoinType]string{Bitcoin: seed, Skycoin: seed},
+			InitSeed:       seed,
+			AddressEntries: make(map[string][]AddressEntry)}
+		if err := wlt.save(); err != nil {
+			return nil, err
+		}
+		return wlt, nil
+	default:
+		return nil, fmt.Errorf("newWallet fail, unknow wallet type:%d", wltType)
+	}
+}
+
+// Load load wallet from specific local disk.
+func Load(path string) (Wallet, error) {
+	w, err := loadWalletFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	concretWlt, err := w.newConcretWallet()
+	if err != nil {
+		return nil, err
+	}
+	concretWlt.SetID(filepath.Base(path))
+	return concretWlt, nil
+}
+
+func IsExist(path string) bool {
+	_, err := os.Stat(path)
+	return os.IsExist(err)
 }
 
 func loadWalletFromFile(filename string) (WalletBase, error) {
