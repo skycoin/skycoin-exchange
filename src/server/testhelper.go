@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
@@ -91,9 +90,7 @@ func (fa *FakeAccount) AddDepositAddress(ct wallet.CoinType, addr string) {
 }
 
 func (fs *FakeServer) CreateAccountWithPubkey(pk cipher.PubKey) (account.Accounter, error) {
-	// if fs.A.GetWalletID() == "" {
-	// 	return nil, fmt.Errorf("create wallet failed")
-	// }
+	fs.A = &FakeAccount{ID: pk.Hex()}
 	return fs.A, nil
 }
 
@@ -104,40 +101,16 @@ func (fs *FakeServer) GetAccount(id account.AccountID) (account.Accounter, error
 	return nil, errors.New("account not found")
 }
 
-func (fs FakeServer) Encrypt(data []byte, pubkey cipher.PubKey, nonce []byte) (d []byte, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New("server decrypt faild")
-		}
-	}()
-
-	key := cipher.ECDH(pubkey, fs.Seckey)
-	d, err = Encrypt(data, key, nonce)
-	return
-}
-
-func (fs FakeServer) Decrypt(data []byte, pubkey cipher.PubKey, nonce []byte) (d []byte, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New("server decrypt faild")
-		}
-	}()
-
-	key := cipher.ECDH(pubkey, fs.Seckey)
-	d, err = Decrypt(data, key, nonce)
-	return
-}
-
 func (fs *FakeServer) Run() {
 
 }
 
-func (fs FakeServer) GetNonceKeyLifetime() time.Duration {
-	return time.Second * time.Duration(10*60)
-}
-
 func (fs FakeServer) GetFee() uint64 {
 	return fs.Fee
+}
+
+func (fs FakeServer) GetPrivKey() cipher.SecKey {
+	return fs.Seckey
 }
 
 func (fs *FakeServer) GetNewAddress(ct wallet.CoinType) string {
