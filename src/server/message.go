@@ -71,7 +71,7 @@ func MustToContentRequest(r interface{}, id string, key []byte) ContentRequest {
 		panic(err)
 	}
 	nonce := cipher.RandByte(8)
-	data, err := Encrypt(d, key, nonce)
+	data, err := encOrDec(d, key, nonce)
 	if err != nil {
 		panic(err)
 	}
@@ -82,26 +82,6 @@ func MustToContentRequest(r interface{}, id string, key []byte) ContentRequest {
 	}
 }
 
-// func (car CreateAccountRequest) MustToContentRequest(id string, key []byte) ContentRequest {
-// }
-//
-// func (dar DepositAddressRequest) MustToContentResponse(id string, key []byte) ContentRequest {
-// 	d, err := json.Marshal(dar)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	nonce := cipher.RandByte(8)
-// 	data, err := Encrypt(d, key, nonce)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return ContentRequest{
-// 		AccountID: id,
-// 		Data:      data,
-// 		Nonce:     nonce,
-// 	}
-// }
-
 func (cr ContentRequest) MustJson() []byte {
 	d, err := json.Marshal(cr)
 	if err != nil {
@@ -110,20 +90,6 @@ func (cr ContentRequest) MustJson() []byte {
 	return d
 }
 
-// func (wr WithdrawResponse) MustToContentResponse(a account.Accounter) ContentResponse {
-// 	d, err := json.Marshal(wr)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-//
-// 	data, _ := a.Encrypt(bytes.NewBuffer(d))
-//
-// 	return ContentResponse{
-// 		Success: true,
-// 		Data:    data,
-// 	}
-// }
-
 // MustToContentRequest convert DepositAddressRequest to ContentRequest
 func (dar DepositAddressRequest) MustToContentRequest(key []byte, nonce []byte) ContentRequest {
 	d, err := json.Marshal(dar)
@@ -131,7 +97,7 @@ func (dar DepositAddressRequest) MustToContentRequest(key []byte, nonce []byte) 
 		panic(err)
 	}
 
-	data, err := Encrypt(d, key, nonce)
+	data, err := encOrDec(d, key, nonce)
 	if err != nil {
 		panic(err)
 	}
