@@ -39,17 +39,17 @@ func (bo BlkChnUtxo) GetVout() uint32 {
 	return uint32(bo.Tx_output_n)
 }
 
-func (bo BlkChnUtxo) GetAmount() int64 {
-	return int64(bo.Value)
+func (bo BlkChnUtxo) GetAmount() uint64 {
+	return bo.Value
 }
 
 func (bk BlkChnUtxoWithkey) GetPrivKey() string {
 	return bk.Privkey
 }
 
-// GetUnspentOutputsBlkChnInfo get unspent outputs from blockchain.info
+// GetUtxosBlkChnInfo get unspent outputs from blockchain.info
 // https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
-func getUnspentOutputsBlkChnInfo(addr string) []Utxo {
+func getUtxosBlkChnInfo(addr string) []Utxo {
 	if AddressValid(addr) != nil {
 		log.Fatal("Address is invalid")
 	}
