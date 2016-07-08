@@ -12,7 +12,7 @@ import (
 
 type Vout struct {
 	Addr  string `json:"addr"`
-	Value int    `json:"value"`
+	Value uint64 `json:"value"`
 }
 
 type TData struct {
@@ -30,10 +30,10 @@ func TestNewRawTransaction(t *testing.T) {
 	assert.Nil(t, err)
 
 	utxos := GetUnspentOutputs(td.Address)
-	outAddr := make([]OutAddr, len(td.OutAddr))
+	outAddr := make([]UtxoOut, len(td.OutAddr))
 	for i, o := range td.OutAddr {
 		outAddr[i].Addr = o.Addr
-		outAddr[i].Value = int64(o.Value)
+		outAddr[i].Value = o.Value
 	}
 
 	utks := make([]UtxoWithkey, len(utxos))

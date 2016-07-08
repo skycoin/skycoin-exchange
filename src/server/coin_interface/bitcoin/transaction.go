@@ -32,17 +32,12 @@ type sendTxJson struct {
 	RawTx string `json:"rawtx"`
 }
 
-type OutAddr struct {
-	Addr  string
-	Value int64
-}
-
 // NewTransaction create transaction,
 // utxos is an interface which need to be a slice type, and each item
 // of the slice is an UtxoWithPrivkey interface.
 // outAddrs is the output address array.
 // using the api of blockchain.info to get the raw trasaction info of txid.
-func NewTransaction(utxos interface{}, outAddrs []OutAddr) (*wire.MsgTx, error) {
+func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) {
 	s := reflect.ValueOf(utxos)
 	if s.Kind() != reflect.Slice {
 		return nil, errors.New("error utxo type")
@@ -225,12 +220,12 @@ func createTxIn(outpoint *wire.OutPoint) *wire.TxIn {
 }
 
 // createTxOut generates a TxOut that can be added to a transaction.
-func createTxOut(outCoins int64, addr btcutil.Address) *wire.TxOut {
+func createTxOut(outCoins uint64, addr btcutil.Address) *wire.TxOut {
 	// Take the address and generate a PubKeyScript out of it
 	script, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	txout := wire.NewTxOut(outCoins, script)
+	txout := wire.NewTxOut(int64(outCoins), script)
 	return txout
 }
