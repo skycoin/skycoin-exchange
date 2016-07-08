@@ -129,8 +129,9 @@ func Load(path string) (Wallet, error) {
 	return concretWlt, nil
 }
 
-func IsExist(path string) bool {
-	_, err := os.Stat(path)
+func IsExist(wltName string) bool {
+	p := filepath.Join(WltDir, wltName)
+	_, err := os.Stat(p)
 	return os.IsExist(err)
 }
 
