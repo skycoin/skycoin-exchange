@@ -19,8 +19,7 @@ type Server interface {
 	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
 	GetAccount(id account.AccountID) (account.Accounter, error)
 	GetFee() uint64
-	Encrypt(data []byte, pubkey cipher.PubKey, nonce []byte) ([]byte, error)
-	Decrypt(data []byte, pubkey cipher.PubKey, nonce []byte) ([]byte, error)
+	GetPrivKey() cipher.SecKey
 	GetNewAddress(coinType wallet.CoinType) string
 }
 
@@ -94,6 +93,10 @@ func (self ExchangeServer) GetFee() uint64 {
 	return uint64(self.cfg.Fee)
 }
 
+func (self ExchangeServer) GetPrivKey() cipher.SecKey {
+	return self.cfg.Seckey
+}
+
 func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	self.wltMtx.Lock()
 	defer self.wltMtx.Unlock()
@@ -104,85 +107,38 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	return addrEntry[0].Address
 }
 
-func (self ExchangeServer) Decrypt(data []byte, pubkey cipher.PubKey, nonce []byte) (d []byte, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New("server decrypt faild")
-		}
-	}()
+func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, error) {
+	bal := act.GetBalance(coinType)
+	fee := svr.GetFee()
+	if bal < amount+fee {
+		return []byte{}, errors.New("balance is not sufficient")
+	}
 
-	key := cipher.ECDH(pubkey, self.cfg.Seckey)
-	d, err = Encrypt(data, key, nonce)
-	return
-}
+	utxos, err := chooseUtxos(svr, coinType, amount)
+	if err != nil {
+		return []byte{}, err
+	}
 
-func (self ExchangeServer) Encrypt(data []byte, pubkey cipher.PubKey, nonce []byte) (d []byte, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New("server encrypt faild")
-		}
-	}()
+	var totalAmounts uint64
+	for _, u := range utxos {
+		totalAmounts += u.GetAmount()
+	}
 
-	key := cipher.ECDH(pubkey, self.cfg.Seckey)
-	d, err = Decrypt(data, key, nonce)
-	return
-}
+	// generate a change address
+	chgAddr := svr.GetNewAddress(coinType)
+	chgAmt := totalAmounts - fee - amount
 
-func GenerateWithdrawlTx(svr Server, id account.AccountID, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, error) {
-	return []byte{}, nil
-	// check if balance sufficient
-	// bla := self.GetBalance(coinType)
+	outAddrs := []bitcoin.UtxoOut{
+		bitcoin.UtxoOut{Addr: toAddr, Value: amount},
+		bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt},
+	}
 
-	// if bla < (amount + fee) {
-	// 	return []byte{}, errors.New("balance is not sufficient")
-	// }
+	tx, err := bitcoin.NewTransaction(utxos, outAddrs)
+	if err != nil {
+		return []byte{}, err
+	}
 
-	// choose the appropriate utxos。
-	// utxos, err := chooseUtxos(svr, coinType, amount)
-	// if err != nil {
-	// 	return []byte{}, err
-	// }
-	//
-	// // create change address
-	// changeAddr := svr.GetNewAddress(coinType)
-	//
-	// outAddrs := []bitcoin.UtxoOut{
-	// 	bitcoin.UtxoOut{Addr: toAddr, Value: amount},
-	// 	bitcoin.UtxoOut{Addr: changeAddr, Value: bla - amount - fee},
-	// }
-	//
-	// switch coinType {
-	// case wallet.Bitcoin:
-	// 	tx, err := bitcoin.NewTransaction(utxos, outAddrs)
-	// 	if err != nil {
-	// 		return []byte{}, errors.New("create bitcoin transaction failed")
-	// 	}
-	// 	return bitcoin.DumpTxBytes(tx), nil
-	// default:
-	// 	return []byte{}, errors.New("unknow coin type")
-	// }
-
-	// get utxos
-	// utxos := []bitcoin.UtxoWithkey{}
-	// switch coinType {
-	// case wallet.Bitcoin:
-	// 	for _, addrEntry := range addrs {
-	// 		us := bitcoin.GetUnspentOutputs(addrEntry.Address)
-	// 		usks := make([]bitcoin.UtxoWithkey, len(us))
-	// 		for i, u := range us {
-	// 			usk := bitcoin.NewUtxoWithKey(u, addrEntry.Secret)
-	// 			usks[i] = usk
-	// 		}
-	// 		utxos = append(utxos, usks...)
-	// 	}
-	// 	msgTx, err := bitcoin.NewTransaction(utxos, outAddrs)
-	// 	if err != nil {
-	// 		return []byte{}, errors.New("create bitcoin transaction faild")
-	// 	}
-	// 	return bitcoin.DumpTxBytes(msgTx), nil
-	// default:
-	// 	return []byte{}, errors.New("unknow coin type")
-	// }
+	return bitcoin.DumpTxBytes(tx), nil
 }
 
 func chooseUtxos(svr Server, coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
