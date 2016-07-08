@@ -5,6 +5,8 @@ import (
 
 	"fmt"
 	"io/ioutil"
+	"strconv"
+	"strings"
 
 	"log"
 	"net/http"
@@ -21,13 +23,18 @@ var (
 type Utxo interface {
 	GetTxid() string
 	GetVout() uint32
-	GetAmount() int64
+	GetAmount() uint64
 }
 
 // UtxoWithkey unspent output with privkey.
 type UtxoWithkey interface {
 	Utxo
 	GetPrivKey() string
+}
+
+type UtxoOut struct {
+	Addr  string
+	Value uint64
 }
 
 // GenerateAddresses, generate bitcoin addresses.
@@ -46,21 +53,27 @@ func GenerateAddresses(seed []byte, num int) (string, []coin_interface.AddressEn
 }
 
 // GetBalance, query balance of address through the API of blockexplorer.com.
-func GetBalance(addr string) (string, error) {
-	if AddressValid(addr) != nil {
-		log.Fatal("Address is invalid")
-	}
-
-	data, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/addr/%s/balance", addr))
+func GetBalance(addr []string) (uint64, error) {
+	// if AddressValid(addr) != nil {
+	// 	log.Fatal("Address is invalid")
+	// }
+	// blkEplUrl := fmt.Sprintf("https://blockexplorer.com/api/addr/%s/balance", addr)
+	addrs := strings.Join(addr, "|")
+	blkChnUrl := fmt.Sprintf("https://blockchain.info/q/addressbalance/%s", addrs)
+	data, err := getDataOfUrl(blkChnUrl)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return string(data), nil
+	b, err := strconv.Atoi(string(data))
+	if err != nil {
+		return 0, err
+	}
+	return uint64(b), nil
 }
 
-// GetUnspentOutputs
+// GetUnspentOutputs return the unspent outputs
 func GetUnspentOutputs(addr string) []Utxo {
-	return getUnspentOutputsBlkChnInfo(addr)
+	return getUtxosBlkChnInfo(addr)
 }
 
 func NewUtxoWithKey(utxo Utxo, key string) UtxoWithkey {
