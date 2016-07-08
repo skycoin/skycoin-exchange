@@ -104,11 +104,11 @@ func Withdrawl(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		// a, err := svr.GetAccount(account.AccountID(pubkey))
-		// if err != nil {
-		// 	Reply(c, 404, ErrorMsg{Code: 404, Error: "account id does not exist"})
-		// 	return
-		// }
+		a, err := svr.GetAccount(account.AccountID(pubkey))
+		if err != nil {
+			Reply(c, 404, ErrorMsg{Code: 404, Error: "account id does not exist"})
+			return
+		}
 
 		ct, err := wallet.ConvertCoinType(wr.CoinType)
 		if err != nil {
@@ -116,7 +116,7 @@ func Withdrawl(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		tx, err := GenerateWithdrawlTx(svr, account.AccountID(pubkey), ct, wr.Coins, wr.OutputAddress)
+		tx, err := GenerateWithdrawlTx(svr, a, ct, wr.Coins, wr.OutputAddress)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
@@ -136,9 +136,3 @@ func Reply(c *gin.Context, code int, r interface{}) {
 	c.Set("code", code)
 	c.Set("response", r)
 }
-
-// // ErrReplay set the code in gin
-// func Reply(c *gin.Context, code int, r interface{}) {
-// 	c.Set("code", code)
-// 	c.JSON(400, r)
-// }
