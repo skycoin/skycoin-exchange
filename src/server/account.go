@@ -86,8 +86,8 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 	}
 }
 
-// Withdraw api handler for generating withdraw transaction.
-func Withdraw(svr Server) gin.HandlerFunc {
+// Withdrawl api handler for generating withdraw transaction.
+func Withdrawl(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		wr := WithdrawRequest{}
 		if err := getRequest(c, &wr); err != nil {
@@ -113,7 +113,7 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
 		}
-		tx, err := a.GenerateWithdrawTx(wr.Coins, ct, wr.OutputAddress)
+		tx, err := a.GenerateWithdrawlTx(wr.Coins, ct, wr.OutputAddress)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
@@ -126,20 +126,6 @@ func Withdraw(svr Server) gin.HandlerFunc {
 		Reply(c, 200, resp)
 	}
 }
-
-// newWithdrawRequest create WithdrawRequest from rawdata, which has been decrypted
-// in AuthRequired middleware.
-// func newWithdrawRequest(c *gin.Context) (WithdrawRequest, error) {
-// 	rawdata := c.MustGet("rawdata").([]byte)
-// 	// unmarshal rawdata
-// 	wr := WithdrawRequest{}
-// 	err := json.Unmarshal(rawdata, &wr)
-// 	if err != nil {
-// 		return WithdrawRequest{}, errors.New("bad withdraw request")
-// 	}
-//
-// 	return wr, nil
-// }
 
 // Reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
