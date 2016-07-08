@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -48,9 +47,7 @@ func HttpRequestCase(method string, url string, body io.Reader) CaseHandler {
 // FakeAccount for mocking various account state.
 type FakeAccount struct {
 	ID      string
-	WltID   string
 	Addr    string
-	Nk      account.NonceKey
 	Balance uint64
 }
 
@@ -58,10 +55,7 @@ type FakeAccount struct {
 type FakeServer struct {
 	A      account.Accounter
 	Seckey cipher.SecKey
-}
-
-func (fa FakeAccount) GetWalletID() string {
-	return fa.WltID
+	Fee    uint64
 }
 
 func (fa FakeAccount) GetID() account.AccountID {
@@ -80,14 +74,26 @@ func (fa FakeAccount) GetBalance(ct wallet.CoinType) uint64 {
 	return fa.Balance
 }
 
-func (fa FakeAccount) GenerateWithdrawTx(coins uint64, coinType wallet.CoinType, outAddr string) ([]byte, error) {
+func (fa FakeAccount) GenerateWithdrawlTx(ct wallet.CoinType, Amount uint64, toAdd string, fee uint64) ([]byte, error) {
 	return []byte{}, nil
 }
 
+func (fa FakeAccount) GetAddressBalance(addr string) (uint64, error) {
+	return uint64(0), nil
+}
+
+func (fa FakeAccount) GetAddressEntries(coinType wallet.CoinType) ([]wallet.AddressEntry, error) {
+	return []wallet.AddressEntry{}, nil
+}
+
+func (fa *FakeAccount) AddDepositAddress(ct wallet.CoinType, addr string) {
+
+}
+
 func (fs *FakeServer) CreateAccountWithPubkey(pk cipher.PubKey) (account.Accounter, error) {
-	if fs.A.GetWalletID() == "" {
-		return nil, fmt.Errorf("create wallet failed")
-	}
+	// if fs.A.GetWalletID() == "" {
+	// 	return nil, fmt.Errorf("create wallet failed")
+	// }
 	return fs.A, nil
 }
 
@@ -128,4 +134,12 @@ func (fs *FakeServer) Run() {
 
 func (fs FakeServer) GetNonceKeyLifetime() time.Duration {
 	return time.Second * time.Duration(10*60)
+}
+
+func (fs FakeServer) GetFee() uint64 {
+	return fs.Fee
+}
+
+func (fs *FakeServer) GetNewAddress(ct wallet.CoinType) string {
+	return ""
 }
