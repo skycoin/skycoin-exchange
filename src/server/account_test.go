@@ -26,7 +26,6 @@ func TestCreateAccountSuccess(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -50,7 +49,6 @@ func TestCreateAccountBadRequest(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -64,32 +62,6 @@ func TestCreateAccountBadPubkey(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
-			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-			Balance: uint64(0),
-		},
-		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-	}
-
-	car := CreateAccountRequest{
-		Pubkey: errPubkey,
-	}
-	sp := cipher.MustPubKeyFromHex(server_pubkey)
-	cs := cipher.MustSecKeyFromHex(cli_seckey)
-	key := cipher.ECDH(sp, cs)
-
-	cr := MustToContentRequest(car, cli_pubkey, key)
-	cr.AccountID = cli_pubkey
-	req := cr.MustJson()
-
-	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", bytes.NewBuffer(req)))
-	assert.Equal(t, w.Code, 400)
-}
-
-func TestCreateAccountServerFail(t *testing.T) {
-	svr := FakeServer{
-		A: &FakeAccount{
-			ID:      cli_pubkey,
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -97,23 +69,44 @@ func TestCreateAccountServerFail(t *testing.T) {
 	}
 
 	r := CreateAccountRequest{
-		Pubkey: cli_pubkey,
+		Pubkey: errPubkey,
 	}
-
 	sp := cipher.MustPubKeyFromHex(server_pubkey)
 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-
 	key := cipher.ECDH(sp, cs)
+
 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", bytes.NewBuffer(req)))
-	assert.Equal(t, w.Code, 501)
+	assert.Equal(t, w.Code, 400)
 }
+
+// func TestCreateAccountServerFail(t *testing.T) {
+// 	svr := FakeServer{
+// 		A: &FakeAccount{
+// 			ID:      cli_pubkey,
+// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
+// 			Balance: uint64(0),
+// 		},
+// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
+// 	}
+//
+// 	r := CreateAccountRequest{
+// 		Pubkey: cli_pubkey,
+// 	}
+//
+// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
+// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
+//
+// 	key := cipher.ECDH(sp, cs)
+// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
+// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", bytes.NewBuffer(req)))
+// 	assert.Equal(t, w.Code, 501)
+// }
 
 func TestGetDepositAddress(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -138,7 +131,6 @@ func TestGetDepositAddressBadCoinType(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -163,7 +155,6 @@ func TestGetDepositAddressIDNotExist(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -188,7 +179,6 @@ func TestGetDepositAddressBadAccountID(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "test.wlt",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
