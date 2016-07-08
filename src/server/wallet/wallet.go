@@ -71,6 +71,7 @@ type Wallet interface {
 	SetID(id string)
 	GetID() string
 	NewAddresses(coinType CoinType, num int) ([]AddressEntry, error)
+	GetAddressEntries(coinType CoinType) []AddressEntry
 }
 
 // WalletBase, used to serialise wallet into json, and unserialise wallet from json.
