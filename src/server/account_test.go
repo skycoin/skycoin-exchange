@@ -80,29 +80,6 @@ func TestCreateAccountBadPubkey(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-// func TestCreateAccountServerFail(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-// 	}
-//
-// 	r := CreateAccountRequest{
-// 		Pubkey: cli_pubkey,
-// 	}
-//
-// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
-// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-//
-// 	key := cipher.ECDH(sp, cs)
-// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", bytes.NewBuffer(req)))
-// 	assert.Equal(t, w.Code, 501)
-// }
-
 func TestGetDepositAddress(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
