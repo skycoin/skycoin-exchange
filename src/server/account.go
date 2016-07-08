@@ -64,6 +64,7 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: "error account id"})
 			return
 		}
+
 		at, err := svr.GetAccount(account.AccountID(pubkey))
 		if err != nil {
 			Reply(c, 404, ErrorMsg{Code: 404, Error: fmt.Sprintf("account id does not exist")})
@@ -76,7 +77,8 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		addr := at.GetNewAddress(ct)
+		addr := svr.GetNewAddress(ct)
+		at.AddDepositAddress(ct, addr)
 		ds := DepositAddressResponse{
 			Success:     true,
 			AccountID:   dar.AccountID,
@@ -102,18 +104,19 @@ func Withdrawl(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		a, err := svr.GetAccount(account.AccountID(pubkey))
-		if err != nil {
-			Reply(c, 404, ErrorMsg{Code: 404, Error: "account id does not exist"})
-			return
-		}
+		// a, err := svr.GetAccount(account.AccountID(pubkey))
+		// if err != nil {
+		// 	Reply(c, 404, ErrorMsg{Code: 404, Error: "account id does not exist"})
+		// 	return
+		// }
 
 		ct, err := wallet.ConvertCoinType(wr.CoinType)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
 		}
-		tx, err := a.GenerateWithdrawlTx(wr.Coins, ct, wr.OutputAddress)
+
+		tx, err := GenerateWithdrawlTx(svr, account.AccountID(pubkey), ct, wr.Coins, wr.OutputAddress)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
