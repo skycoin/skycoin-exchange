@@ -17,14 +17,16 @@ var (
 	HideSeckey = true
 )
 
-type UnspentOutput interface {
+// Utxo unspent output
+type Utxo interface {
 	GetTxid() string
 	GetVout() uint32
 	GetAmount() int64
 }
 
+// UtxoWithkey unspent output with privkey.
 type UtxoWithkey interface {
-	UnspentOutput
+	Utxo
 	GetPrivKey() string
 }
 
@@ -56,23 +58,35 @@ func GetBalance(addr string) (string, error) {
 	return string(data), nil
 }
 
-type Manager struct {
-	WatchAddresses []string
-	UxStateMap     map[string]UnspentOutput //keeps track of state
+// GetUnspentOutputs
+func GetUnspentOutputs(addr string) []Utxo {
+	return getUnspentOutputsBlkChnInfo(addr)
 }
 
-type UxMap map[string]UnspentOutput
+func NewUtxoWithKey(utxo Utxo, key string) UtxoWithkey {
+	return BlkChnUtxoWithkey{
+		BlkChnUtxo: utxo.(BlkChnUtxo),
+		Privkey:    key,
+	}
+}
+
+type Manager struct {
+	WatchAddresses []string
+	UxStateMap     map[string]Utxo //keeps track of state
+}
+
+type UxMap map[string]Utxo
 
 //does querry/update
 func (self *Manager) UpdateOutputs() {
 	log.Println("Update outputs...")
 	//get all unspent outputs for all watch addresses
-	var list []BlkChnUtxo
+	var list []Utxo
 	for _, addr := range self.WatchAddresses {
-		ux := GetUnspentOutputsBlkChnInfo(addr)
+		ux := GetUnspentOutputs(addr)
 		list = append(list, ux...)
 	}
-	latestUxMap := make(map[string]UnspentOutput)
+	latestUxMap := make(map[string]Utxo)
 	//do diff
 	for _, utxo := range list {
 		id := fmt.Sprintf("%s:%d", utxo.GetTxid(), utxo.GetVout())
@@ -80,7 +94,7 @@ func (self *Manager) UpdateOutputs() {
 	}
 
 	//get new
-	NewUx := make(map[string]UnspentOutput)
+	NewUx := make(map[string]Utxo)
 	for id, utxo := range latestUxMap {
 		if _, ok := self.UxStateMap[id]; !ok {
 			NewUx[id] = utxo
@@ -95,7 +109,7 @@ func (self *Manager) UpdateOutputs() {
 	// look for ux that disappeared
 	// TODO: make sure output exists and has not disappeared, else panic mode
 	// TODO: output should still exist, even if not spendable
-	DisappearingUx := make(map[string]UnspentOutput)
+	DisappearingUx := make(map[string]Utxo)
 	for id, utxo := range self.UxStateMap {
 		if _, ok := self.UxStateMap[id]; !ok {
 			DisappearingUx[id] = utxo
@@ -124,7 +138,7 @@ func getDataOfUrl(url string) ([]byte, error) {
 func (self *Manager) Init() {
 	//UxStateMap     map[string]UnspentOutputJSON
 	self.WatchAddresses = make([]string, 0)
-	self.UxStateMap = make(map[string]UnspentOutput)
+	self.UxStateMap = make(map[string]Utxo)
 }
 
 func (self *Manager) AddWatchAddress(addr string) {
