@@ -99,6 +99,10 @@ func (self *DeterministicWallet) GetID() string {
 	return self.ID
 }
 
+func (self DeterministicWallet) GetAddressEntries(bt CoinType) []AddressEntry {
+	return self.AddressEntries[bt.String()]
+}
+
 func (self *DeterministicWallet) toWalletBase() WalletBase {
 	w := WalletBase{
 		Meta: map[string]string{
