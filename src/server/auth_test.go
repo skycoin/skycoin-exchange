@@ -12,7 +12,6 @@ func TestAuthBadPubkey(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -33,7 +32,6 @@ func TestAuthBadKey(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
@@ -53,7 +51,6 @@ func TestAuthUnauthorized(t *testing.T) {
 	svr := FakeServer{
 		A: &FakeAccount{
 			ID:      cli_pubkey,
-			WltID:   "",
 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
 			Balance: uint64(0),
 		},
