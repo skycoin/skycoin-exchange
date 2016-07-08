@@ -79,16 +79,16 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 	}
 	self.addAddresses(coinType, addrEntries)
 	// save automaticaly after new addressess are added.
-	self.save(dataDir)
+	self.save()
 	return addrEntries, nil
 }
 
 // Save the wallet
-func (self *DeterministicWallet) save(dir string) error {
+func (self *DeterministicWallet) save() error {
 	// self.fileLock.Lock()
 	// defer self.fileLock.Unlock()
 	w := self.toWalletBase()
-	return util.SaveJSON(filepath.Join(dir, self.GetID()), w, 0600)
+	return util.SaveJSON(filepath.Join(WltDir, self.ID), w, 0600)
 }
 
 func (self *DeterministicWallet) SetID(id string) {
