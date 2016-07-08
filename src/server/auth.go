@@ -22,7 +22,7 @@ func Authorize(svr Server) gin.HandlerFunc {
 				return
 			}
 
-			data, err := svr.Decrypt(r.Data, pubkey, r.Nonce)
+			data, err := Decrypt(r.Data, svr.GetPrivKey(), pubkey, r.Nonce)
 			if err != nil {
 				c.JSON(401, ErrorMsg{Code: 401, Error: "unauthorized"})
 				c.Abort()
@@ -64,7 +64,7 @@ func MustToContentResponse(svr Server, pubkey cipher.PubKey, rsp interface{}) Co
 	}
 
 	nonce := cipher.RandByte(8)
-	resp, err := svr.Encrypt(d, pubkey, nonce)
+	resp, err := Encrypt(d, svr.GetPrivKey(), pubkey, nonce)
 	if err != nil {
 		panic(err)
 	}
