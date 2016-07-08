@@ -133,6 +133,12 @@ func BroadcastTx(tx *wire.MsgTx) {
 	fmt.Printf("The sending api responded with:\n%s\n", b)
 }
 
+func DumpTxBytes(tx *wire.MsgTx) []byte {
+	b := bytes.Buffer{}
+	tx.Serialize(&b)
+	return b.Bytes()
+}
+
 // signRawTransaction requires a transaction, a private key, and the bytes of the raw
 // scriptPubKey. It will then generate a signature over all of the outputs of
 // the provided tx. This is the last step of creating a valid transaction.
