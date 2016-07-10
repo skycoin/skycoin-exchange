@@ -88,8 +88,8 @@ func GetNewAddress(svr Server) gin.HandlerFunc {
 	}
 }
 
-// Withdrawl api handler for generating withdraw transaction.
-func Withdrawl(svr Server) gin.HandlerFunc {
+// Withdraw api handler for generating withdraw transaction.
+func Withdraw(svr Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		wr := WithdrawRequest{}
 		if err := getRequest(c, &wr); err != nil {
