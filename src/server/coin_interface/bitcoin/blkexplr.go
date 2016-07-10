@@ -46,6 +46,9 @@ func (beu BlkExplrUtxoWithkey) GetPrivKey() string {
 }
 
 func getUtxosBlkExplr(addrs []string) ([]Utxo, error) {
+	if len(addrs) == 0 {
+		return []Utxo{}, nil
+	}
 	url := fmt.Sprintf("https://blockexplorer.com/api/addrs/%s/utxo", strings.Join(addrs, ","))
 	rsp, err := http.Get(url)
 	if err != nil {
