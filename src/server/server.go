@@ -31,13 +31,13 @@ type Server interface {
 
 // Config store server's configuration.
 type Config struct {
-	Port         int
-	Fee          int
-	DataDir      string
-	WalletName   string
-	Seed         string
-	Seckey       cipher.SecKey
-	UtxoPoolSize int
+	Port         int           // api port
+	Fee          int           // transaction fee
+	DataDir      string        // data directory
+	WalletName   string        // wallet name
+	Seed         string        // seed
+	Seckey       cipher.SecKey // private key
+	UtxoPoolSize int           // utxo pool size.
 }
 
 /*
