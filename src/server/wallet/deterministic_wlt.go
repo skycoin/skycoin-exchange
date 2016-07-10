@@ -124,6 +124,19 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 	return w
 }
 
+// GetAddressEntry get address entry by coin type and address.
+func (self DeterministicWallet) GetAddressEntry(ct CoinType, addr string) (AddressEntry, error) {
+	if aes, ok := self.AddressEntries[ct.String()]; ok {
+		for _, a := range aes {
+			if a.Address == addr {
+				return a, nil
+			}
+		}
+		return AddressEntry{}, errors.New("address not found")
+	}
+	return AddressEntry{}, errors.New("unknow coin type")
+}
+
 func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error) {
 	var (
 		id        string
