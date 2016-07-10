@@ -19,7 +19,7 @@ type TData struct {
 	Address string `json:"address"`
 	Key     string `json:"key"`
 	OutAddr []Vout `json:"vout"`
-	Fee     int64  `json:"fee"`
+	Fee     uint64 `json:"fee"`
 }
 
 func TestNewRawTransaction(t *testing.T) {
@@ -35,6 +35,9 @@ func TestNewRawTransaction(t *testing.T) {
 		outAddr[i].Addr = o.Addr
 		outAddr[i].Value = o.Value
 	}
+
+	lastIdx := len(outAddr) - 1
+	outAddr[lastIdx].Value = outAddr[lastIdx].Value - td.Fee
 
 	utks := make([]UtxoWithkey, len(utxos))
 	for i, utxo := range utxos {
