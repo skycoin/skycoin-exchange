@@ -10,10 +10,6 @@ import (
 	"strings"
 )
 
-type BlkExplrUtxoArray struct {
-	Data []BlkExplrUtxo
-}
-
 type BlkExplrUtxo struct {
 	Address      string  `json:"address"`
 	Txid         string  `json:"txid"`
@@ -64,15 +60,15 @@ func getUtxosBlkExplr(addrs []string) ([]Utxo, error) {
 	if err != nil {
 		return []Utxo{}, err
 	}
-	us := BlkExplrUtxoArray{}
+	us := []BlkExplrUtxo{}
 	err = json.Unmarshal(data, &us)
 	if err != nil {
 		return []Utxo{}, err
 	}
 
-	utxos := make([]Utxo, len(us.Data))
-	for i, u := range us.Data {
-		utxos[i] = &u
+	utxos := make([]Utxo, len(us))
+	for i, u := range us {
+		utxos[i] = u
 	}
 	return utxos, nil
 }
