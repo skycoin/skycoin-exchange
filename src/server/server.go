@@ -27,6 +27,7 @@ type Server interface {
 	AddWatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
 	ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error)
+	PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey)
 }
 
 // Config store server's configuration.
@@ -178,21 +179,27 @@ func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
 	self.um.AddWatchAddress(ct, addr)
 }
 
+func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey) {
+	for _, u := range utxos {
+		self.um.PutUtxo(ct, u)
+	}
+}
+
 // GenerateWithdrawlTx create withdraw transaction.
 // act is the user that want to withdraw coins, it's balance need to be checked.
 // coinType specific which kind of coin the user want to withdraw.
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
-func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, error) {
+func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, []bitcoin.UtxoWithkey, error) {
 	bal := act.GetBalance(coinType)
 	fee := svr.GetFee()
 	if bal < amount+fee {
-		return []byte{}, errors.New("balance is not sufficient")
+		return []byte{}, []bitcoin.UtxoWithkey{}, errors.New("balance is not sufficient")
 	}
 
 	utxos, err := svr.ChooseUtxos(coinType, amount, ChooseUtxoTmout)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, []bitcoin.UtxoWithkey{}, err
 	}
 
 	var totalAmounts uint64
@@ -213,8 +220,8 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 
 	tx, err := bitcoin.NewTransaction(utxos, outAddrs)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, []bitcoin.UtxoWithkey{}, err
 	}
 
-	return bitcoin.DumpTxBytes(tx), nil
+	return bitcoin.DumpTxBytes(tx), utxos, nil
 }
