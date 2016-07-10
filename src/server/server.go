@@ -19,8 +19,10 @@ type Server interface {
 	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
 	GetAccount(id account.AccountID) (account.Accounter, error)
 	GetFee() uint64
-	GetPrivKey() cipher.SecKey
+	GetServPrivKey() cipher.SecKey
+	GetPrivKey(ct wallet.CoinType, addr string) (string, error)
 	GetNewAddress(coinType wallet.CoinType) string
+	ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.Utxo, error)
 }
 
 // Config store server's configuration.
@@ -46,9 +48,16 @@ type Config struct {
 
 type ExchangeServer struct {
 	account.AccountManager
+	UtxosManager
 	cfg    Config
 	wallet wallet.Wallet
 	wltMtx sync.RWMutex // mutex for protecting the wallet.
+}
+
+type UtxosManager interface {
+	ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.Utxo, error) // choose appropriate utxos and mark them as spending.
+	// AddWatchAddress(coinType wallet.CoinType, addr string)                     // add address which has unspent outputs in he server.
+	UpdateUtxos() // update the server's utxos.
 }
 
 // New create new server
@@ -93,8 +102,19 @@ func (self ExchangeServer) GetFee() uint64 {
 	return uint64(self.cfg.Fee)
 }
 
-func (self ExchangeServer) GetPrivKey() cipher.SecKey {
+// GetServPrivKey returnt he sever's private key.
+func (self ExchangeServer) GetServPrivKey() cipher.SecKey {
 	return self.cfg.Seckey
+}
+
+// GetPrivKey return the private key of specific address.
+func (self ExchangeServer) GetPrivKey(ct wallet.CoinType, addr string) (string, error) {
+	entry, err := self.wallet.GetAddressEntry(ct, addr)
+	if err != nil {
+		return "", err
+	}
+
+	return entry.Secret, nil
 }
 
 func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
@@ -107,6 +127,35 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	return addrEntry[0].Address
 }
 
+// func (self *ExchangeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
+
+// addrEntries, err := a.GetAddressEntries(coinType)
+// utxoks := []bitcoin.UtxoWithkey{}
+// if err != nil {
+// 	return utxoks, errors.New("get account addresses failed")
+// }
+//
+// addrBals := map[string]uint64{} // key: address, value: balance
+// addrKeys := map[string]string{} // key: address, value: private key
+// balList := []addrBalance{}
+//
+// for _, addrEntry := range addrEntries {
+// 	// get the balance of addr
+// 	b, err := a.GetAddressBalance(addrEntry.Address)
+// 	if err != nil {
+// 		return utxoks, err
+// 	}
+// 	addrBals[addrEntry.Address] = b
+// 	addrKeys[addrEntry.Address] = addrEntry.Secret
+// 	balList = append(balList, addrBalance{Addr: addrEntry.Address, Balance: b})
+// }
+//
+// // sort the bals list
+// sort.Sort(byBalance(balList))
+
+// 	return []bitcoin.UtxoWithkey{}, nil
+// }
+
 func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, error) {
 	bal := act.GetBalance(coinType)
 	fee := svr.GetFee()
@@ -114,7 +163,7 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 		return []byte{}, errors.New("balance is not sufficient")
 	}
 
-	utxos, err := chooseUtxos(svr, coinType, amount)
+	utxos, err := svr.ChooseUtxos(coinType, amount)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -139,32 +188,4 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 	}
 
 	return bitcoin.DumpTxBytes(tx), nil
-}
-
-func chooseUtxos(svr Server, coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
-	// addrEntries, err := a.GetAddressEntries(coinType)
-	// utxoks := []bitcoin.UtxoWithkey{}
-	// if err != nil {
-	// 	return utxoks, errors.New("get account addresses failed")
-	// }
-	//
-	// addrBals := map[string]uint64{} // key: address, value: balance
-	// addrKeys := map[string]string{} // key: address, value: private key
-	// balList := []addrBalance{}
-	//
-	// for _, addrEntry := range addrEntries {
-	// 	// get the balance of addr
-	// 	b, err := a.GetAddressBalance(addrEntry.Address)
-	// 	if err != nil {
-	// 		return utxoks, err
-	// 	}
-	// 	addrBals[addrEntry.Address] = b
-	// 	addrKeys[addrEntry.Address] = addrEntry.Secret
-	// 	balList = append(balList, addrBalance{Addr: addrEntry.Address, Balance: b})
-	// }
-	//
-	// // sort the bals list
-	// sort.Sort(byBalance(balList))
-
-	return []bitcoin.UtxoWithkey{}, nil
 }
