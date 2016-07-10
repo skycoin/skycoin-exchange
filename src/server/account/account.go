@@ -1,6 +1,7 @@
 package account
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -14,6 +15,7 @@ type Accounter interface {
 	GetID() AccountID                                  // return the account id.
 	GetBalance(ct wallet.CoinType) uint64              // return the account's balance.
 	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
+	DecreaseBalance(amt uint64) error
 }
 
 // ExchangeAccount maintains the account state
@@ -95,102 +97,16 @@ func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64
 	return nil
 }
 
-// GenerateWithdrawTx
-// func (self ExchangeAccount) GenerateWithdrawlTx(coinType wallet.CoinType, amount uint64, toAddr string, fee uint64) ([]byte, error) {
-// 	// check if balance sufficient
-// 	bla := self.GetBalance(coinType)
-//
-// 	if bla < (amount + fee) {
-// 		return []byte{}, errors.New("balance is not sufficient")
-// 	}
-//
-// 	// choose the appropriate utxos。
-// 	utxos, err := chooseUtxos(&self, coinType, amount)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-//
-// 	// create change address
-// 	changeAddr := self.GetNewAddress(coinType)
-//
-// 	outAddrs := []bitcoin.UtxoOut{
-// 		bitcoin.UtxoOut{Addr: toAddr, Value: amount},
-// 		bitcoin.UtxoOut{Addr: changeAddr, Value: bla - amount - fee},
-// 	}
-//
-// 	switch coinType {
-// 	case wallet.Bitcoin:
-// 		tx, err := bitcoin.NewTransaction(utxos, outAddrs)
-// 		if err != nil {
-// 			return []byte{}, errors.New("create bitcoin transaction failed")
-// 		}
-// 		return bitcoin.DumpTxBytes(tx), nil
-// 	default:
-// 		return []byte{}, errors.New("unknow coin type")
-// 	}
+func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
+	self.balance_mtx.Lock()
+	defer self.balance_mtx.Unlock()
+	if _, ok := self.balance[ct]; !ok {
+		return errors.New("unknow coin type")
+	}
+	if self.balance[ct] < amt {
+		return errors.New("account balance is not sufficient")
+	}
 
-// get utxos
-// utxos := []bitcoin.UtxoWithkey{}
-// switch coinType {
-// case wallet.Bitcoin:
-// 	for _, addrEntry := range addrs {
-// 		us := bitcoin.GetUnspentOutputs(addrEntry.Address)
-// 		usks := make([]bitcoin.UtxoWithkey, len(us))
-// 		for i, u := range us {
-// 			usk := bitcoin.NewUtxoWithKey(u, addrEntry.Secret)
-// 			usks[i] = usk
-// 		}
-// 		utxos = append(utxos, usks...)
-// 	}
-// 	msgTx, err := bitcoin.NewTransaction(utxos, outAddrs)
-// 	if err != nil {
-// 		return []byte{}, errors.New("create bitcoin transaction faild")
-// 	}
-// 	return bitcoin.DumpTxBytes(msgTx), nil
-// default:
-// 	return []byte{}, errors.New("unknow coin type")
-// }
-// }
-
-// func chooseUtxos(a Accounter, coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
-// 	addrEntries, err := a.GetAddressEntries(coinType)
-// 	utxoks := []bitcoin.UtxoWithkey{}
-// 	if err != nil {
-// 		return utxoks, errors.New("get account addresses failed")
-// 	}
-//
-// 	addrBals := map[string]uint64{} // key: address, value: balance
-// 	addrKeys := map[string]string{} // key: address, value: private key
-// 	balList := []addrBalance{}
-//
-// 	for _, addrEntry := range addrEntries {
-// 		// get the balance of addr
-// 		b, err := a.GetAddressBalance(addrEntry.Address)
-// 		if err != nil {
-// 			return utxoks, err
-// 		}
-// 		addrBals[addrEntry.Address] = b
-// 		addrKeys[addrEntry.Address] = addrEntry.Secret
-// 		balList = append(balList, addrBalance{Addr: addrEntry.Address, Balance: b})
-// 	}
-//
-// 	// sort the bals list
-// 	sort.Sort(byBalance(balList))
-//
-// 	return []bitcoin.UtxoWithkey{}, nil
-//
-// }
-
-// chooseUtxos choose utxos that can satisify the amount, and set the private key as well.
-// func (self ExchangeAccount) chooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
-// }
-
-// func (self ExchangeAccount) GetAddressEntries(coinType wallet.CoinType) ([]wallet.AddressEntry, error) {
-// 	// get address list of this account
-// 	wlt, err := wallet.GetWallet(self.wltID)
-// 	if err != nil {
-// 		return []wallet.AddressEntry{}, fmt.Errorf("account get wallet faild, wallet id:%s", self.wltID)
-// 	}
-// 	addresses := wlt.GetAddressEntries(coinType)
-// 	return addresses, nil
-// }
+	self.balance[ct] = self.balance[ct] - amt
+	return nil
+}
