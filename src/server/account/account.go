@@ -15,8 +15,8 @@ type Accounter interface {
 	GetID() AccountID                                  // return the account id.
 	GetBalance(ct wallet.CoinType) uint64              // return the account's balance.
 	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
-	DecreaseBalance(amt uint64) error
-	IncreaseBalance(amt uint64) error
+	DecreaseBalance(ct wallet.CoinType, amt uint64) error
+	IncreaseBalance(ct wallet.CoinType, amt uint64) error
 }
 
 // ExchangeAccount maintains the account state
