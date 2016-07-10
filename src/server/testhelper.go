@@ -91,6 +91,14 @@ func (fa *FakeAccount) AddDepositAddress(ct wallet.CoinType, addr string) {
 
 }
 
+func (fa *FakeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
+	return nil
+}
+
+func (fa *FakeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
+	return nil
+}
+
 func (fs *FakeServer) CreateAccountWithPubkey(pk cipher.PubKey) (account.Accounter, error) {
 	fs.A = &FakeAccount{ID: pk.Hex()}
 	return fs.A, nil
