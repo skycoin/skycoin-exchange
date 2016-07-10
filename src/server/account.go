@@ -119,7 +119,7 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		tx, err := GenerateWithdrawlTx(svr, a, ct, wr.Coins, wr.OutputAddress)
+		tx, usingUtxos, err := GenerateWithdrawlTx(svr, a, ct, wr.Coins, wr.OutputAddress)
 		if err != nil {
 			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
 			return
@@ -134,10 +134,12 @@ func Withdraw(svr Server) gin.HandlerFunc {
 
 			newTxid, err := bitcoin_interface.BroadcastTx(&t)
 			if err != nil {
+				// send utxos back.
+				svr.PutUtxos(ct, usingUtxos)
 				Reply(c, 500, ErrorMsg{Code: 500, Error: err.Error()})
 			}
 
-			a.DecreaseBalance(wr.Coins)
+			a.DecreaseBalance(ct, wr.Coins)
 
 			resp := WithdrawResponse{
 				AccountID: wr.AccountID,

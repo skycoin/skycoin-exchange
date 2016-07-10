@@ -115,6 +115,10 @@ func (fs *FakeServer) Run() {
 
 }
 
+func (fs *FakeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey) {
+
+}
+
 func (fs FakeServer) GetFee() uint64 {
 	return fs.Fee
 }
