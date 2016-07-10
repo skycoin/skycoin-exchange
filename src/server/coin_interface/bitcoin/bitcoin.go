@@ -24,6 +24,7 @@ type Utxo interface {
 	GetTxid() string
 	GetVout() uint32
 	GetAmount() uint64
+	GetAddress() string
 }
 
 // UtxoWithkey unspent output with privkey.
@@ -72,14 +73,14 @@ func GetBalance(addr []string) (uint64, error) {
 }
 
 // GetUnspentOutputs return the unspent outputs
-func GetUnspentOutputs(addr string) []Utxo {
-	return getUtxosBlkChnInfo(addr)
+func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
+	return getUtxosBlkExplr(addrs)
 }
 
 func NewUtxoWithKey(utxo Utxo, key string) UtxoWithkey {
-	return BlkChnUtxoWithkey{
-		BlkChnUtxo: utxo.(BlkChnUtxo),
-		Privkey:    key,
+	return BlkExplrUtxoWithkey{
+		BlkExplrUtxo: utxo.(BlkExplrUtxo),
+		Privkey:      key,
 	}
 }
 
@@ -96,7 +97,10 @@ func (self *Manager) UpdateOutputs() {
 	//get all unspent outputs for all watch addresses
 	var list []Utxo
 	for _, addr := range self.WatchAddresses {
-		ux := GetUnspentOutputs(addr)
+		ux, err := GetUnspentOutputs(addr)
+		if err != nil {
+			panic(err)
+		}
 		list = append(list, ux...)
 	}
 	latestUxMap := make(map[string]Utxo)
