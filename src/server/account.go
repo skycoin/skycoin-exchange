@@ -136,6 +136,9 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			if err != nil {
 				Reply(c, 500, ErrorMsg{Code: 500, Error: err.Error()})
 			}
+
+			a.DecreaseBalance(wr.Coins)
+
 			resp := WithdrawResponse{
 				AccountID: wr.AccountID,
 				NewTxid:   newTxid,
