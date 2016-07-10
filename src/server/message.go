@@ -62,7 +62,7 @@ type WithdrawRequest struct {
 
 type WithdrawResponse struct {
 	AccountID string `json:"account_id"`
-	Tx        []byte `json:"tx"` // signed transaction
+	NewTxid   string `json:"new_txid"` // signed transaction
 }
 
 func MustToContentRequest(r interface{}, id string, key []byte) ContentRequest {
