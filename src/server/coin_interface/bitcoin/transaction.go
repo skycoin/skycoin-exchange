@@ -101,7 +101,7 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) 
 // The transaction is broadcast to the bitcoin network using this API:
 //    https://github.com/bitpay/insight-api
 //
-func BroadcastTx(tx *wire.MsgTx) {
+func BroadcastTx(tx *wire.MsgTx) (string, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	tx.Serialize(buf)
 	hexstr := hex.EncodeToString(buf.Bytes())
@@ -109,23 +109,24 @@ func BroadcastTx(tx *wire.MsgTx) {
 	url := "https://insight.bitpay.com/api/tx/send"
 	contentType := "application/json"
 
-	fmt.Printf("Sending transaction to: %s\n", url)
+	// fmt.Printf("Sending transaction to: %s\n", url)
 	sendTxJson := &sendTxJson{RawTx: hexstr}
 	j, err := json.Marshal(sendTxJson)
 	if err != nil {
-		log.Fatal(fmt.Errorf("Broadcasting the tx failed: %v", err))
+		return "", fmt.Errorf("Broadcasting the tx failed: %v", err)
 	}
 	buf = bytes.NewBuffer(j)
 	resp, err := http.Post(url, contentType, buf)
 	if err != nil {
-		log.Fatal(fmt.Errorf("Broadcasting the tx failed: %v", err))
+		return "", fmt.Errorf("Broadcasting the tx failed: %v", err)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	fmt.Printf("The sending api responded with:\n%s\n", b)
+	// fmt.Printf("The sending api responded with:\n%s\n", b)
+	return string(b), nil
 }
 
 func DumpTxBytes(tx *wire.MsgTx) []byte {
