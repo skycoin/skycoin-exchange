@@ -47,6 +47,10 @@ func (bk BlkChnUtxoWithkey) GetPrivKey() string {
 	return bk.Privkey
 }
 
+func (bk BlkChnUtxo) GetAddress() string {
+	return ""
+}
+
 // GetUtxosBlkChnInfo get unspent outputs from blockchain.info
 // https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
 func getUtxosBlkChnInfo(addr string) []Utxo {

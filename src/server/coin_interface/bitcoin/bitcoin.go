@@ -97,7 +97,7 @@ func (self *Manager) UpdateOutputs() {
 	//get all unspent outputs for all watch addresses
 	var list []Utxo
 	for _, addr := range self.WatchAddresses {
-		ux, err := GetUnspentOutputs(addr)
+		ux, err := GetUnspentOutputs([]string{addr})
 		if err != nil {
 			panic(err)
 		}
