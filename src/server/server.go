@@ -6,6 +6,7 @@ import (
 	"log"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
@@ -20,7 +21,7 @@ type Server interface {
 	GetAccount(id account.AccountID) (account.Accounter, error)
 	GetFee() uint64
 	GetServPrivKey() cipher.SecKey
-	GetPrivKey(ct wallet.CoinType, addr string) (string, error)
+	AddWatchAddress()
 	GetNewAddress(coinType wallet.CoinType) string
 	ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.Utxo, error)
 }
@@ -48,16 +49,10 @@ type Config struct {
 
 type ExchangeServer struct {
 	account.AccountManager
-	UtxosManager
+	um     UtxoManager
 	cfg    Config
 	wallet wallet.Wallet
 	wltMtx sync.RWMutex // mutex for protecting the wallet.
-}
-
-type UtxosManager interface {
-	ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.Utxo, error) // choose appropriate utxos and mark them as spending.
-	// AddWatchAddress(coinType wallet.CoinType, addr string)                     // add address which has unspent outputs in he server.
-	UpdateUtxos() // update the server's utxos.
 }
 
 // New create new server
@@ -127,35 +122,50 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	return addrEntry[0].Address
 }
 
-// func (self *ExchangeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.UtxoWithkey, error) {
+// ChooseUtxos choose appropriate utxos, if time out, and not found enough utxos,
+// the utxos got before will put back to the utxos pool, and return error.
+func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Millisecond) ([]bitcoin.UtxoWithkey, error) {
+	var totalAmount uint64
+	utxos := []bitcoin.UtxoWithkey{}
+	for {
+		select {
+		case utxo := <-self.um.GetUtxo(ct):
+			// get private key
+			key, err := self.GetPrivKey(ct, utxo.GetAddress())
+			if err != nil {
+				// put utxo back.
+				return []bitcoin.UtxoWithkey{}, err
+			}
 
-// addrEntries, err := a.GetAddressEntries(coinType)
-// utxoks := []bitcoin.UtxoWithkey{}
-// if err != nil {
-// 	return utxoks, errors.New("get account addresses failed")
-// }
-//
-// addrBals := map[string]uint64{} // key: address, value: balance
-// addrKeys := map[string]string{} // key: address, value: private key
-// balList := []addrBalance{}
-//
-// for _, addrEntry := range addrEntries {
-// 	// get the balance of addr
-// 	b, err := a.GetAddressBalance(addrEntry.Address)
-// 	if err != nil {
-// 		return utxoks, err
-// 	}
-// 	addrBals[addrEntry.Address] = b
-// 	addrKeys[addrEntry.Address] = addrEntry.Secret
-// 	balList = append(balList, addrBalance{Addr: addrEntry.Address, Balance: b})
-// }
-//
-// // sort the bals list
-// sort.Sort(byBalance(balList))
+			utxok := bitcoin.NewUtxoWithKey(utxo, key)
+			utxos = append(utxos, utxok)
 
-// 	return []bitcoin.UtxoWithkey{}, nil
-// }
+			totalAmount += utxo.GetAmount()
+			if totalAmount >= (amount + self.GetFee()) {
+				close(c)
+				return utxos, nil
+			}
 
+		case <-time.After(tm):
+			// put utxos back
+			for _, u := range utxos {
+				self.um.PutUtxo(ct, u)
+			}
+			return []bitcoin.UtxoWithkey{}, errors.New("choose utxo time out")
+		}
+	}
+}
+
+// AddWatchAddress add watch address for utxo manager.
+func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
+	self.um.AddWatchAddress(ct, addr)
+}
+
+// GenerateWithdrawlTx create withdraw transaction.
+// act is the user that want to withdraw coins, it's balance need to be checked.
+// coinType specific which kind of coin the user want to withdraw.
+// amount is the number of coins that want to withdraw.
+// toAddr is the address that the coins will be sent to.
 func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, error) {
 	bal := act.GetBalance(coinType)
 	fee := svr.GetFee()
@@ -173,13 +183,15 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 		totalAmounts += u.GetAmount()
 	}
 
-	// generate a change address
-	chgAddr := svr.GetNewAddress(coinType)
+	outAddrs := []bitcoin.UtxoOut{}
 	chgAmt := totalAmounts - fee - amount
-
-	outAddrs := []bitcoin.UtxoOut{
-		bitcoin.UtxoOut{Addr: toAddr, Value: amount},
-		bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt},
+	if chgAddr > 0 {
+		// generate a change address
+		chgAddr := svr.GetNewAddress(coinType)
+		svr.AddWatchAddress(coinType, chgAddr)
+		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount}, bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt})
+	} else {
+		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount})
 	}
 
 	tx, err := bitcoin.NewTransaction(utxos, outAddrs)
