@@ -16,6 +16,7 @@ type Accounter interface {
 	GetBalance(ct wallet.CoinType) uint64              // return the account's balance.
 	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
 	DecreaseBalance(amt uint64) error
+	IncreaseBalance(amt uint64) error
 }
 
 // ExchangeAccount maintains the account state
@@ -107,6 +108,17 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 		return errors.New("account balance is not sufficient")
 	}
 
-	self.balance[ct] = self.balance[ct] - amt
+	self.balance[ct] -= amt
+	return nil
+}
+
+func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
+	self.balance_mtx.Lock()
+	defer self.balance_mtx.Unlock()
+	if _, ok := self.balance[ct]; !ok {
+		return errors.New("unknow coin type")
+	}
+
+	self.balance[ct] += amt
 	return nil
 }
