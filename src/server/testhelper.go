@@ -5,9 +5,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -109,8 +111,15 @@ func (fs FakeServer) GetFee() uint64 {
 	return fs.Fee
 }
 
-func (fs FakeServer) GetPrivKey() cipher.SecKey {
+func (fs FakeServer) GetServPrivKey() cipher.SecKey {
 	return fs.Seckey
+}
+func (fs *FakeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
+
+}
+
+func (fs *FakeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error) {
+	return []bitcoin.UtxoWithkey{}, nil
 }
 
 func (fs *FakeServer) GetNewAddress(ct wallet.CoinType) string {
