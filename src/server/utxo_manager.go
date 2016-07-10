@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 )
@@ -22,7 +23,7 @@ type ExUtxoManager struct {
 }
 
 func (eum ExUtxoManager) Start(closing chan bool) {
-	fmt.Println("exchange-server start the utxo manager")
+	glog.Info("exchange-server start the utxo manager")
 	t := time.Tick(CheckTick)
 	for {
 		select {
@@ -32,7 +33,7 @@ func (eum ExUtxoManager) Start(closing chan bool) {
 			// check new bitcoin utxos.
 			newUtxos, err := eum.checkNewBtcUtxo()
 			if err != nil {
-				fmt.Println(err)
+				glog.Error(err)
 				break
 			}
 
