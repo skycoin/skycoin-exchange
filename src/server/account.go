@@ -1,12 +1,15 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/btcsuite/btcd/wire"
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -122,11 +125,25 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			return
 		}
 
-		resp := WithdrawResponse{
-			AccountID: wr.AccountID,
-			Tx:        tx,
+		switch ct {
+		case wallet.Bitcoin:
+			t := wire.MsgTx{}
+			if err := t.Deserialize(bytes.NewBuffer(tx)); err != nil {
+				Reply(c, 500, ErrorMsg{Code: 500, Error: err.Error()})
+			}
+
+			newTxid, err := bitcoin_interface.BroadcastTx(&t)
+			if err != nil {
+				Reply(c, 500, ErrorMsg{Code: 500, Error: err.Error()})
+			}
+			resp := WithdrawResponse{
+				AccountID: wr.AccountID,
+				NewTxid:   newTxid,
+			}
+			Reply(c, 200, resp)
+			// TODO:
+			// case wallet.Skycoin:
 		}
-		Reply(c, 200, resp)
 	}
 }
 
