@@ -29,7 +29,8 @@ func TestNewRawTransaction(t *testing.T) {
 	err = json.Unmarshal(d, &td)
 	assert.Nil(t, err)
 
-	utxos := GetUnspentOutputs(td.Address)
+	utxos, err := GetUnspentOutputs([]string{td.Address})
+	assert.Nil(t, err)
 	outAddr := make([]UtxoOut, len(td.OutAddr))
 	for i, o := range td.OutAddr {
 		outAddr[i].Addr = o.Addr
