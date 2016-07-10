@@ -15,25 +15,29 @@ import (
 	"github.com/skycoin/skycoin/src/util"
 )
 
+var ChooseUtxoTmout = 1 * time.Second
+var CheckTick = 5 * time.Second
+
 type Server interface {
 	Run()
 	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
 	GetAccount(id account.AccountID) (account.Accounter, error)
 	GetFee() uint64
 	GetServPrivKey() cipher.SecKey
-	AddWatchAddress()
+	AddWatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
-	ChooseUtxos(coinType wallet.CoinType, amount uint64) ([]bitcoin.Utxo, error)
+	ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error)
 }
 
 // Config store server's configuration.
 type Config struct {
-	Port       int
-	Fee        int
-	DataDir    string
-	WalletName string
-	Seed       string
-	Seckey     cipher.SecKey
+	Port         int
+	Fee          int
+	DataDir      string
+	WalletName   string
+	Seed         string
+	Seckey       cipher.SecKey
+	UtxoPoolSize int
 }
 
 /*
@@ -81,6 +85,15 @@ func New(cfg Config) Server {
 		cfg:            cfg,
 		wallet:         wlt,
 		AccountManager: account.NewExchangeAccountManager(),
+		um: &ExUtxoManager{
+			UtxosCh: map[wallet.CoinType]chan bitcoin.Utxo{
+				wallet.Bitcoin: make(chan bitcoin.Utxo),
+				wallet.Skycoin: make(chan bitcoin.Utxo),
+			},
+			UtxoStateMap: map[wallet.CoinType]map[string]bitcoin.Utxo{
+				wallet.Bitcoin: make(map[string]bitcoin.Utxo),
+				wallet.Skycoin: make(map[string]bitcoin.Utxo)},
+		},
 	}
 	return s
 }
@@ -88,8 +101,12 @@ func New(cfg Config) Server {
 func (self *ExchangeServer) Run() {
 	log.Println("skycoin-exchange server started, port:", self.cfg.Port)
 
-	r := NewRouter(self)
+	// start the utxo manager
+	c := make(chan bool)
+	go func() { self.um.Start(c) }()
 
+	// start the api server.
+	r := NewRouter(self)
 	r.Run(fmt.Sprintf(":%d", self.cfg.Port))
 }
 
@@ -124,7 +141,8 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 
 // ChooseUtxos choose appropriate utxos, if time out, and not found enough utxos,
 // the utxos got before will put back to the utxos pool, and return error.
-func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Millisecond) ([]bitcoin.UtxoWithkey, error) {
+// the tm is millisecond
+func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error) {
 	var totalAmount uint64
 	utxos := []bitcoin.UtxoWithkey{}
 	for {
@@ -133,7 +151,7 @@ func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm ti
 			// get private key
 			key, err := self.GetPrivKey(ct, utxo.GetAddress())
 			if err != nil {
-				// put utxo back.
+				self.um.PutUtxo(ct, utxo)
 				return []bitcoin.UtxoWithkey{}, err
 			}
 
@@ -142,7 +160,6 @@ func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm ti
 
 			totalAmount += utxo.GetAmount()
 			if totalAmount >= (amount + self.GetFee()) {
-				close(c)
 				return utxos, nil
 			}
 
@@ -173,7 +190,7 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 		return []byte{}, errors.New("balance is not sufficient")
 	}
 
-	utxos, err := svr.ChooseUtxos(coinType, amount)
+	utxos, err := svr.ChooseUtxos(coinType, amount, ChooseUtxoTmout)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -185,7 +202,7 @@ func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.Coin
 
 	outAddrs := []bitcoin.UtxoOut{}
 	chgAmt := totalAmounts - fee - amount
-	if chgAddr > 0 {
+	if chgAmt > 0 {
 		// generate a change address
 		chgAddr := svr.GetNewAddress(coinType)
 		svr.AddWatchAddress(coinType, chgAddr)
