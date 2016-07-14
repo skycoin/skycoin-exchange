@@ -28,7 +28,7 @@ type ContentRequest struct {
 
 type ContentResponse struct {
 	Success bool   `json:"success"`
-	Nonce   string `json:"nonce"`
+	Nonce   []byte `json:"nonce"`
 	Data    []byte `json:"data"`
 }
 
