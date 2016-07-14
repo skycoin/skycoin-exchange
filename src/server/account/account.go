@@ -46,7 +46,9 @@ func newExchangeAccount(id AccountID) ExchangeAccount {
 		balance: map[wallet.CoinType]uint64{
 			wallet.Bitcoin: 0,
 			wallet.Skycoin: 0,
-		}}
+		},
+		addresses: make(map[wallet.CoinType][]string),
+	}
 }
 
 func (self ExchangeAccount) GetID() AccountID {
