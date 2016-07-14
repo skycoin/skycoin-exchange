@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +46,7 @@ func Authorize(svr Server) gin.HandlerFunc {
 				// encapsulate the response in ContentResponse.
 				cr := MustToContentResponse(svr, pubkey, rsp)
 				c.JSON(code, cr)
+				return
 			}
 			c.JSON(code, rsp)
 			return
@@ -71,7 +71,7 @@ func MustToContentResponse(svr Server, pubkey cipher.PubKey, rsp interface{}) Co
 
 	return ContentResponse{
 		Success: true,
-		Nonce:   fmt.Sprintf("%x", nonce),
+		Nonce:   nonce,
 		Data:    resp,
 	}
 }
