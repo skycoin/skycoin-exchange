@@ -142,6 +142,7 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			a.DecreaseBalance(ct, wr.Coins)
 
 			resp := WithdrawResponse{
+				Success:   true,
 				AccountID: wr.AccountID,
 				NewTxid:   newTxid,
 			}
@@ -149,6 +150,43 @@ func Withdraw(svr Server) gin.HandlerFunc {
 			// TODO:
 			// case wallet.Skycoin:
 		}
+	}
+}
+
+func GetBalance(svr Server) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		breq := GetBalanceRequest{}
+		if err := getRequest(c, &breq); err != nil {
+			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
+			return
+		}
+		// convert to cipher.PubKey
+		pubkey, err := cipher.PubKeyFromHex(breq.AccountID)
+		if err != nil {
+			Reply(c, 400, ErrorMsg{Code: 400, Error: "error account id"})
+			return
+		}
+
+		a, err := svr.GetAccount(account.AccountID(pubkey))
+		if err != nil {
+			Reply(c, 404, ErrorMsg{Code: 404, Error: "account id does not exist"})
+			return
+		}
+
+		ct, err := wallet.ConvertCoinType(breq.CoinType)
+		if err != nil {
+			Reply(c, 400, ErrorMsg{Code: 400, Error: err.Error()})
+			return
+		}
+
+		bal := a.GetBalance(ct)
+		bres := GetBalanceResponse{
+			Success:   true,
+			AccountID: breq.AccountID,
+			CoinType:  breq.CoinType,
+			Balance:   int64(bal),
+		}
+		Reply(c, 200, bres)
 	}
 }
 
