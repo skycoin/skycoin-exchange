@@ -135,6 +135,45 @@ func Withdraw(cli Client) gin.HandlerFunc {
 		c.JSON(resp.StatusCode, em)
 	}
 }
+
+func GetBalance(cli Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		coinType := c.Query("coin_type")
+		gbr := server.GetBalanceRequest{
+			AccountID: cli.GetLocalPubKey().Hex(),
+			CoinType:  coinType,
+		}
+
+		key := cipher.ECDH(cli.GetServPubkey(), cli.GetLocalSecKey())
+		req := EncryptContentRequest(gbr, cli.GetLocalPubKey().Hex(), key).MustJson()
+		url := fmt.Sprintf("%s/account/balance", cli.GetServApiRoot())
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(req))
+		if err != nil {
+			panic(err)
+		}
+
+		// handle the response
+		if resp.StatusCode == 200 || resp.StatusCode == 201 {
+			rawdata, err := DecryptResponseBody(resp, cli.GetServPubkey(), cli.GetLocalSecKey())
+			if err != nil {
+				panic(err)
+			}
+			bres := server.GetBalanceResponse{}
+			if err := json.Unmarshal(rawdata, &bres); err != nil {
+				panic(err)
+			}
+			c.JSON(resp.StatusCode, bres)
+			return
+		}
+
+		em, err := GetErrorMsg(resp)
+		if err != nil {
+			panic(err)
+		}
+		c.JSON(resp.StatusCode, em)
+	}
+}
+
 func DecryptResponseBody(resp *http.Response, servPubkey cipher.PubKey, cliSeckey cipher.SecKey) ([]byte, error) {
 	// decrypt the data.
 	cnt := server.ContentRequest{}
