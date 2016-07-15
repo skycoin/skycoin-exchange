@@ -61,8 +61,21 @@ type WithdrawRequest struct {
 }
 
 type WithdrawResponse struct {
+	Success   bool   `json:"success"`
 	AccountID string `json:"account_id"`
 	NewTxid   string `json:"new_txid"` // signed transaction
+}
+
+type GetBalanceRequest struct {
+	AccountID string `json:"account_id"`
+	CoinType  string `json:"coin_type"`
+}
+
+type GetBalanceResponse struct {
+	Success   string `json:"success"`
+	AccountID string `json:"account_id"`
+	CoinType  string `json:"coin_type"`
+	Balance   int64  `json:"balance"`
 }
 
 func MustToContentRequest(r interface{}, id string, key []byte) ContentRequest {
