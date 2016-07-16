@@ -1,0 +1,14 @@
+package pp;
+
+import "pp.common.proto";
+
+message CreateAccountReq {
+  optional string pubkey = 1;
+}
+
+message CreateAccountRes {
+  required Result result = 1;
+
+  optional string account_id = 10;
+  optional int64 created_at = 20;
+}

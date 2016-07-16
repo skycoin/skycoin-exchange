@@ -1,0 +1,23 @@
+package pp;
+
+message Result {
+  required bool success = 1;
+
+  optional int32 code = 2;
+  optional string reason = 3;
+}
+
+message EmptyRes {
+  required Result result = 1;
+}
+
+enum ErrCode {
+    ErrCode_Success = 0;
+    ErrCode_WrongFormat = 10;
+    // ErrCode_WrongParams = 20;
+    // ErrCode_NotExits = 30;
+    // ErrCode_ServerError = 31;
+    // ErrCode_AlreadyExits = 32;
+    //
+    // ErrCode_DbOrmerError = 40;
+};

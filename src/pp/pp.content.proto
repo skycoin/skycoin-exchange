@@ -1,0 +1,12 @@
+package pp;
+
+message ContentReq {
+  optional string account_id = 1;
+  optional bytes nonce = 2;
+  optional bytes encryptdata = 3;
+}
+
+message ContentRes {
+  optional bytes nonce = 10;
+  optional bytes encryptdata = 20;
+}
