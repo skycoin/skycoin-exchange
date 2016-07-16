@@ -12,9 +12,9 @@ message EmptyRes {
 }
 
 enum ErrCode {
-    ErrCode_Success = 0;
-    ErrCode_WrongFormat = 10;
-    // ErrCode_WrongParams = 20;
+    Success = 0;
+    WrongFormat = 10;
+    WrongAccountId = 20;
     // ErrCode_NotExits = 30;
     // ErrCode_ServerError = 31;
     // ErrCode_AlreadyExits = 32;
