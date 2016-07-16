@@ -22,7 +22,7 @@ func PtrString(s string) *string {
 
 func MakeErrRes(err error) *EmptyRes {
 	res := &EmptyRes{}
-	res.Result = MakeResult(ErrCode_ErrCode_WrongFormat, err.Error())
+	res.Result = MakeResult(ErrCode_WrongFormat, err.Error())
 	return res
 }
 
@@ -45,7 +45,7 @@ func MakeResultWithCode(code ErrCode) *Result {
 
 func (r *Result) SetCode(code ErrCode) {
 	r.Code = PtrInt32(int32(code))
-	r.Success = PtrBool(code == ErrCode_ErrCode_Success)
+	r.Success = PtrBool(code == ErrCode_Success)
 	r.Reason = PtrString(code.String())
 }
 
