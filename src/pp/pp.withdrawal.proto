@@ -1,0 +1,17 @@
+package pp;
+
+import "pp.common.proto";
+
+message WithdrawalReq {
+  optional string account_id = 1;
+  optional string coin_type = 2;
+  optional uint64 coins = 3;
+  optional string output_address = 4;
+}
+
+message WithdrawalRes {
+  required Result result = 1;
+
+  optional string account_id = 10;
+  optional string new_txid = 20;
+}
