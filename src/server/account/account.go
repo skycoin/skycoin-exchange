@@ -55,23 +55,6 @@ func (self ExchangeAccount) GetID() AccountID {
 	return self.ID
 }
 
-// GetNewAddress generate new address for this account.
-// func (self *ExchangeAccount) GetNewAddress(ct wallet.CoinType) string {
-// 	// get the wallet.
-// 	wlt, err := wallet.GetWallet(self.wltID)
-// 	if err != nil {
-// 		panic(fmt.Sprintf("account get wallet faild, wallet id:%s", self.wltID))
-// 	}
-//
-// 	self.wlt_mtx.Lock()
-// 	defer self.wlt_mtx.Unlock()
-// 	addr, err := wlt.NewAddresses(ct, 1)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return addr[0].Address
-// }
-
 // Get the current recored balance.
 func (self *ExchangeAccount) GetBalance(coinType wallet.CoinType) uint64 {
 	self.balance_mtx.RLock()
@@ -84,10 +67,6 @@ func (self *ExchangeAccount) AddDepositAddress(coinType wallet.CoinType, addr st
 	self.addresses[coinType] = append(self.addresses[coinType], addr)
 	self.addr_mtx.Unlock()
 }
-
-// func (self ExchangeAccount) GetAddressBalance(addr string) (uint64, error) {
-// 	return bitcoin.GetBalance([]string{addr})
-// }
 
 // SetBalance update the balanace of specific coin.
 func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64) error {
