@@ -182,7 +182,7 @@ func Run() {
 
 	btcd := BtClient(&config, GetCerts("btcd"), config.btcd_host)
 	btcwallet := BtClient(&config, GetCerts("btcwallet"), config.btcwallet_host)
-	skycoin := SkyClient(&config, config.btcwallet_host)
+	skycoin, _ := SkyClient(&config, config.btcwallet_host)
 
 	actor := interact.NewActor(os.Stdin, os.Stdout)
 
