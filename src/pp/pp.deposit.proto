@@ -1,6 +1,5 @@
 package pp;
 
-import "pp.common.proto";
 
 message GetDepositAddrReq {
   optional string account_id = 1;
@@ -9,7 +8,6 @@ message GetDepositAddrReq {
 
 
 message GetDepositAddrRes {
-  required Result result = 1;
 
   optional string account_id = 10;
   optional string coin_type = 11;

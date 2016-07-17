@@ -1,13 +1,16 @@
 package pp;
 
-message ContentReq {
-  optional string account_id = 1;
+import "pp.common.proto";
+
+message EncryptReq {
+  optional string pubkey = 1;
   optional bytes nonce = 2;
   optional bytes encryptdata = 3;
 }
 
-message ContentRes {
-  optional string account_id = 1;
+message EncryptRes {
+  required Result result = 1;
+
   optional bytes nonce = 10;
   optional bytes encryptdata = 20;
 }
