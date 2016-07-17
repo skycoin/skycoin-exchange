@@ -1,5 +1,13 @@
 package pp
 
+import (
+	"encoding/json"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/skycoin/skycoin-exchange/src/xchacha20"
+	"github.com/skycoin/skycoin/src/cipher"
+)
+
 func PtrBool(b bool) *bool {
 	return &b
 }
@@ -56,4 +64,25 @@ func (r *Result) SetReason(reason string) {
 func (r *Result) SetCodeAndReason(code ErrCode, reason string) {
 	r.SetCode(code)
 	r.SetReason(reason)
+}
+
+func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, error) {
+	sp := cipher.MustPubKeyFromHex(pubkey)
+	cs := cipher.MustSecKeyFromHex(seckey)
+	cp := cipher.PubKeyFromSecKey(cs)
+	nonce := cipher.RandByte(xchacha20.NonceSize)
+	d, err := json.Marshal(r)
+	if err != nil {
+		return EncryptReq{}, err
+	}
+
+	ed, err := xchacha20.Encrypt([]byte(d), sp, cs, nonce)
+	if err != nil {
+		return EncryptReq{}, err
+	}
+	return EncryptReq{
+		Pubkey:      PtrString(cp.Hex()),
+		Nonce:       nonce,
+		Encryptdata: ed,
+	}, nil
 }
