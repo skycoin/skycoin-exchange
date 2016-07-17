@@ -1,4 +1,4 @@
-../../cmd/server/log/*
+../../cmd/server/log/
 coin_interface/bitcoin/test.json
 *.out
 tests/api/*.out
