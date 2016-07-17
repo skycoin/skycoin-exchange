@@ -12,8 +12,8 @@ func NewRouter(cli Client) *gin.Engine {
 	{
 		v1.POST("/accounts", CreateAccount(cli))
 		v1.GET("/deposit_address", GetNewAddress(cli))
-		// v1.POST("/account/withdrawal", Withdraw(cli))
-		// v1.GET("/account/balance", GetBalance(cli))
+		v1.GET("/account/balance", GetBalance(cli))
+		v1.POST("/account/withdrawal", Withdraw(cli))
 	}
 	return r
 }
