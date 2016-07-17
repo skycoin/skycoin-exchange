@@ -10,25 +10,13 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
-var ChooseUtxoTmout = 1 * time.Second
 var CheckTick = 5 * time.Second
-
-type Server interface {
-	Run()
-	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
-	GetAccount(id account.AccountID) (account.Accounter, error)
-	GetFee() uint64
-	GetServPrivKey() cipher.SecKey
-	AddWatchAddress(ct wallet.CoinType, addr string)
-	GetNewAddress(coinType wallet.CoinType) string
-	ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error)
-	PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey)
-}
 
 // Config store server's configuration.
 type Config struct {
@@ -61,7 +49,7 @@ type ExchangeServer struct {
 }
 
 // New create new server
-func New(cfg Config) Server {
+func New(cfg Config) engine.Exchange {
 	// init the data dir
 	path := util.InitDataDir(cfg.DataDir)
 
@@ -183,45 +171,4 @@ func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWit
 	for _, u := range utxos {
 		self.um.PutUtxo(ct, u)
 	}
-}
-
-// GenerateWithdrawlTx create withdraw transaction.
-// act is the user that want to withdraw coins, it's balance need to be checked.
-// coinType specific which kind of coin the user want to withdraw.
-// amount is the number of coins that want to withdraw.
-// toAddr is the address that the coins will be sent to.
-func GenerateWithdrawlTx(svr Server, act account.Accounter, coinType wallet.CoinType, amount uint64, toAddr string) ([]byte, []bitcoin.UtxoWithkey, error) {
-	bal := act.GetBalance(coinType)
-	fee := svr.GetFee()
-	if bal < amount+fee {
-		return []byte{}, []bitcoin.UtxoWithkey{}, errors.New("balance is not sufficient")
-	}
-
-	utxos, err := svr.ChooseUtxos(coinType, amount, ChooseUtxoTmout)
-	if err != nil {
-		return []byte{}, []bitcoin.UtxoWithkey{}, err
-	}
-
-	var totalAmounts uint64
-	for _, u := range utxos {
-		totalAmounts += u.GetAmount()
-	}
-
-	outAddrs := []bitcoin.UtxoOut{}
-	chgAmt := totalAmounts - fee - amount
-	if chgAmt > 0 {
-		// generate a change address
-		chgAddr := svr.GetNewAddress(coinType)
-		svr.AddWatchAddress(coinType, chgAddr)
-		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount}, bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt})
-	} else {
-		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount})
-	}
-
-	tx, err := bitcoin.NewTransaction(utxos, outAddrs)
-	if err != nil {
-		return []byte{}, []bitcoin.UtxoWithkey{}, err
-	}
-
-	return bitcoin.DumpTxBytes(tx), utxos, nil
 }
