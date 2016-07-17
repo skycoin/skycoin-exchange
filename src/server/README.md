@@ -45,7 +45,65 @@ Should operate over IRC like network
 
 === Statistics
 
-Keep track of 
+Keep track of
 - exchange balance net, in/out
 - how many Bitcoin/Skycoin flow into/out of the exchange (total in, total out)
 - how many coins flow between each other (capital flows)
+
+
+## message struct
+
+#### create account
+request
+{
+  pubkey string
+}
+
+response
+{
+  success bool
+  accountID string
+  createdAt string
+}
+
+#### negotiate nonce key
+request
+{
+  pubkey string
+}
+
+response
+{
+  pubkey string
+}
+
+#### transfer data
+request
+{
+  accountID string   // account id.
+  data []byte // encrypted data with nonce key.
+}
+
+response
+{
+  success bool
+  data []byte
+}
+
+##### get deposit address
+request
+{
+  accountID string
+  {
+    coinType string
+  }
+}
+
+response
+{
+  success bool
+  {
+    accountID string
+    depositeAddr string
+  }
+}
