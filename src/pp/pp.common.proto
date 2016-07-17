@@ -15,9 +15,15 @@ enum ErrCode {
     Success = 0;
     WrongFormat = 10;
     WrongAccountId = 20;
-    // ErrCode_NotExits = 30;
-    // ErrCode_ServerError = 31;
-    // ErrCode_AlreadyExits = 32;
+    WrongRequest = 21;
+
+    UnAuthorized = 31;
+    NotExits = 32;
+    AlreadyExits = 33;
+
+    ServerError = 40;
+
+    BroadcastTxFail = 50;
     //
     // ErrCode_DbOrmerError = 40;
 };
