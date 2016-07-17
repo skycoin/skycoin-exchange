@@ -6,9 +6,9 @@ import (
 	"regexp"
 
 	"github.com/gin-gonic/gin"
-	"github.com/skycoin/skycoin-exchange/src/chacha20"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/xchacha20"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -16,25 +16,23 @@ import (
 func Authorize(ee engine.Exchange) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var (
-			cnt_req   pp.ContentReq
-			rsp       interface{}
-			errRlt    *pp.EmptyRes
-			accountid string
-			cliPubkey cipher.PubKey
-			err       error
+			cnt_req pp.EncryptReq
+			errRlt  = &pp.EmptyRes{}
 		)
 
 		for {
+			// d, _ := ioutil.ReadAll(c.Request.Body)
+			// fmt.Println(string(d))
+
 			if c.BindJSON(&cnt_req) == nil {
-				accountid = cnt_req.GetAccountId()
-				cliPubkey, err = cipher.PubKeyFromHex(cnt_req.GetAccountId())
+				cliPubkey, err := cipher.PubKeyFromHex(cnt_req.GetPubkey())
 				if err != nil {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 					c.Abort()
 					break
 				}
 
-				data, err := chacha20.Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
+				data, err := xchacha20.Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
 				if err != nil {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					c.Abort()
@@ -53,28 +51,23 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 				c.Next()
 
 				// get response code
-				code := c.MustGet("code").(int)
-				rsp = c.MustGet("response")
-				break
+				if rsp, isExist := c.Get("response"); isExist {
+					// encrypt the response.
+					encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
+					encpt_res := pp.EncryptRes{
+						Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
+						Encryptdata: encryptData,
+						Nonce:       nonce,
+					}
+
+					c.JSON(200, encpt_res)
+				}
+				return
 			}
 			errRlt = pp.MakeErrRes(errors.New("bad request"))
 			break
 		}
-
-		if errRlt != nil {
-			c.JSON(200, *errRlt)
-			return
-		}
-
-		// encrypt the response.
-		encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
-		cnt_res := pp.ContentRes{
-			AccountId:   &accountid,
-			Encryptdata: encryptData,
-			Nonce:       nonce,
-		}
-
-		c.JSON(200, cnt_res)
+		c.JSON(200, *errRlt)
 	}
 }
 
@@ -90,10 +83,26 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 		panic(err)
 	}
 
-	nonce = cipher.RandByte(chacha20.NonceSize)
-	encryptData, err = chacha20.Encrypt(d, pubkey, seckey, nonce)
+	nonce = cipher.RandByte(xchacha20.NonceSize)
+	encryptData, err = xchacha20.Encrypt(d, pubkey, seckey, nonce)
 	if err != nil {
 		panic(err)
 	}
 	return
+}
+
+// func mustMakeEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{}) *pp.EncryptRes {
+// 	encryptData, nonce := mustEncryptRes(pubkey, seckey, rsp)
+// 	encpt_res := pp.EncryptRes{
+// 		Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
+// 		Encryptdata: encryptData,
+// 		Nonce:       nonce,
+// 	}
+// 	return &encpt_res
+// }
+
+// reply set the code and response in gin, the gin Security middleware
+// will encrypt the response, and send the encryped response to client.
+func reply(c *gin.Context, r interface{}) {
+	c.Set("response", r)
 }
