@@ -86,3 +86,15 @@ func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, 
 		Encryptdata: ed,
 	}, nil
 }
+
+func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) error {
+	p := cipher.MustPubKeyFromHex(pubkey)
+	s := cipher.MustSecKeyFromHex(seckey)
+	d, err := xchacha20.Decrypt(res.Encryptdata, p, s, res.GetNonce())
+	if err != nil {
+		return err
+	}
+
+	// unmarshal the data
+	return json.Unmarshal(d, v)
+}
