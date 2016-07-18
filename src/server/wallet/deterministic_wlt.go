@@ -88,7 +88,7 @@ func (self *DeterministicWallet) save() error {
 	// self.fileLock.Lock()
 	// defer self.fileLock.Unlock()
 	w := self.toWalletBase()
-	return util.SaveJSON(filepath.Join(WltDir, self.ID), w, 0600)
+	return util.SaveJSON(filepath.Join(wltDir, self.ID), w, 0600)
 }
 
 func (self *DeterministicWallet) SetID(id string) {

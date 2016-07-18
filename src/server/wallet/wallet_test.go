@@ -16,7 +16,7 @@ import (
 func TestNewWallet(t *testing.T) {
 	wlt, err := New("server.wlt", Deterministic, "test")
 	assert.Nil(t, err)
-	path := filepath.Join(WltDir, "server.wlt")
+	path := filepath.Join(wltDir, "server.wlt")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Fail()
 	}
@@ -29,7 +29,7 @@ func TestNewWallet(t *testing.T) {
 func TestLoadWallet(t *testing.T) {
 	wlt, err := New("server.wlt", Deterministic, "test")
 	assert.Nil(t, err)
-	path := filepath.Join(WltDir, "server.wlt")
+	path := filepath.Join(wltDir, "server.wlt")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Fail()
 	}
