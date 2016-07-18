@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/server"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
@@ -40,10 +40,9 @@ func main() {
 	flag.Parse()
 	key, err := cipher.SecKeyFromHex(sk)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 	cfg.Seckey = key
-
 	s := server.New(cfg)
 	s.Run()
 }

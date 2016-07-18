@@ -53,8 +53,10 @@ func New(cfg Config) engine.Exchange {
 	// init the data dir
 	path := util.InitDataDir(cfg.DataDir)
 
+	// init the wallet dir.
 	// set the wallet dir.
-	wallet.WltDir = filepath.Join(path, "wallets")
+	// wallet.WltDir = filepath.Join(path, "wallets")
+	wallet.InitDir(filepath.Join(path, "wallets"))
 
 	// get wallet
 	var wlt wallet.Wallet
