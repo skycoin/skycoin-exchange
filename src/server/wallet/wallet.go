@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/golang/glog"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -16,7 +17,7 @@ type WalletID string
 
 var (
 	// GWallets Wallets
-	WltDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/wallets")
+	wltDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/wallets")
 )
 
 const (
@@ -116,8 +117,10 @@ func New(name string, wltType WalletType, seed string) (Wallet, error) {
 }
 
 // Load load wallet from specific local disk.
-func Load(path string) (Wallet, error) {
-	w, err := loadWalletFromFile(path)
+func Load(name string) (Wallet, error) {
+	p := filepath.Join(wltDir, name)
+	glog.Info("load wallet")
+	w, err := loadWalletFromFile(p)
 	if err != nil {
 		return nil, err
 	}
@@ -126,14 +129,25 @@ func Load(path string) (Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	concretWlt.SetID(filepath.Base(path))
+	concretWlt.SetID(name)
 	return concretWlt, nil
 }
 
 func IsExist(wltName string) bool {
-	p := filepath.Join(WltDir, wltName)
+	p := filepath.Join(wltDir, wltName)
 	_, err := os.Stat(p)
-	return os.IsExist(err)
+	return !os.IsNotExist(err)
+}
+
+func InitDir(dir string) {
+	// check if the wallet dir is exist.
+	wltDir = dir
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// create the dir
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func loadWalletFromFile(filename string) (WalletBase, error) {
