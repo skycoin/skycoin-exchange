@@ -18,7 +18,12 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 		// generate account pubkey/privkey pair, pubkey is the account id.
 		errRlt := &pp.EmptyRes{}
 		for {
-			act := cli.CreateAccount()
+			act, err := cli.CreateAccount()
+			if err != nil {
+				log.Println(err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
 			r := pp.CreateAccountReq{
 				Pubkey: pp.PtrString(act.Pubkey.Hex()),
 			}
@@ -42,8 +47,6 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.CreateAccountRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), act.Seckey.Hex(), &v)
-
-				StoreAccount(*act, "")
 				c.JSON(200, &v)
 				return
 			} else {
@@ -62,6 +65,11 @@ func GetNewAddress(cli Client) gin.HandlerFunc {
 			cointype, exist := c.GetQuery("cointype")
 			if !exist {
 				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
+				break
+			}
+
+			if !cli.HasAccount() {
+				errRlt = pp.MakeErrRes(errors.New("no account found"))
 				break
 			}
 
