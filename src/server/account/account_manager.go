@@ -2,9 +2,15 @@ package account
 
 import (
 	"errors"
+	"path/filepath"
 	"sync"
 
 	"github.com/skycoin/skycoin/src/cipher"
+	"github.com/skycoin/skycoin/src/util"
+)
+
+var (
+	accountDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/account/server")
 )
 
 type AccountManager interface {
@@ -16,9 +22,8 @@ type AccountManager interface {
 
 // AccountManager manage all the accounts in the server.
 type ExchangeAccountManager struct {
-	Accounts map[AccountID]Accounter
+	Accounts map[AccountID]Accounter `json:"accounts"`
 	mtx      sync.RWMutex
-	//AccountMap map[cipher.Address]uint64
 }
 
 // NewAccountManager
