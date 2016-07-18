@@ -13,7 +13,7 @@ type AccountID cipher.PubKey
 
 type Accounter interface {
 	GetID() AccountID                                  // return the account id.
-	GetBalance(ct wallet.CoinType) uint64              // return the account's balance.
+	GetBalance(ct wallet.CoinType) uint64              // return the account's Balance.
 	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
 	DecreaseBalance(ct wallet.CoinType, amt uint64) error
 	IncreaseBalance(ct wallet.CoinType, amt uint64) error
@@ -21,33 +21,22 @@ type Accounter interface {
 
 // ExchangeAccount maintains the account state
 type ExchangeAccount struct {
-	ID          AccountID                  // account id
-	balance     map[wallet.CoinType]uint64 // the balance should not be accessed directly.
-	balance_mtx sync.RWMutex               // mutex used to protect the balance's concurrent read and write.
-	addresses   map[wallet.CoinType][]string
+	ID          AccountID                    `json:"id"`        // account id
+	Balance     map[wallet.CoinType]uint64   `json:"balance"`   // the Balance should not be accessed directly.
+	Addresses   map[wallet.CoinType][]string `json:"addresses"` //
 	addr_mtx    sync.Mutex
+	balance_mtx sync.RWMutex // mutex used to protect the Balance's concurrent read and write.
 }
-
-type addrBalance struct {
-	Addr    string
-	Balance uint64
-}
-
-type byBalance []addrBalance
-
-func (bb byBalance) Len() int           { return len(bb) }
-func (bb byBalance) Swap(i, j int)      { bb[i], bb[j] = bb[j], bb[i] }
-func (bb byBalance) Less(i, j int) bool { return bb[i].Balance < bb[j].Balance }
 
 // newExchangeAccount helper function for generating and initialize ExchangeAccount
 func newExchangeAccount(id AccountID) ExchangeAccount {
 	return ExchangeAccount{
 		ID: id,
-		balance: map[wallet.CoinType]uint64{
+		Balance: map[wallet.CoinType]uint64{
 			wallet.Bitcoin: 0,
 			wallet.Skycoin: 0,
 		},
-		addresses: make(map[wallet.CoinType][]string),
+		Addresses: make(map[wallet.CoinType][]string),
 	}
 }
 
@@ -55,16 +44,16 @@ func (self ExchangeAccount) GetID() AccountID {
 	return self.ID
 }
 
-// Get the current recored balance.
+// Get the current recored Balance.
 func (self *ExchangeAccount) GetBalance(coinType wallet.CoinType) uint64 {
 	self.balance_mtx.RLock()
 	defer self.balance_mtx.RUnlock()
-	return self.balance[coinType]
+	return self.Balance[coinType]
 }
 
 func (self *ExchangeAccount) AddDepositAddress(coinType wallet.CoinType, addr string) {
 	self.addr_mtx.Lock()
-	self.addresses[coinType] = append(self.addresses[coinType], addr)
+	self.Addresses[coinType] = append(self.Addresses[coinType], addr)
 	self.addr_mtx.Unlock()
 }
 
@@ -72,34 +61,38 @@ func (self *ExchangeAccount) AddDepositAddress(coinType wallet.CoinType, addr st
 func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
-	if _, ok := self.balance[coinType]; !ok {
+	if _, ok := self.Balance[coinType]; !ok {
 		return fmt.Errorf("the account does not have %s", coinType)
 	}
-	self.balance[coinType] = balance
+	self.Balance[coinType] = balance
 	return nil
 }
 
 func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
-	if _, ok := self.balance[ct]; !ok {
+	if _, ok := self.Balance[ct]; !ok {
 		return errors.New("unknow coin type")
 	}
-	if self.balance[ct] < amt {
-		return errors.New("account balance is not sufficient")
+	if self.Balance[ct] < amt {
+		return errors.New("account Balance is not sufficient")
 	}
 
-	self.balance[ct] -= amt
+	self.Balance[ct] -= amt
 	return nil
 }
 
 func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
-	if _, ok := self.balance[ct]; !ok {
+	if _, ok := self.Balance[ct]; !ok {
 		return errors.New("unknow coin type")
 	}
 
-	self.balance[ct] += amt
+	self.Balance[ct] += amt
 	return nil
+}
+
+func init() {
+	// init the account dir of server.
 }
