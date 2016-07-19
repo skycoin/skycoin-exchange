@@ -83,6 +83,14 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 	return addrEntries, nil
 }
 
+func (self DeterministicWallet) GetCoinTypes() []CoinType {
+	cts := []CoinType{}
+	for ct, _ := range self.Seed {
+		cts = append(cts, ct)
+	}
+	return cts
+}
+
 // Save the wallet
 func (self *DeterministicWallet) save() error {
 	// self.fileLock.Lock()
