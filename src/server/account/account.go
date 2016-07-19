@@ -3,10 +3,17 @@ package account
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
+	"github.com/skycoin/skycoin/src/util"
+)
+
+var (
+	acntDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/account/server")
 )
 
 type AccountID cipher.PubKey
@@ -21,11 +28,31 @@ type Accounter interface {
 
 // ExchangeAccount maintains the account state
 type ExchangeAccount struct {
-	ID          AccountID                    `json:"id"`        // account id
-	Balance     map[wallet.CoinType]uint64   `json:"balance"`   // the Balance should not be accessed directly.
-	Addresses   map[wallet.CoinType][]string `json:"addresses"` //
+	ID          AccountID                    // account id
+	Balance     map[wallet.CoinType]uint64   // the Balance should not be accessed directly.
+	Addresses   map[wallet.CoinType][]string // deposit addresses
 	addr_mtx    sync.Mutex
 	balance_mtx sync.RWMutex // mutex used to protect the Balance's concurrent read and write.
+}
+
+type exchgAcntJson struct {
+	ID        []byte              `json:"id"`
+	Balance   map[string]uint64   `json:"balance"`
+	Addresses map[string][]string `json:"addresses"`
+}
+
+func InitDir(path string) {
+	if path == "" {
+		path = acntDir
+	} else {
+		acntDir = path
+	}
+	// create the account dir if not exist.
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0777); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // newExchangeAccount helper function for generating and initialize ExchangeAccount
@@ -93,6 +120,49 @@ func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) err
 	return nil
 }
 
-func init() {
-	// init the account dir of server.
+func (self ExchangeAccount) ToMarshalable() exchgAcntJson {
+	id := cipher.PubKey(self.ID)
+	eaj := exchgAcntJson{
+		ID:        id[:],
+		Balance:   make(map[string]uint64),
+		Addresses: make(map[string][]string),
+	}
+
+	for ct, bal := range self.Balance {
+		eaj.Balance[ct.String()] = bal
+	}
+
+	for ct, addrs := range self.Addresses {
+		eaj.Addresses[ct.String()] = append(eaj.Addresses[ct.String()], addrs...)
+	}
+	return eaj
+}
+
+func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
+	pk := cipher.PubKey{}
+	copy(pk[:], self.ID[0:33])
+	at := ExchangeAccount{
+		ID:        AccountID(pk),
+		Balance:   make(map[wallet.CoinType]uint64),
+		Addresses: make(map[wallet.CoinType][]string),
+	}
+
+	// convert balance.
+	for ct, bal := range self.Balance {
+		t, err := wallet.ConvertCoinType(ct)
+		if err != nil {
+			panic(err)
+		}
+		at.Balance[t] = bal
+	}
+
+	// convert address
+	for ct, addrs := range self.Addresses {
+		t, err := wallet.ConvertCoinType(ct)
+		if err != nil {
+			panic(err)
+		}
+		at.Addresses[t] = append(at.Addresses[t], addrs...)
+	}
+	return &at
 }
