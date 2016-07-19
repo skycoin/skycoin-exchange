@@ -7,7 +7,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 func GetBalance(ee engine.Exchange) gin.HandlerFunc {
@@ -22,8 +21,8 @@ func GetBalance(ee engine.Exchange) gin.HandlerFunc {
 			}
 
 			// convert to cipher.PubKey
-			pubkey, err := cipher.PubKeyFromHex(breq.GetAccountId())
-			if err != nil {
+			pubkey := pp.BytesToPubKey(breq.GetAccountId())
+			if err := pubkey.Verify(); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}

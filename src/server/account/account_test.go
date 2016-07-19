@@ -1,11 +1,5 @@
 package account
 
-import (
-	"os"
-	"path/filepath"
-	"testing"
-)
-
 // type funcHandler func(ema AccountManager)
 
 // func DataMaintainer(f funcHandler) {
@@ -74,20 +68,20 @@ import (
 // 	})
 // }
 
-func TestMsgAuth(t *testing.T) {
-	// DataMaintainer(func(am AccountManager) {
-	// 	_, s, err := am.CreateAccount()
-	// 	assert.Nil(t, err)
-	// 	addr := cipher.AddressFromSecKey(s)
-	//
-	// 	ma := CreateMsgAuth(s, MsgAuth{Msg: []byte{"hello world"}})
-	//
-	// 	CheckMsgAuth(ma)
-	//
-	//
-	// 	// cipher.a.GetAccountID()
-	// })
-}
+// func TestMsgAuth(t *testing.T) {
+// DataMaintainer(func(am AccountManager) {
+// 	_, s, err := am.CreateAccount()
+// 	assert.Nil(t, err)
+// 	addr := cipher.AddressFromSecKey(s)
+//
+// 	ma := CreateMsgAuth(s, MsgAuth{Msg: []byte{"hello world"}})
+//
+// 	CheckMsgAuth(ma)
+//
+//
+// 	// cipher.a.GetAccountID()
+// })
+// }
 
 // func TestSetBalance(t *testing.T) {
 // 	ah := newAccountHelper(t)
@@ -110,21 +104,21 @@ func TestMsgAuth(t *testing.T) {
 // 	assert.Equal(t, sb, Balance(20))
 // }
 
-func removeContents(dir string) error {
-	d, err := os.Open(dir)
-	if err != nil {
-		return err
-	}
-	defer d.Close()
-	names, err := d.Readdirnames(-1)
-	if err != nil {
-		return err
-	}
-	for _, name := range names {
-		err = os.RemoveAll(filepath.Join(dir, name))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func removeContents(dir string) error {
+// 	d, err := os.Open(dir)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer d.Close()
+// 	names, err := d.Readdirnames(-1)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	for _, name := range names {
+// 		err = os.RemoveAll(filepath.Join(dir, name))
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }

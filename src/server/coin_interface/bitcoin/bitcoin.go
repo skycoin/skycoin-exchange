@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	HideSeckey = true
+	HideSeckey = false
 )
 
 // Utxo unspent output

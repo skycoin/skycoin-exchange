@@ -20,6 +20,7 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&cfg.DataDir, "dataDir", filepath.Join(homeDir, ".skycoin-exchange"), "data directory")
 	flag.StringVar(&cfg.WalletName, "wltName", "server.wlt", "server's wallet file name")
 	flag.StringVar(&cfg.Seed, "s", "seed", "wallet's seed")
+	flag.StringVar(&cfg.AcntName, "acntName", "account.data", "accounts file name")
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 
 	// set the log dir

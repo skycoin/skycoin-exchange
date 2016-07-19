@@ -24,6 +24,4 @@ enum ErrCode {
     ServerError = 40;
 
     BroadcastTxFail = 50;
-    //
-    // ErrCode_DbOrmerError = 40;
 };

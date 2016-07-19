@@ -3,7 +3,7 @@ package pp;
 import "pp.common.proto";
 
 message EncryptReq {
-  optional string pubkey = 1;
+  optional bytes pubkey = 1;
   optional bytes nonce = 2;
   optional bytes encryptdata = 3;
 }

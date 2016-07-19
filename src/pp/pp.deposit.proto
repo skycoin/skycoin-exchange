@@ -2,14 +2,14 @@ package pp;
 
 
 message GetDepositAddrReq {
-  optional string account_id = 1;
+  optional bytes account_id = 1;
   optional string coin_type = 2;
 }
 
 
 message GetDepositAddrRes {
 
-  optional string account_id = 10;
+  optional bytes account_id = 10;
   optional string coin_type = 11;
   optional string address = 12;
 }
