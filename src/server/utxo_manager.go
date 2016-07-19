@@ -22,6 +22,29 @@ type ExUtxoManager struct {
 	UtxoStateMap map[wallet.CoinType]map[string]bitcoin.Utxo
 }
 
+func NewUtxoManager(wlt wallet.Wallet, utxoPoolsize int) UtxoManager {
+	eum := &ExUtxoManager{
+		UtxosCh: map[wallet.CoinType]chan bitcoin.Utxo{
+			wallet.Bitcoin: make(chan bitcoin.Utxo, utxoPoolsize),
+			wallet.Skycoin: make(chan bitcoin.Utxo, utxoPoolsize),
+		},
+		UtxoStateMap: map[wallet.CoinType]map[string]bitcoin.Utxo{
+			wallet.Bitcoin: make(map[string]bitcoin.Utxo),
+			wallet.Skycoin: make(map[string]bitcoin.Utxo)},
+		WatchAddress: make(map[wallet.CoinType][]string),
+	}
+
+	// add watch addresses
+	cts := wlt.GetCoinTypes()
+	for _, ct := range cts {
+		addrs := wlt.GetAddressEntries(ct)
+		for _, addr := range addrs {
+			eum.AddWatchAddress(ct, addr.Address)
+		}
+	}
+	return eum
+}
+
 func (eum ExUtxoManager) Start(closing chan bool) {
 	glog.Info("exchange-server start the utxo manager")
 	t := time.Tick(CheckTick)
@@ -38,6 +61,7 @@ func (eum ExUtxoManager) Start(closing chan bool) {
 			}
 
 			for _, utxo := range newUtxos {
+				glog.Info("new bitcoin utxo:", utxo.GetTxid(), " ", utxo.GetVout())
 				eum.UtxosCh[wallet.Bitcoin] <- utxo
 			}
 
@@ -55,6 +79,7 @@ func (eum *ExUtxoManager) PutUtxo(ct wallet.CoinType, utxo bitcoin.Utxo) {
 }
 
 func (eum *ExUtxoManager) AddWatchAddress(ct wallet.CoinType, addr string) {
+	glog.Info("watch ", ct.String(), " address:", addr)
 	eum.WatchAddress[ct] = append(eum.WatchAddress[ct], addr)
 }
 
