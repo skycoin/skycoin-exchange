@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin-exchange/src/rpclient/account"
 )
 
 // CreateAccount handle the request of creating account.
@@ -47,6 +48,8 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.CreateAccountRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), act.Seckey.Hex(), &v)
+				// store the account
+				account.Store(cli.GetAcntName(), *act)
 				c.JSON(200, &v)
 				return
 			} else {
@@ -62,16 +65,17 @@ func GetNewAddress(cli Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
+			if !cli.HasAccount() {
+				errRlt = pp.MakeErrRes(errors.New("no account found"))
+				break
+			}
+
 			cointype, exist := c.GetQuery("cointype")
 			if !exist {
 				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
 				break
 			}
 
-			if !cli.HasAccount() {
-				errRlt = pp.MakeErrRes(errors.New("no account found"))
-				break
-			}
 			pk := cli.GetLocalPubKey()
 			r := pp.GetDepositAddrReq{
 				AccountId: pk[:],
@@ -112,6 +116,11 @@ func GetBalance(cli Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
+			if !cli.HasAccount() {
+				errRlt = pp.MakeErrRes(errors.New("no account found"))
+				break
+			}
+
 			coinType := c.Query("coin_type")
 			pk := cli.GetLocalPubKey()
 			gbr := pp.GetBalanceReq{
