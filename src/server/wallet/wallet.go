@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/golang/glog"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -119,7 +118,10 @@ func New(name string, wltType WalletType, seed string) (Wallet, error) {
 // Load load wallet from specific local disk.
 func Load(name string) (Wallet, error) {
 	p := filepath.Join(wltDir, name)
-	glog.Info("load wallet")
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		return nil, err
+	}
+
 	w, err := loadWalletFromFile(p)
 	if err != nil {
 		return nil, err
@@ -140,11 +142,15 @@ func IsExist(wltName string) bool {
 }
 
 func InitDir(dir string) {
+	if dir == "" {
+		dir = wltDir
+	} else {
+		wltDir = dir
+	}
 	// check if the wallet dir is exist.
-	wltDir = dir
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// create the dir
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(dir, 0777); err != nil {
 			panic(err)
 		}
 	}
