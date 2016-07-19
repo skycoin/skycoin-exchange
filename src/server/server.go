@@ -92,19 +92,12 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
+	um := NewUtxoManager(wlt, cfg.UtxoPoolSize)
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
 		AccountManager: acntMgr,
-		um: &ExUtxoManager{
-			UtxosCh: map[wallet.CoinType]chan bitcoin.Utxo{
-				wallet.Bitcoin: make(chan bitcoin.Utxo),
-				wallet.Skycoin: make(chan bitcoin.Utxo),
-			},
-			UtxoStateMap: map[wallet.CoinType]map[string]bitcoin.Utxo{
-				wallet.Bitcoin: make(map[string]bitcoin.Utxo),
-				wallet.Skycoin: make(map[string]bitcoin.Utxo)},
-		},
+		um:             um,
 	}
 	return s
 }
