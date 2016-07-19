@@ -3,7 +3,7 @@ package pp;
 message Result {
   required bool success = 1;
 
-  optional int32 code = 2;
+  optional int32 errcode = 2;
   optional string reason = 3;
 }
 
