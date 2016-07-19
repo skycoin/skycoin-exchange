@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
@@ -24,6 +26,7 @@ type Config struct {
 	Fee          int           // transaction fee
 	DataDir      string        // data directory
 	WalletName   string        // wallet name
+	AcntName     string        // accounts file name
 	Seed         string        // seed
 	Seckey       cipher.SecKey // private key
 	UtxoPoolSize int           // utxo pool size.
@@ -54,28 +57,45 @@ func New(cfg Config) engine.Exchange {
 	path := util.InitDataDir(cfg.DataDir)
 
 	// init the wallet dir.
-	// set the wallet dir.
-	// wallet.WltDir = filepath.Join(path, "wallets")
 	wallet.InitDir(filepath.Join(path, "wallets"))
+
+	// init the account dir
+	account.InitDir(filepath.Join(path, "account/server"))
+
+	// load account manager if exist.
+	var (
+		acntMgr account.AccountManager
+		err     error
+	)
+
+	acntMgr, err = account.LoadAccountManager(cfg.AcntName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			acntMgr = account.NewAccountManager(cfg.AcntName)
+		} else {
+			panic(err)
+		}
+	}
 
 	// get wallet
 	var wlt wallet.Wallet
-	var err error
-	if wallet.IsExist(cfg.WalletName) {
-		wlt, err = wallet.Load(cfg.WalletName)
-		if err != nil {
-			panic("server load walle failed")
-		}
-	} else {
-		wlt, err = wallet.New(cfg.WalletName, wallet.Deterministic, cfg.Seed)
-		if err != nil {
-			panic("server create wallet failed")
+	wlt, err = wallet.Load(cfg.WalletName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			glog.Info("wallet file not exist")
+			wlt, err = wallet.New(cfg.WalletName, wallet.Deterministic, cfg.Seed)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic(err)
 		}
 	}
+
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
-		AccountManager: account.NewExchangeAccountManager(),
+		AccountManager: acntMgr,
 		um: &ExUtxoManager{
 			UtxosCh: map[wallet.CoinType]chan bitcoin.Utxo{
 				wallet.Bitcoin: make(chan bitcoin.Utxo),
