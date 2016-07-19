@@ -25,7 +25,7 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 				break
 			}
 			r := pp.CreateAccountReq{
-				Pubkey: pp.PtrString(act.Pubkey.Hex()),
+				Pubkey: act.Pubkey[:],
 			}
 
 			req, _ := pp.MakeEncryptReq(&r, cli.GetServPubkey().Hex(), act.Seckey.Hex())
@@ -72,9 +72,9 @@ func GetNewAddress(cli Client) gin.HandlerFunc {
 				errRlt = pp.MakeErrRes(errors.New("no account found"))
 				break
 			}
-
+			pk := cli.GetLocalPubKey()
 			r := pp.GetDepositAddrReq{
-				AccountId: pp.PtrString(cli.GetLocalPubKey().Hex()),
+				AccountId: pk[:],
 				CoinType:  pp.PtrString(cointype),
 			}
 
@@ -113,8 +113,9 @@ func GetBalance(cli Client) gin.HandlerFunc {
 		errRlt := &pp.EmptyRes{}
 		for {
 			coinType := c.Query("coin_type")
+			pk := cli.GetLocalPubKey()
 			gbr := pp.GetBalanceReq{
-				AccountId: pp.PtrString(cli.GetLocalPubKey().Hex()),
+				AccountId: pk[:],
 				CoinType:  pp.PtrString(coinType),
 			}
 

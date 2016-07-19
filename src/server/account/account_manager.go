@@ -32,7 +32,6 @@ func NewAccountManager(fileName string) AccountManager {
 		Accounts:        make(map[AccountID]*ExchangeAccount),
 		AcntMgrFileName: fileName,
 	}
-
 }
 
 // LoadAccountManager from local disk.

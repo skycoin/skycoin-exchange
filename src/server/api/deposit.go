@@ -6,7 +6,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // GetNewAddress account create new address for depositing.
@@ -22,8 +21,8 @@ func GetNewAddress(ee engine.Exchange) gin.HandlerFunc {
 			}
 
 			// convert to cipher.PubKey
-			pubkey, err := cipher.PubKeyFromHex(dar.GetAccountId())
-			if err != nil {
+			pubkey := pp.BytesToPubKey(dar.GetAccountId())
+			if err := pubkey.Verify(); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}

@@ -13,7 +13,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 var ChooseUtxoTmout = 1 * time.Second
@@ -31,8 +30,8 @@ func Withdraw(ee engine.Exchange) gin.HandlerFunc {
 			}
 
 			// convert to cipher.PubKey
-			pubkey, err := cipher.PubKeyFromHex(wr.GetAccountId())
-			if err != nil {
+			pubkey := pp.BytesToPubKey(wr.GetAccountId())
+			if err := pubkey.Verify(); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}

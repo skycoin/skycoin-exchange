@@ -80,8 +80,9 @@ func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, 
 	if err != nil {
 		return EncryptReq{}, err
 	}
+
 	return EncryptReq{
-		Pubkey:      PtrString(cp.Hex()),
+		Pubkey:      []byte(cp[:]),
 		Nonce:       nonce,
 		Encryptdata: ed,
 	}, nil
@@ -97,4 +98,10 @@ func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) err
 
 	// unmarshal the data
 	return json.Unmarshal(d, v)
+}
+
+func BytesToPubKey(b []byte) cipher.PubKey {
+	pk := cipher.PubKey{}
+	copy(pk[:], b[:])
+	return pk
 }

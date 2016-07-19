@@ -8,7 +8,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 func getRequest(c *gin.Context, out interface{}) error {
@@ -28,8 +27,8 @@ func CreateAccount(ee engine.Exchange) gin.HandlerFunc {
 				break
 			}
 
-			pubkey, err := cipher.PubKeyFromHex(req.GetPubkey())
-			if err != nil {
+			pubkey := pp.BytesToPubKey(req.GetPubkey())
+			if err := pubkey.Verify(); err != nil {
 				glog.Error(err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break

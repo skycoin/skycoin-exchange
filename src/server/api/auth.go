@@ -25,10 +25,9 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 			// fmt.Println(string(d))
 
 			if c.BindJSON(&cnt_req) == nil {
-				cliPubkey, err := cipher.PubKeyFromHex(cnt_req.GetPubkey())
-				if err != nil {
+				cliPubkey := pp.BytesToPubKey(cnt_req.GetPubkey())
+				if err := cliPubkey.Verify(); err != nil {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
-					c.Abort()
 					break
 				}
 
