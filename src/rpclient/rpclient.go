@@ -14,6 +14,7 @@ type Client interface {
 	GetServPubkey() cipher.PubKey
 	GetLocalPubKey() cipher.PubKey
 	GetLocalSecKey() cipher.SecKey
+	GetAcntName() string
 	CreateAccount() (*account.RpcAccount, error)
 	HasAccount() bool
 }
@@ -82,6 +83,10 @@ func (rc RpcClient) GetLocalSecKey() cipher.SecKey {
 
 func (rc RpcClient) HasAccount() bool {
 	return rc.RpcAccount != nil
+}
+
+func (rc RpcClient) GetAcntName() string {
+	return rc.Cfg.AcntName
 }
 
 func (rc *RpcClient) Run(addr string) {
