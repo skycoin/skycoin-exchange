@@ -42,7 +42,7 @@ func MakeErrResWithCode(code ErrCode) *EmptyRes {
 
 func MakeResult(code ErrCode, reason string) *Result {
 	result := &Result{}
-	result.SetCode(code)
+	result.SetErrCode(code)
 	result.SetReason(reason)
 	return result
 }
@@ -51,8 +51,8 @@ func MakeResultWithCode(code ErrCode) *Result {
 	return MakeResult(code, code.String())
 }
 
-func (r *Result) SetCode(code ErrCode) {
-	r.Code = PtrInt32(int32(code))
+func (r *Result) SetErrCode(code ErrCode) {
+	r.Errcode = PtrInt32(int32(code))
 	r.Success = PtrBool(code == ErrCode_Success)
 	r.Reason = PtrString(code.String())
 }
@@ -62,7 +62,7 @@ func (r *Result) SetReason(reason string) {
 }
 
 func (r *Result) SetCodeAndReason(code ErrCode, reason string) {
-	r.SetCode(code)
+	r.SetErrCode(code)
 	r.SetReason(reason)
 }
 
