@@ -61,7 +61,7 @@ func (eum ExUtxoManager) Start(closing chan bool) {
 			}
 
 			for _, utxo := range newUtxos {
-				glog.Info("new bitcoin utxo:", utxo.GetTxid(), " ", utxo.GetVout())
+				glog.Info("new bitcoin utxo:", utxo.GetTxid(), " ", utxo.GetVout(), " ", utxo.GetAmount())
 				eum.UtxosCh[wallet.Bitcoin] <- utxo
 			}
 
@@ -75,6 +75,7 @@ func (eum *ExUtxoManager) GetUtxo(ct wallet.CoinType) chan bitcoin.Utxo {
 }
 
 func (eum *ExUtxoManager) PutUtxo(ct wallet.CoinType, utxo bitcoin.Utxo) {
+	glog.Info(ct.String(), " utxo put back:", utxo.GetAddress(), " ", utxo.GetTxid(), " ", utxo.GetVout())
 	eum.UtxosCh[ct] <- utxo
 }
 
