@@ -31,8 +31,10 @@ func TestCreateAccountSuccess(t *testing.T) {
 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
 	}
 
+	pk := cipher.MustPubKeyFromHex(cli_pubkey)
+
 	r := pp.CreateAccountReq{
-		Pubkey: &cli_pubkey,
+		Pubkey: pk[:],
 	}
 
 	req, err := pp.MakeEncryptReq(&r, server_pubkey, cli_seckey)
@@ -59,9 +61,9 @@ func TestGetDepositAddress(t *testing.T) {
 		},
 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
 	}
-
+	pk := cipher.MustPubKeyFromHex(cli_pubkey)
 	r := pp.GetDepositAddrReq{
-		AccountId: &cli_pubkey,
+		AccountId: pk[:],
 		CoinType:  pp.PtrString("bitcoin"),
 	}
 
@@ -88,9 +90,9 @@ func TestGetbalance(t *testing.T) {
 		},
 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
 	}
-
+	pk := cipher.MustPubKeyFromHex(cli_pubkey)
 	r := pp.GetBalanceReq{
-		AccountId: &cli_pubkey,
+		AccountId: pk[:],
 		CoinType:  pp.PtrString("bitcoin"),
 	}
 	req, _ := pp.MakeEncryptReq(&r, server_pubkey, cli_seckey)
@@ -104,117 +106,3 @@ func TestGetbalance(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, res.Result.GetSuccess(), true)
 }
-
-// func TestCreateAccountBadRequest(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &tests.FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 	}
-// 	jsonStr := fmt.Sprintf(``)
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", strings.NewReader(jsonStr)))
-// 	assert.Equal(t, w.Code, 200)
-// }
-//
-// func TestCreateAccountBadPubkey(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &tests.FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-// 	}
-//
-// 	r := CreateAccountRequest{
-// 		Pubkey: errPubkey,
-// 	}
-// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
-// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-// 	key := cipher.ECDH(sp, cs)
-//
-// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/accounts", bytes.NewBuffer(req)))
-// 	assert.Equal(t, w.Code, 400)
-// }
-//
-//
-// func TestGetDepositAddressBadCoinType(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &tests.FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-// 	}
-//
-// 	r := DepositAddressRequest{
-// 		AccountID: cli_pubkey,
-// 		CoinType:  "abc",
-// 	}
-//
-// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
-// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-//
-// 	key := cipher.ECDH(sp, cs)
-// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/deposit_address", bytes.NewBuffer(req)))
-// 	assert.Equal(t, w.Code, 400)
-// }
-//
-// func TestGetDepositAddressIDNotExist(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &tests.FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-// 	}
-//
-// 	r := DepositAddressRequest{
-// 		AccountID: pubkey,
-// 		CoinType:  "bitcoin",
-// 	}
-//
-// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
-// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-//
-// 	key := cipher.ECDH(sp, cs)
-// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/deposit_address", bytes.NewBuffer(req)))
-// 	assert.Equal(t, w.Code, 404)
-// }
-//
-// func TestGetDepositAddressBadAccountID(t *testing.T) {
-// 	svr := FakeServer{
-// 		A: &tests.FakeAccount{
-// 			ID:      cli_pubkey,
-// 			Addr:    "16VV1EbKHK7e3vJu4rhq2dJwegDcbaCcma",
-// 			Balance: uint64(0),
-// 		},
-// 		Seckey: cipher.MustSecKeyFromHex(server_seckey),
-// 	}
-//
-// 	r := DepositAddressRequest{
-// 		AccountID: errPubkey,
-// 		CoinType:  "bitcoin",
-// 	}
-//
-// 	sp := cipher.MustPubKeyFromHex(server_pubkey)
-// 	cs := cipher.MustSecKeyFromHex(cli_seckey)
-//
-// 	key := cipher.ECDH(sp, cs)
-// 	req := MustToContentRequest(r, cli_pubkey, key).MustJson()
-// 	w := MockServer(&svr, HttpRequestCase("POST", "/api/v1/deposit_address", bytes.NewBuffer(req)))
-// 	assert.Equal(t, w.Code, 400)
-// }
-//
-//
-// func PrintResponse(w *httptest.ResponseRecorder) {
-// 	d, _ := ioutil.ReadAll(w.Body)
-// 	fmt.Println(string(d))
-// }
