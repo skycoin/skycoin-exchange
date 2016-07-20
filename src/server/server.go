@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -70,6 +69,7 @@ func New(cfg Config) engine.Exchange {
 
 	acntMgr, err = account.LoadAccountManager(cfg.AcntName)
 	if err != nil {
+		glog.Error(err)
 		if os.IsNotExist(err) {
 			acntMgr = account.NewAccountManager(cfg.AcntName)
 		} else {
@@ -146,22 +146,16 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 // ChooseUtxos choose appropriate utxos, if time out, and not found enough utxos,
 // the utxos got before will put back to the utxos pool, and return error.
 // the tm is millisecond
-func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error) {
+func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.Utxo, error) {
+	glog.Info("choose utxos, coin type:", ct.String(), " amount:", amount)
 	var totalAmount uint64
-	utxos := []bitcoin.UtxoWithkey{}
+	// utxos := []bitcoin.UtxoWithkey{}
+	utxos := []bitcoin.Utxo{}
 	for {
 		select {
 		case utxo := <-self.um.GetUtxo(ct):
-			// get private key
-			key, err := self.GetPrivKey(ct, utxo.GetAddress())
-			if err != nil {
-				self.um.PutUtxo(ct, utxo)
-				return []bitcoin.UtxoWithkey{}, err
-			}
-
-			utxok := bitcoin.NewUtxoWithKey(utxo, key)
-			utxos = append(utxos, utxok)
-
+			glog.Info("get utxo:", utxo.GetAddress(), " ", utxo.GetAmount())
+			utxos = append(utxos, utxo)
 			totalAmount += utxo.GetAmount()
 			if totalAmount >= (amount + self.GetFee()) {
 				return utxos, nil
@@ -169,10 +163,11 @@ func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm ti
 
 		case <-time.After(tm):
 			// put utxos back
+			glog.Info("choose time out, put back utxos")
 			for _, u := range utxos {
 				self.um.PutUtxo(ct, u)
 			}
-			return []bitcoin.UtxoWithkey{}, errors.New("choose utxo time out")
+			return []bitcoin.Utxo{}, nil
 		}
 	}
 }
@@ -182,8 +177,12 @@ func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
 	self.um.AddWatchAddress(ct, addr)
 }
 
-func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey) {
+func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.Utxo) {
 	for _, u := range utxos {
 		self.um.PutUtxo(ct, u)
 	}
+}
+
+func (self *ExchangeServer) SaveAccount() error {
+	return self.Save()
 }
