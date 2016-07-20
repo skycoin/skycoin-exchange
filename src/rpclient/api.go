@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
@@ -160,10 +161,27 @@ func Withdraw(cli Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
-			wr := pp.WithdrawalReq{}
-			if err := c.BindJSON(&wr); err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+			cointype := c.Query("cointype")
+			amount := c.Query("amount")
+			toAddr := c.Query("toaddr")
+
+			if cointype == "" || amount == "" || toAddr == "" {
+				rlt = pp.MakeErrRes(errors.New(""))
 				break
+			}
+
+			pk := cli.GetLocalPubKey()
+			amtmp, err := strconv.Atoi(amount)
+			if err != nil {
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			amt := uint64(amtmp)
+			wr := pp.WithdrawalReq{
+				AccountId:     pk[:],
+				CoinType:      &cointype,
+				Coins:         &amt,
+				OutputAddress: &toAddr,
 			}
 
 			req, _ := pp.MakeEncryptReq(&wr, cli.GetServPubkey().Hex(), cli.GetLocalSecKey().Hex())
@@ -186,9 +204,18 @@ func Withdraw(cli Client) gin.HandlerFunc {
 				return
 			} else {
 				c.JSON(200, res)
+				return
 			}
 		}
-		c.JSON(200, *rlt)
+		// pk := cli.GetLocalPubKey()
+		// r := struct {
+		// 	Rlt       *pp.EmptyRes
+		// 	AccountId []byte
+		// }{
+		// 	Rlt:       rlt,
+		// 	AccountId: pk[:],
+		// }
+		c.JSON(200, rlt)
 	}
 }
 
