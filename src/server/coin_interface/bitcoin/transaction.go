@@ -77,7 +77,7 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) 
 	for _, out := range outAddrs {
 		addr, err := btcutil.DecodeAddress(out.Addr, &chaincfg.MainNetParams)
 		if err != nil {
-			return nil, fmt.Errorf("decode address faild, %s", err)
+			return nil, fmt.Errorf("decode address %s, faild, %s", out.Addr, err)
 		}
 		txout := createTxOut(out.Value, addr)
 		tx.AddTxOut(txout)
@@ -94,6 +94,15 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) 
 	}
 	return tx, nil
 }
+
+// func BroadcastTx(tx []byte) (string, error) {
+// 	t := wire.MsgTx{}
+// 	if err := t.Deserialize(bytes.NewBuffer(tx)); err != nil {
+// 		return "", err
+// 	}
+//
+// 	return broadcastTx(&t)
+// }
 
 // BroadcastTx tries to send the transaction using an api that will broadcast
 // a submitted transaction on behalf of the user.
@@ -125,8 +134,12 @@ func BroadcastTx(tx *wire.MsgTx) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	v := struct {
+		Txid string `json:"txid"`
+	}{}
+	json.Unmarshal(b, &v)
 	// fmt.Printf("The sending api responded with:\n%s\n", b)
-	return string(b), nil
+	return v.Txid, nil
 }
 
 func DumpTxBytes(tx *wire.MsgTx) []byte {
