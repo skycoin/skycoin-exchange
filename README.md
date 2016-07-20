@@ -26,6 +26,38 @@ go run client.go
 ```
 Default rpclient port is 6060.
 
+### Rpc client APIs
+#### create account
+```
+mode: POST
+url: /api/v1/accounts
+```
+
+#### get deposit address
+```
+mode: GET
+url: /api/v1/deposit_address?cointype=[:type]
+params: 
+	type: can be bitcoin, skycoin, etc.
+```
+
+#### get account balance
+```
+mode: GET
+url: /api/v1/account/balance?cointype=[:type]
+params: 
+	type: can be bitcoin, skycoin, etc.
+```
+
+#### withdraw coins
+```
+mdoe: POST
+url: /api/v1/account/withdrawal?cointype=[:type]&amount=[:amt]&toaddr=[:toaddr]
+params:
+	type: can be bitcoin, skycoin, etc
+	amount: the coin number you want to withdrawal back, in satoshis.
+	toaddr: address you want to receive the coins.
+```
 Dependencies
 ---
 
