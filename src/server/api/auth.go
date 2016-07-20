@@ -21,9 +21,6 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 		)
 
 		for {
-			// d, _ := ioutil.ReadAll(c.Request.Body)
-			// fmt.Println(string(d))
-
 			if c.BindJSON(&cnt_req) == nil {
 				cliPubkey := pp.BytesToPubKey(cnt_req.GetPubkey())
 				if err := cliPubkey.Verify(); err != nil {
