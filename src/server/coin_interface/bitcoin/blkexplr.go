@@ -11,12 +11,12 @@ import (
 )
 
 type BlkExplrUtxo struct {
-	Address      string  `json:"address"`
-	Txid         string  `json:"txid"`
-	Vout         uint32  `json:"vout"`
-	ScriptPubkey string  `json:"criptPubKey"`
-	Amount       float64 `json:"amount"`
-	Confirms     uint64  `json:"confirmations"`
+	Address      string `json:"address"`
+	Txid         string `json:"txid"`
+	Vout         uint32 `json:"vout"`
+	ScriptPubkey string `json:"criptPubKey"`
+	Amount       uint64 `json:"satoshis"`
+	Confirms     uint64 `json:"confirmations"`
 }
 
 func (be BlkExplrUtxo) GetTxid() string {
@@ -28,7 +28,7 @@ func (be BlkExplrUtxo) GetVout() uint32 {
 }
 
 func (be BlkExplrUtxo) GetAmount() uint64 {
-	return uint64(be.Amount * 100000000)
+	return be.Amount
 }
 
 func (be BlkExplrUtxo) GetAddress() string {
@@ -52,7 +52,7 @@ func getUtxosBlkExplr(addrs []string) ([]Utxo, error) {
 	url := fmt.Sprintf("https://blockexplorer.com/api/addrs/%s/utxo", strings.Join(addrs, ","))
 	rsp, err := http.Get(url)
 	if err != nil {
-		return []Utxo{}, err
+		return []Utxo{}, errors.New("get utxo from blockexplorer.com failed")
 	}
 
 	if rsp.StatusCode != 200 {
