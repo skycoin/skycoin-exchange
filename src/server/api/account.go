@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,11 +8,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 )
-
-func getRequest(c *gin.Context, out interface{}) error {
-	d := c.MustGet("rawdata").([]byte)
-	return json.Unmarshal(d, out)
-}
 
 // CreateAccount create account with specific pubkey,
 func CreateAccount(ee engine.Exchange) gin.HandlerFunc {
