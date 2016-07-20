@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
@@ -49,7 +50,7 @@ func InitDir(path string) {
 	}
 	// create the account dir if not exist.
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.MkdirAll(path, 0777); err != nil {
+		if err := os.MkdirAll(path, 0755); err != nil {
 			panic(err)
 		}
 	}
@@ -96,13 +97,15 @@ func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64
 }
 
 func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
+	glog.Info("decrease balance")
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
 		return errors.New("unknow coin type")
 	}
 	if self.Balance[ct] < amt {
-		return errors.New("account Balance is not sufficient")
+		glog.Info("balance:", self.Balance[ct], " amt:", amt)
+		return errors.New("account balance is not sufficient")
 	}
 
 	self.Balance[ct] -= amt
@@ -110,6 +113,7 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 }
 
 func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
+	glog.Info("increase balance")
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
