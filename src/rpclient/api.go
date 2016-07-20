@@ -151,6 +151,7 @@ func GetBalance(cli Client) gin.HandlerFunc {
 				return
 			} else {
 				c.JSON(200, res)
+				return
 			}
 		}
 		c.JSON(200, *errRlt)
@@ -207,79 +208,6 @@ func Withdraw(cli Client) gin.HandlerFunc {
 				return
 			}
 		}
-		// pk := cli.GetLocalPubKey()
-		// r := struct {
-		// 	Rlt       *pp.EmptyRes
-		// 	AccountId []byte
-		// }{
-		// 	Rlt:       rlt,
-		// 	AccountId: pk[:],
-		// }
 		c.JSON(200, rlt)
 	}
 }
-
-//
-// func DecryptResponseBody(resp *http.Response, servPubkey cipher.PubKey, cliSeckey cipher.SecKey) ([]byte, error) {
-// 	// decrypt the data.
-// 	cnt := server.ContentRequest{}
-// 	rd, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-// 	fmt.Println(string(rd))
-// 	defer resp.Body.Close()
-// 	if err := json.Unmarshal(rd, &cnt); err != nil {
-// 		return []byte{}, err
-// 	}
-//
-// 	key := cipher.ECDH(servPubkey, cliSeckey)
-// 	return ChaCha20(cnt.Data, key, cnt.Nonce)
-// }
-//
-// func EncryptContentRequest(r interface{}, id string, key []byte) server.ContentRequest {
-// 	d, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	nonce := cipher.RandByte(xchacha20.NonceSize)
-// 	data, err := ChaCha20(d, key, nonce)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return server.ContentRequest{
-// 		AccountID: id,
-// 		Data:      data,
-// 		Nonce:     nonce,
-// 	}
-// }
-//
-// func GetErrorMsg(resp *http.Response) (server.ErrorMsg, error) {
-// 	em := server.ErrorMsg{}
-// 	rd, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return em, err
-// 	}
-//
-// 	if err := json.Unmarshal(rd, &em); err != nil {
-// 		return em, err
-// 	}
-//
-// 	return em, nil
-// }
-//
-// // decrypt the data
-//
-// func ChaCha20(data []byte, key []byte, nonce []byte) ([]byte, error) {
-// 	e := make([]byte, len(data))
-// 	c, err := chacha20.New(key, nonce)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-// 	c.XORKeyStream(e, data)
-// 	return e, nil
-// }
-//
-// func makeErrorMsg(code int, reason string) server.ErrorMsg {
-// 	return server.ErrorMsg{Code: code, Error: reason}
-// }
