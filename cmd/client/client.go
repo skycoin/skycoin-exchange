@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/skycoin/skycoin-exchange/src/rpclient"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -10,14 +13,17 @@ const (
 )
 
 func main() {
+	apiUrl := flag.String("api_url", "http://localhost:8080/api/v1", "server api root")
+	port := flag.Int("port", 6060, "rpc port")
+	flag.Parse()
 	pk := cipher.MustPubKeyFromHex(ServPubkey)
 
 	cfg := rpclient.Config{
-		ApiRoot:    "http://localhost:8080/api/v1",
+		ApiRoot:    *apiUrl,
 		AcntName:   "account.data",
 		ServPubkey: pk,
 	}
 
 	cli := rpclient.New(cfg)
-	cli.Run(":6060")
+	cli.Run(fmt.Sprintf(":%d", *port))
 }
