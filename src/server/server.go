@@ -44,7 +44,7 @@ type Config struct {
 
 type ExchangeServer struct {
 	account.AccountManager
-	um     UtxoManager
+	btcum  bitcoin.UtxoManager
 	cfg    Config
 	wallet wallet.Wallet
 	wltMtx sync.RWMutex // mutex for protecting the wallet.
@@ -92,12 +92,12 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
-	um := NewUtxoManager(wlt, cfg.UtxoPoolSize)
+	btcum := bitcoin.NewUtxoManager(wlt, cfg.UtxoPoolSize)
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
 		AccountManager: acntMgr,
-		um:             um,
+		btcum:          btcum,
 	}
 	return s
 }
@@ -107,7 +107,7 @@ func (self *ExchangeServer) Run() {
 
 	// start the utxo manager
 	c := make(chan bool)
-	go func() { self.um.Start(c) }()
+	go func() { self.btcum.Start(c) }()
 
 	// start the api server.
 	r := NewRouter(self)
@@ -143,43 +143,22 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	return addrEntry[0].Address
 }
 
-// ChooseUtxos choose appropriate utxos, if time out, and not found enough utxos,
-// the utxos got before will put back to the utxos pool, and return error.
-// the tm is millisecond
-func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.Utxo, error) {
-	glog.Info("choose utxos, coin type:", ct.String(), " amount:", amount)
-	var totalAmount uint64
-	// utxos := []bitcoin.UtxoWithkey{}
-	utxos := []bitcoin.Utxo{}
-	for {
-		select {
-		case utxo := <-self.um.GetUtxo(ct):
-			glog.Info("get utxo:", utxo.GetAddress(), " ", utxo.GetAmount())
-			utxos = append(utxos, utxo)
-			totalAmount += utxo.GetAmount()
-			if totalAmount >= (amount + self.GetFee()) {
-				return utxos, nil
-			}
-
-		case <-time.After(tm):
-			// put utxos back
-			glog.Info("choose time out, put back utxos")
-			for _, u := range utxos {
-				self.um.PutUtxo(ct, u)
-			}
-			return []bitcoin.Utxo{}, nil
-		}
-	}
+// BtcChooseUtxos choose appropriate bitcoin utxos,
+func (self *ExchangeServer) BtcChooseUtxos(amount uint64) ([]bitcoin.Utxo, error) {
+	return self.btcum.ChooseUtxos(amount)
 }
 
 // AddWatchAddress add watch address for utxo manager.
 func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
-	self.um.AddWatchAddress(ct, addr)
+	switch ct {
+	case wallet.Bitcoin:
+		self.btcum.AddWatchAddress(addr)
+	}
 }
 
-func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.Utxo) {
+func (self *ExchangeServer) BtcPutUtxos(ct wallet.CoinType, utxos []bitcoin.Utxo) {
 	for _, u := range utxos {
-		self.um.PutUtxo(ct, u)
+		self.btcum.PutUtxo(ct, u)
 	}
 }
 
