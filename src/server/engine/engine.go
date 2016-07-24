@@ -17,6 +17,7 @@ type Exchange interface {
 	GetServPrivKey() cipher.SecKey
 	AddWatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
+	// bitcoin functions.
 	BtcChooseUtxos(amount uint64, tm time.Duration) ([]bitcoin_interface.Utxo, error)
 	BtcPutUtxos(utxos []bitcoin_interface.Utxo)
 	GetPrivKey(ct wallet.CoinType, addr string) (string, error)
