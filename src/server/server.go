@@ -17,8 +17,6 @@ import (
 	"github.com/skycoin/skycoin/src/util"
 )
 
-var CheckTick = 5 * time.Second
-
 // Config store server's configuration.
 type Config struct {
 	Port         int           // api port
@@ -92,7 +90,13 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
-	btcum := bitcoin.NewUtxoManager(wlt, cfg.UtxoPoolSize)
+	addrEntries := wlt.GetAddressEntries(wallet.Bitcoin)
+	addrs := make([]string, len(addrEntries))
+	for i, entry := range addrEntries {
+		addrs[i] = entry.Address
+	}
+
+	btcum := bitcoin.NewUtxoManager(cfg.UtxoPoolSize, addrs)
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
@@ -144,21 +148,21 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 }
 
 // BtcChooseUtxos choose appropriate bitcoin utxos,
-func (self *ExchangeServer) BtcChooseUtxos(amount uint64) ([]bitcoin.Utxo, error) {
-	return self.btcum.ChooseUtxos(amount)
+func (self *ExchangeServer) BtcChooseUtxos(amount uint64, tm time.Duration) ([]bitcoin.Utxo, error) {
+	return self.btcum.ChooseUtxos(amount, tm)
 }
 
 // AddWatchAddress add watch address for utxo manager.
 func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
 	switch ct {
 	case wallet.Bitcoin:
-		self.btcum.AddWatchAddress(addr)
+		self.btcum.WatchAddresses([]string{addr})
 	}
 }
 
-func (self *ExchangeServer) BtcPutUtxos(ct wallet.CoinType, utxos []bitcoin.Utxo) {
+func (self *ExchangeServer) BtcPutUtxos(utxos []bitcoin.Utxo) {
 	for _, u := range utxos {
-		self.btcum.PutUtxo(ct, u)
+		self.btcum.PutUtxo(u)
 	}
 }
 
