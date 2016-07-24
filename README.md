@@ -37,7 +37,7 @@ url: /api/v1/accounts
 ```
 mode: GET
 url: /api/v1/deposit_address?cointype=[:type]
-params: 
+params:
 	type: can be bitcoin, skycoin, etc.
 ```
 
@@ -45,7 +45,7 @@ params:
 ```
 mode: GET
 url: /api/v1/account/balance?cointype=[:type]
-params: 
+params:
 	type: can be bitcoin, skycoin, etc.
 ```
 
