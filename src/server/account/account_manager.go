@@ -53,7 +53,6 @@ func LoadAccountManager(acntName string) (AccountManager, error) {
 	if err := json.Unmarshal(d, &a); err != nil {
 		return nil, err
 	}
-
 	return a.ToExchgAcntMgr(acntName), nil
 }
 
@@ -107,7 +106,6 @@ func (self *ExchangeAccountManager) save() error {
 	glog.Info("save accounts")
 	a := self.ToMarshalable()
 	// for self.Accounts
-	glog.Info("filepath:", filepath.Join(acntDir, self.AcntMgrFileName))
 	return util.SaveJSON(filepath.Join(acntDir, self.AcntMgrFileName), a, 0600)
 }
 
