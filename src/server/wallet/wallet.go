@@ -136,12 +136,6 @@ func Load(name string) (Wallet, error) {
 	return concretWlt, nil
 }
 
-func IsExist(wltName string) bool {
-	p := filepath.Join(wltDir, wltName)
-	_, err := os.Stat(p)
-	return !os.IsNotExist(err)
-}
-
 func InitDir(dir string) {
 	if dir == "" {
 		dir = wltDir
