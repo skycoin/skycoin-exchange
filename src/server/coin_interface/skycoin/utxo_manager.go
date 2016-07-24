@@ -1,0 +1,1 @@
+package skycoin_interface
