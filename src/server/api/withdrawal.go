@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"math/rand"
 	"time"
 
 	"github.com/btcsuite/btcd/wire"
@@ -22,12 +21,6 @@ type BtcTxResult struct {
 	Tx         *wire.MsgTx
 	UsingUtxos []bitcoin.Utxo
 	ChangeAddr string
-}
-
-func randExpireTm() time.Duration {
-	v := rand.Intn(5)
-	glog.Info("rand v:", v)
-	return time.Duration(3+v) * time.Second
 }
 
 // Withdraw api handler for generating withdraw transaction.
@@ -90,19 +83,18 @@ func withdrawlWork(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyR
 
 	switch ct {
 	case wallet.Bitcoin:
+		var success bool
+		var btcTxRlt *BtcTxResult
+		var err error
 		if err := acnt.DecreaseBalance(ct, amt+ee.GetFee()); err != nil {
 			return nil, pp.MakeErrRes(err)
 		}
-		var success bool
-		btcTxRlt, err := createBtcWithdrawTx(ee, amt, toAddr)
-		if err != nil {
-			return nil, pp.MakeErrRes(errors.New("failed to create withdrawal tx"))
-		}
-
 		defer func() {
 			if !success {
 				go func() {
-					ee.PutUtxos(ct, btcTxRlt.UsingUtxos)
+					if btcTxRlt != nil {
+						ee.BtcPutUtxos(btcTxRlt.UsingUtxos)
+					}
 					acnt.IncreaseBalance(ct, amt+ee.GetFee())
 				}()
 			} else {
@@ -110,6 +102,11 @@ func withdrawlWork(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyR
 				ee.SaveAccount()
 			}
 		}()
+
+		btcTxRlt, err = createBtcWithdrawTx(ee, amt, toAddr)
+		if err != nil {
+			return nil, pp.MakeErrRes(errors.New("failed to create withdrawal tx"))
+		}
 
 		newTxid, err := bitcoin.BroadcastTx(btcTxRlt.Tx)
 		// newTxid, err := "123", errors.New("broadcast tx not support yet")
@@ -132,6 +129,8 @@ func withdrawlWork(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyR
 			NewTxid:   &newTxid,
 		}
 		return &resp, nil
+	case wallet.Skycoin:
+		return nil, pp.MakeErrRes(errors.New("skycoin withdrawal not support yet"))
 	default:
 		return nil, pp.MakeErrRes(errors.New("unknow coin type"))
 	}
@@ -141,15 +140,19 @@ func withdrawlWork(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyR
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
 func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*BtcTxResult, error) {
-	utxos, err := chooseSufUtxos(egn, wallet.Bitcoin, amount)
+	utxos, err := egn.BtcChooseUtxos(amount+egn.GetFee(), 5*time.Second)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, u := range utxos {
+		glog.Info("using utxos:", u.GetTxid(), " ", u.GetVout())
 	}
 
 	var success bool
 	defer func() {
 		if !success {
-			go func() { egn.PutUtxos(wallet.Bitcoin, utxos) }()
+			go func() { egn.BtcPutUtxos(utxos) }()
 		}
 	}()
 
@@ -177,8 +180,10 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		return nil, err
 	}
 
+	glog.Info("creating transaction...")
 	tx, err := bitcoin.NewTransaction(utxoKeys, outAddrs)
 	if err != nil {
+		glog.Error(err)
 		return nil, err
 	}
 	success = true
@@ -188,26 +193,6 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		ChangeAddr: chgAddr,
 	}
 	return &rlt, nil
-}
-
-// chooseSufUtxos choose sufficient from utxo pool.
-func chooseSufUtxos(egn engine.Exchange, ct wallet.CoinType, amt uint64) ([]bitcoin.Utxo, error) {
-	var (
-		utxos []bitcoin.Utxo
-		err   error
-	)
-
-	for {
-		utxos, err = egn.ChooseUtxos(ct, amt, randExpireTm())
-		if err != nil {
-			return []bitcoin.Utxo{}, err
-		}
-
-		if len(utxos) > 0 {
-			break
-		}
-	}
-	return utxos, nil
 }
 
 func makeBtcUtxoWithkeys(utxos []bitcoin.Utxo, egn engine.Exchange) ([]bitcoin.UtxoWithkey, error) {
