@@ -54,9 +54,9 @@ func (bk BlkChnUtxo) GetAddress() string {
 // GetUtxosBlkChnInfo get unspent outputs from blockchain.info
 // https://blockchain.info/unspent?active=1SakrZuzQmGwn7MSiJj5awqJZjSYeBWC3
 func getUtxosBlkChnInfo(addr string) []Utxo {
-	if AddressValid(addr) != nil {
-		log.Fatal("Address is invalid")
-	}
+	// if AddressValid(addr) != nil {
+	// log.Fatal("Address is invalid")
+	// }
 	url := fmt.Sprintf("https://blockchain.info/unspent?active=%s", addr)
 	// fmt.Println(url)
 

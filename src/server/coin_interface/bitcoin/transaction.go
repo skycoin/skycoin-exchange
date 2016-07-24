@@ -137,8 +137,11 @@ func BroadcastTx(tx *wire.MsgTx) (string, error) {
 	v := struct {
 		Txid string `json:"txid"`
 	}{}
-	json.Unmarshal(b, &v)
-	// fmt.Printf("The sending api responded with:\n%s\n", b)
+
+	if err := json.Unmarshal(b, &v); err != nil {
+		fmt.Println(string(b))
+		return "", fmt.Errorf("Broadcasting tx failed, unmarshal result failed, %v", err)
+	}
 	return v.Txid, nil
 }
 
