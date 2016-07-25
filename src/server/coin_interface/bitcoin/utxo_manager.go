@@ -49,7 +49,7 @@ func (eum *ExUtxoManager) Start(closing chan bool) {
 			return
 		case <-t:
 			// check bitcoin new utxos.
-			newUtxos, err := eum.checkNewBtcUtxo()
+			newUtxos, err := eum.checkNewUtxo()
 			if err != nil {
 				glog.Error(err)
 				break
@@ -76,7 +76,7 @@ func (eum *ExUtxoManager) WatchAddresses(addrs []string) {
 	eum.WatchAddress = append(eum.WatchAddress, addrs...)
 }
 
-func (eum *ExUtxoManager) checkNewBtcUtxo() ([]Utxo, error) {
+func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 	latestUtxos, err := GetUnspentOutputs(eum.WatchAddress)
 	if err != nil {
 		return []Utxo{}, err
