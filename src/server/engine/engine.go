@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -17,9 +16,10 @@ type Exchange interface {
 	GetServPrivKey() cipher.SecKey
 	AddWatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
-	// bitcoin functions.
-	BtcChooseUtxos(amount uint64, tm time.Duration) ([]bitcoin_interface.Utxo, error)
-	BtcPutUtxos(utxos []bitcoin_interface.Utxo)
+
+	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
+	PutUtxos(ct wallet.CoinType, utxos interface{})
+
 	GetPrivKey(ct wallet.CoinType, addr string) (string, error)
 	SaveAccount() error
 }
