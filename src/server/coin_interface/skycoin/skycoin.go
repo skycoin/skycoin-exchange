@@ -3,6 +3,7 @@ package skycoin_interface
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -18,12 +19,6 @@ var (
 	HideSeckey bool   = false
 	ServeAddr  string = "http://127.0.0.1:6420"
 )
-
-// Hash              string `json:"txid"` //hash uniquely identifies transaction
-// SourceTransaction string `json:"src_tx"`
-// Address           string `json:"address"`
-// Coins             string `json:"coins"`
-// Hours             uint64 `json:"hours"`
 
 type Utxo interface {
 	GetHash() string
@@ -69,6 +64,14 @@ func (su SkyUtxo) GetHours() uint64 {
 	return su.Hours
 }
 
+func MakeUtxoOutput(addr string, amount uint64, hours uint64) UtxoOut {
+	uo := UtxoOut{}
+	uo.Address = cipher.MustDecodeBase58Address(addr)
+	uo.Coins = amount * 1e6
+	uo.Hours = hours
+	return uo
+}
+
 // GenerateAddresses, generate bitcoin addresses.
 func GenerateAddresses(seed []byte, num int) (string, []coin_interface.AddressEntry) {
 	sd, seckeys := cipher.GenerateDeterministicKeyPairsSeed(seed, num)
@@ -111,12 +114,12 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 }
 
 // NewTransaction create skycoin transaction.
-func NewTransaction(utxos []Utxo, keyMap map[string]cipher.SecKey, outs []UtxoOut) Transaction {
+func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transaction {
 	tx := Transaction{}
-	keys := make([]cipher.SecKey, len(utxos))
-	for i, u := range utxos {
+	// keys := make([]cipher.SecKey, len(utxos))
+	for _, u := range utxos {
 		tx.PushInput(cipher.MustSHA256FromHex(u.GetHash()))
-		keys[i] = keyMap[u.GetAddress()]
+		// keys[i] = keyMap[u.GetAddress()]
 	}
 
 	for _, o := range outs {
@@ -125,7 +128,7 @@ func NewTransaction(utxos []Utxo, keyMap map[string]cipher.SecKey, outs []UtxoOu
 
 	tx.SignInputs(keys)
 	tx.UpdateHeader()
-	return tx
+	return &tx
 }
 
 // BroadcastTx
@@ -148,10 +151,16 @@ func BroadcastTx(tx Transaction) (string, error) {
 	}
 	defer rsp.Body.Close()
 	rslt := struct {
-		Txid string `json:"txid"`
+		Success bool   `json:"success"`
+		Reason  string `json:"reason"`
+		Txid    string `json:"txid"`
 	}{}
+
 	if err := json.NewDecoder(rsp.Body).Decode(&rslt); err != nil {
 		return "", err
 	}
-	return rslt.Txid, nil
+	if rslt.Success {
+		return rslt.Txid, nil
+	}
+	return "", errors.New(rslt.Reason)
 }
