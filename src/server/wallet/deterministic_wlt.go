@@ -111,6 +111,15 @@ func (self DeterministicWallet) GetAddressEntries(bt CoinType) []AddressEntry {
 	return self.AddressEntries[bt.String()]
 }
 
+func (self DeterministicWallet) GetAddresses(ct CoinType) []string {
+	entries := self.AddressEntries[ct.String()]
+	addrs := make([]string, len(entries))
+	for i, entry := range entries {
+		addrs[i] = entry.Address
+	}
+	return addrs
+}
+
 func (self *DeterministicWallet) toWalletBase() WalletBase {
 	w := WalletBase{
 		Meta: map[string]string{
