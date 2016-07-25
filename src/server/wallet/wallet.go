@@ -77,6 +77,7 @@ type Wallet interface {
 	SetID(id string)
 	GetID() string
 	NewAddresses(coinType CoinType, num int) ([]AddressEntry, error)
+	GetAddresses(coinType CoinType) []string
 	GetAddressEntries(coinType CoinType) []AddressEntry
 	GetAddressEntry(coinType CoinType, addr string) (AddressEntry, error)
 	GetCoinTypes() []CoinType
