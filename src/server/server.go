@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -43,6 +45,7 @@ type Config struct {
 type ExchangeServer struct {
 	account.AccountManager
 	btcum  bitcoin.UtxoManager
+	skyum  skycoin.UtxoManager
 	cfg    Config
 	wallet wallet.Wallet
 	wltMtx sync.RWMutex // mutex for protecting the wallet.
@@ -51,7 +54,7 @@ type ExchangeServer struct {
 // New create new server
 func New(cfg Config) engine.Exchange {
 	// init the data dir
-	path := util.InitDataDir(cfg.DataDir)
+	path := initDataDir(cfg.DataDir)
 
 	// init the wallet dir.
 	wallet.InitDir(filepath.Join(path, "wallets"))
@@ -90,18 +93,12 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
-	addrEntries := wlt.GetAddressEntries(wallet.Bitcoin)
-	addrs := make([]string, len(addrEntries))
-	for i, entry := range addrEntries {
-		addrs[i] = entry.Address
-	}
-
-	btcum := bitcoin.NewUtxoManager(cfg.UtxoPoolSize, addrs)
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
 		AccountManager: acntMgr,
-		btcum:          btcum,
+		btcum:          bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
+		skyum:          skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
 	}
 	return s
 }
@@ -111,7 +108,8 @@ func (self *ExchangeServer) Run() {
 
 	// start the utxo manager
 	c := make(chan bool)
-	go func() { self.btcum.Start(c) }()
+	go self.btcum.Start(c)
+	go self.skyum.Start(c)
 
 	// start the api server.
 	r := NewRouter(self)
@@ -148,8 +146,30 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 }
 
 // BtcChooseUtxos choose appropriate bitcoin utxos,
-func (self *ExchangeServer) BtcChooseUtxos(amount uint64, tm time.Duration) ([]bitcoin.Utxo, error) {
-	return self.btcum.ChooseUtxos(amount, tm)
+func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error) {
+	switch ct {
+	case wallet.Bitcoin:
+		return self.btcum.ChooseUtxos(amount, tm)
+	case wallet.Skycoin:
+		return self.skyum.ChooseUtxos(amount, tm)
+	default:
+		return nil, errors.New("unknow coin type")
+	}
+}
+
+func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
+	switch ct {
+	case wallet.Bitcoin:
+		btcUtxos := utxos.([]bitcoin.Utxo)
+		for _, u := range btcUtxos {
+			self.btcum.PutUtxo(u)
+		}
+	case wallet.Skycoin:
+		skyUtxos := utxos.([]skycoin.Utxo)
+		for _, u := range skyUtxos {
+			self.skyum.PutUtxo(u)
+		}
+	}
 }
 
 // AddWatchAddress add watch address for utxo manager.
@@ -168,4 +188,24 @@ func (self *ExchangeServer) BtcPutUtxos(utxos []bitcoin.Utxo) {
 
 func (self *ExchangeServer) SaveAccount() error {
 	return self.Save()
+}
+
+func initDataDir(dir string) string {
+	//DataDir = dir
+	if dir == "" {
+		glog.Error("data directory is nil")
+	}
+
+	home := util.UserHome()
+	if home == "" {
+		glog.Warning("Failed to get home directory")
+		dir = filepath.Join("./", dir)
+	} else {
+		dir = filepath.Join(home, dir)
+	}
+
+	if err := os.MkdirAll(dir, os.FileMode(0700)); err != nil {
+		glog.Error("Failed to create directory %s: %v", dir, err)
+	}
+	return dir
 }
