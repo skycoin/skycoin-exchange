@@ -129,6 +129,7 @@ func BroadcastTx(tx *wire.MsgTx) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Broadcasting the tx failed: %v", err)
 	}
+	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -183,6 +184,8 @@ func lookupTxid(hash *wire.ShaHash) (*blockChainInfoTx, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Tx Lookup failed: %v", err)
 	}
+
+	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
