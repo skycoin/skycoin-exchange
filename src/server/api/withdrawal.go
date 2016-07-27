@@ -297,7 +297,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 
 	keys := make([]cipher.SecKey, len(utxos))
 	for i, u := range utxos {
-		k, err := egn.GetPrivKey(wallet.Skycoin, u.GetAddress())
+		k, err := egn.GetAddrPrivKey(wallet.Skycoin, u.GetAddress())
 		if err != nil {
 			panic(err)
 		}
@@ -320,7 +320,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 func makeBtcUtxoWithkeys(utxos []bitcoin.Utxo, egn engine.Exchange) ([]bitcoin.UtxoWithkey, error) {
 	utxoks := make([]bitcoin.UtxoWithkey, len(utxos))
 	for i, u := range utxos {
-		key, err := egn.GetPrivKey(wallet.Bitcoin, u.GetAddress())
+		key, err := egn.GetAddrPrivKey(wallet.Bitcoin, u.GetAddress())
 		if err != nil {
 			return []bitcoin.UtxoWithkey{}, err
 		}
