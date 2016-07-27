@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/skycoin/skycoin-exchange/src/xchacha20"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -91,7 +90,7 @@ func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, 
 func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) error {
 	p := cipher.MustPubKeyFromHex(pubkey)
 	s := cipher.MustSecKeyFromHex(seckey)
-	d, err := xchacha20.Decrypt(res.Encryptdata, p, s, res.GetNonce())
+	d, err := cipher.Chacha20Decrypt(res.Encryptdata, p, s, res.GetNonce())
 	if err != nil {
 		return err
 	}

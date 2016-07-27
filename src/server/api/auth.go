@@ -5,10 +5,10 @@ import (
 	"errors"
 	"regexp"
 
+	"github.com/codahale/chacha20"
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/xchacha20"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -28,7 +28,7 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 					break
 				}
 
-				data, err := xchacha20.Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
+				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
 				if err != nil {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					c.Abort()
@@ -79,8 +79,8 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 		panic(err)
 	}
 
-	nonce = cipher.RandByte(xchacha20.NonceSize)
-	encryptData, err = xchacha20.Encrypt(d, pubkey, seckey, nonce)
+	nonce = cipher.RandByte(chacha20.NonceSize)
+	encryptData, err = cipher.Chacha20Encrypt(d, pubkey, seckey, nonce)
 	if err != nil {
 		panic(err)
 	}
