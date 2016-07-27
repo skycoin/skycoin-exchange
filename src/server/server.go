@@ -22,7 +22,7 @@ import (
 // Config store server's configuration.
 type Config struct {
 	Port         int           // api port
-	Fee          int           // transaction fee
+	BtcFee       int           // btc transaction fee
 	DataDir      string        // data directory
 	WalletName   string        // wallet name
 	AcntName     string        // accounts file name
@@ -116,8 +116,8 @@ func (self *ExchangeServer) Run() {
 	r.Run(fmt.Sprintf(":%d", self.cfg.Port))
 }
 
-func (self ExchangeServer) GetFee() uint64 {
-	return uint64(self.cfg.Fee)
+func (self ExchangeServer) GetBtcFee() uint64 {
+	return uint64(self.cfg.BtcFee)
 }
 
 // GetServPrivKey returnt he sever's private key.
@@ -173,7 +173,7 @@ func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
 }
 
 // AddWatchAddress add watch address for utxo manager.
-func (self *ExchangeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
+func (self *ExchangeServer) WatchAddress(ct wallet.CoinType, addr string) {
 	switch ct {
 	case wallet.Bitcoin:
 		self.btcum.WatchAddresses([]string{addr})

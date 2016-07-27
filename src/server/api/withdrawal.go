@@ -103,7 +103,7 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 	var success bool
 	var btcTxRlt *BtcTxResult
 	var err error
-	if err := acnt.DecreaseBalance(ct, amt+ee.GetFee()); err != nil {
+	if err := acnt.DecreaseBalance(ct, amt+ee.GetBtcFee()); err != nil {
 		return nil, pp.MakeErrRes(err)
 	}
 	defer func() {
@@ -112,7 +112,7 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 				if btcTxRlt != nil {
 					ee.PutUtxos(wallet.Bitcoin, btcTxRlt.UsingUtxos)
 				}
-				acnt.IncreaseBalance(ct, amt+ee.GetFee())
+				acnt.IncreaseBalance(ct, amt+ee.GetBtcFee())
 			}()
 		} else {
 			//TODO: handle the saving failure.
@@ -134,7 +134,7 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 	success = true
 	if btcTxRlt.ChangeAddr != "" {
 		glog.Info("change address:", btcTxRlt.ChangeAddr)
-		ee.AddWatchAddress(ct, btcTxRlt.ChangeAddr)
+		ee.WatchAddress(ct, btcTxRlt.ChangeAddr)
 	}
 
 	pk := cipher.PubKey(acnt.GetID())
@@ -185,7 +185,7 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 	success = true
 	if skyTxRlt.ChangeAddr != "" {
 		glog.Info("change address:", skyTxRlt.ChangeAddr)
-		ee.AddWatchAddress(ct, skyTxRlt.ChangeAddr)
+		ee.WatchAddress(ct, skyTxRlt.ChangeAddr)
 	}
 
 	pk := cipher.PubKey(acnt.GetID())
@@ -200,7 +200,7 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
 func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*BtcTxResult, error) {
-	uxs, err := egn.ChooseUtxos(wallet.Bitcoin, amount+egn.GetFee(), 5*time.Second)
+	uxs, err := egn.ChooseUtxos(wallet.Bitcoin, amount+egn.GetBtcFee(), 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 	for _, u := range utxos {
 		totalAmounts += u.GetAmount()
 	}
-	fee := egn.GetFee()
+	fee := egn.GetBtcFee()
 	outAddrs := []bitcoin.UtxoOut{}
 	chgAmt := totalAmounts - fee - amount
 	chgAddr := ""

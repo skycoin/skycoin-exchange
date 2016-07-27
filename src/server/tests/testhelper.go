@@ -121,7 +121,7 @@ func (fs *FakeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey) 
 
 }
 
-func (fs FakeServer) GetFee() uint64 {
+func (fs FakeServer) GetBtcFee() uint64 {
 	return fs.Fee
 }
 

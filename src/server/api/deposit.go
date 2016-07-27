@@ -44,7 +44,7 @@ func GetNewAddress(ee engine.Exchange) gin.HandlerFunc {
 
 			// add the new address to engin for watching it's utxos.
 			at.AddDepositAddress(ct, addr)
-			ee.AddWatchAddress(ct, addr)
+			ee.WatchAddress(ct, addr)
 
 			ds := pp.GetDepositAddrRes{
 				AccountId: dar.AccountId,

@@ -12,9 +12,9 @@ type Exchange interface {
 	Run()
 	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
 	GetAccount(id account.AccountID) (account.Accounter, error)
-	GetFee() uint64
+	GetBtcFee() uint64
 	GetServPrivKey() cipher.SecKey
-	AddWatchAddress(ct wallet.CoinType, addr string)
+	WatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
 
 	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
