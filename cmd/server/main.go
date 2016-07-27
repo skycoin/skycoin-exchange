@@ -26,7 +26,9 @@ func main() {
 	cfg := server.Config{}
 	registerFlags(&cfg)
 	if cfg.Seed == "" {
-		glog.Fatal("seed must be set")
+		glog.Error("seed must be set")
+		flag.Usage()
+		return
 	}
 	cfg.WalletName = cfg.Seed + ".wlt"
 	key, err := cipher.SecKeyFromHex(sk)
