@@ -177,7 +177,6 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 	}
 
 	newTxid, err := skycoin.BroadcastTx(*skyTxRlt.Tx)
-	// newTxid, err := "", errors.New("broadcast skycoin tx failed")
 	if err != nil {
 		glog.Error(err)
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
@@ -307,6 +306,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 
 	glog.Info("creating skycoin transaction...")
 	tx := skycoin.NewTransaction(utxos, keys, outAddrs)
+
 	success = true
 	rlt := SkyTxResult{
 		Tx:         tx,
