@@ -9,7 +9,8 @@ go get github.com/skycoin/skycoin-exchange
 cd skycoin-exchange/cmd/server
 go run main.go -seed="wlt seed name"
 ```
-Seed name must be set, the default port number is 8080, for more usage, run the help command as below:
+Default server port is 8080, must specific the seed name.
+For more usage, run the help command as below:
 
 ```
 go run main.go --help
@@ -32,7 +33,7 @@ url: /api/v1/accounts
 ```
 mode: GET
 url: /api/v1/deposit_address?cointype=[:type]
-params: 
+params:
 	type: can be bitcoin, skycoin, etc.
 ```
 
@@ -40,7 +41,7 @@ params:
 ```
 mode: GET
 url: /api/v1/account/balance?cointype=[:type]
-params: 
+params:
 	type: can be bitcoin, skycoin, etc.
 ```
 
