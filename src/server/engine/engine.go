@@ -20,6 +20,6 @@ type Exchange interface {
 	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
 	PutUtxos(ct wallet.CoinType, utxos interface{})
 
-	GetPrivKey(ct wallet.CoinType, addr string) (string, error)
+	GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error)
 	SaveAccount() error
 }
