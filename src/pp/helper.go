@@ -3,6 +3,7 @@ package pp
 import (
 	"encoding/json"
 
+	"github.com/codahale/chacha20"
 	"github.com/golang/protobuf/proto"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -69,13 +70,13 @@ func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, 
 	sp := cipher.MustPubKeyFromHex(pubkey)
 	cs := cipher.MustSecKeyFromHex(seckey)
 	cp := cipher.PubKeyFromSecKey(cs)
-	nonce := cipher.RandByte(xchacha20.NonceSize)
+	nonce := cipher.RandByte(chacha20.NonceSize)
 	d, err := json.Marshal(r)
 	if err != nil {
 		return EncryptReq{}, err
 	}
 
-	ed, err := xchacha20.Encrypt([]byte(d), sp, cs, nonce)
+	ed, err := cipher.Chacha20Encrypt([]byte(d), sp, cs, nonce)
 	if err != nil {
 		return EncryptReq{}, err
 	}

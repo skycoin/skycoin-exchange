@@ -18,7 +18,6 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&cfg.AcntName, "acntName", "account.data", "accounts file name")
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 
-	// flag.Set("log_dir", logDir)
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 }
@@ -26,6 +25,9 @@ func registerFlags(cfg *server.Config) {
 func main() {
 	cfg := server.Config{}
 	registerFlags(&cfg)
+	if cfg.Seed == "" {
+		glog.Fatal("seed must be set")
+	}
 	cfg.WalletName = cfg.Seed + ".wlt"
 	key, err := cipher.SecKeyFromHex(sk)
 	if err != nil {
