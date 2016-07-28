@@ -132,7 +132,7 @@ func (fs *FakeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
 
 }
 
-func (fs *FakeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) ([]bitcoin.UtxoWithkey, error) {
+func (fs *FakeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error) {
 	return []bitcoin.UtxoWithkey{}, nil
 }
 
