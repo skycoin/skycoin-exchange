@@ -151,6 +151,11 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 	amt := rp.Values["amt"].(uint64)
 	ct := rp.Values["cointype"].(wallet.CoinType)
 	toAddr := rp.Values["toAddr"].(string)
+
+	if err := skycoin.VerifyAmount(amt); err != nil {
+		return nil, pp.MakeErrRes(err)
+	}
+
 	var success bool
 	var skyTxRlt *SkyTxResult
 	var err error
@@ -306,6 +311,9 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 
 	glog.Info("creating skycoin transaction...")
 	tx := skycoin.NewTransaction(utxos, keys, outAddrs)
+	if err := tx.Verify(); err != nil {
+		return nil, err
+	}
 
 	success = true
 	rlt := SkyTxResult{
@@ -314,7 +322,6 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 		ChangeAddr: chgAddr,
 	}
 	return &rlt, nil
-
 }
 
 func makeBtcUtxoWithkeys(utxos []bitcoin.Utxo, egn engine.Exchange) ([]bitcoin.UtxoWithkey, error) {
