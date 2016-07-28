@@ -106,7 +106,7 @@ func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, 
 		case utxo := <-eum.UtxosCh:
 			glog.Info("get utxo:", utxo.GetHash(), " ", utxo.GetCoins())
 			utxos = append(utxos, utxo)
-			totalAmount += utxo.GetCoins()
+			totalAmount += utxo.GetCoins() * 1e6
 			if totalAmount >= amount {
 				return utxos, nil
 			}
