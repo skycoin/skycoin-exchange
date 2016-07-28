@@ -57,7 +57,7 @@ func (su SkyUtxo) GetCoins() uint64 {
 	if err != nil {
 		panic(err)
 	}
-	return i
+	return i * 1e6
 }
 
 func (su SkyUtxo) GetHours() uint64 {
