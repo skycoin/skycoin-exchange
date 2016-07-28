@@ -67,9 +67,16 @@ func (su SkyUtxo) GetHours() uint64 {
 func MakeUtxoOutput(addr string, amount uint64, hours uint64) UtxoOut {
 	uo := UtxoOut{}
 	uo.Address = cipher.MustDecodeBase58Address(addr)
-	uo.Coins = amount * 1e6
+	uo.Coins = amount
 	uo.Hours = hours
 	return uo
+}
+
+func VerifyAmount(amt uint64) error {
+	if (amt % 1e6) != 0 {
+		return errors.New("Transaction amount must be multiple of 1e6 ")
+	}
+	return nil
 }
 
 // GenerateAddresses, generate bitcoin addresses.
@@ -119,12 +126,12 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transac
 	// keys := make([]cipher.SecKey, len(utxos))
 	for _, u := range utxos {
 		tx.PushInput(cipher.MustSHA256FromHex(u.GetHash()))
-		// keys[i] = keyMap[u.GetAddress()]
 	}
 
 	for _, o := range outs {
 		tx.PushOutput(o.Address, o.Coins, o.Hours)
 	}
+	// tx.Verify()
 
 	tx.SignInputs(keys)
 	tx.UpdateHeader()
