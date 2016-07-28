@@ -13,7 +13,6 @@ var CheckTick = 5 * time.Second
 type UtxoManager interface {
 	Start(closing chan bool)
 	ChooseUtxos(amt uint64, tm time.Duration) ([]Utxo, error)
-	// GetUtxo() chan Utxo // get utxo from utxo pool
 	PutUtxo(utxo Utxo) // put utxo into utxo pool
 	WatchAddresses(addrs []string)
 }
@@ -57,16 +56,15 @@ func (eum *ExUtxoManager) Start(closing chan bool) {
 	}
 }
 
-func (eum *ExUtxoManager) GetUtxo() chan Utxo {
-	return eum.UtxosCh
-}
-
 func (eum *ExUtxoManager) PutUtxo(utxo Utxo) {
 	glog.Info("skycoin utxo put back:", utxo.GetHash())
 	eum.UtxosCh <- utxo
 }
 
 func (eum *ExUtxoManager) WatchAddresses(addrs []string) {
+	for _, addr := range addrs {
+		glog.Info("skycoin watch address:", addr)
+	}
 	eum.WatchAddress = append(eum.WatchAddress, addrs...)
 }
 
@@ -145,7 +143,6 @@ func (eum *ExUtxoManager) ChooseUtxos(amt uint64, tm time.Duration) ([]Utxo, err
 				utxos, err = eum.chooseUtxos(amt, randExpireTm())
 				if err != nil {
 					return
-					// return []Utxo{}, err
 				}
 
 				if len(utxos) > 0 {
