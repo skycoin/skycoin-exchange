@@ -90,12 +90,12 @@ func GenerateAddresses(seed []byte, num int) (string, []coin_interface.AddressEn
 // GetUnspentOutputs return the unspent outputs
 func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	var url string
-	if len(addrs) > 0 {
-		addrParam := strings.Join(addrs, ",")
-		url = fmt.Sprintf("%s/outputs?addrs=%s", ServeAddr, addrParam)
-	} else {
-		url = fmt.Sprintf("%s/outputs")
+	if len(addrs) < 0 {
+		return []Utxo{}, nil
 	}
+
+	addrParam := strings.Join(addrs, ",")
+	url = fmt.Sprintf("%s/outputs?addrs=%s", ServeAddr, addrParam)
 
 	rsp, err := http.Get(url)
 	if err != nil {
