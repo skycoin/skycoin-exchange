@@ -12,7 +12,7 @@ var sk = "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257"
 
 func registerFlags(cfg *server.Config) {
 	flag.IntVar(&cfg.Port, "port", 8080, "server listen port")
-	flag.IntVar(&cfg.Fee, "fee", 10000, "transaction fee in satoish")
+	flag.IntVar(&cfg.BtcFee, "btcFee", 10000, "transaction fee in satoish")
 	flag.StringVar(&cfg.DataDir, "dataDir", ".skycoin-exchange", "data directory")
 	flag.StringVar(&cfg.Seed, "seed", "", "wallet's seed")
 	flag.StringVar(&cfg.AcntName, "acntName", "account.data", "accounts file name")
