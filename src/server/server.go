@@ -3,7 +3,6 @@ package server
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -62,16 +61,17 @@ func New(cfg Config) engine.Exchange {
 	// init the account dir
 	account.InitDir(filepath.Join(path, "account/server"))
 
-	// load account manager if exist.
 	var (
 		acntMgr account.AccountManager
 		err     error
 	)
 
+	// load account manager if exist.
 	acntMgr, err = account.LoadAccountManager(cfg.AcntName)
 	if err != nil {
 		glog.Error(err)
 		if os.IsNotExist(err) {
+			// create new account manager.
 			acntMgr = account.NewAccountManager(cfg.AcntName)
 		} else {
 			panic(err)
@@ -103,8 +103,9 @@ func New(cfg Config) engine.Exchange {
 	return s
 }
 
+// Run start the exchange server.
 func (self *ExchangeServer) Run() {
-	log.Println("skycoin-exchange server started, port:", self.cfg.Port)
+	glog.Info(fmt.Sprintf("skycoin-exchange server started, port:", self.cfg.Port))
 
 	// start the utxo manager
 	c := make(chan bool)
@@ -116,6 +117,7 @@ func (self *ExchangeServer) Run() {
 	r.Run(fmt.Sprintf(":%d", self.cfg.Port))
 }
 
+// GetBtcFee get transaction fee of bitcoin.
 func (self ExchangeServer) GetBtcFee() uint64 {
 	return uint64(self.cfg.BtcFee)
 }
@@ -125,8 +127,8 @@ func (self ExchangeServer) GetServPrivKey() cipher.SecKey {
 	return self.cfg.Seckey
 }
 
-// GetPrivKey return the private key of specific address.
-func (self ExchangeServer) GetPrivKey(ct wallet.CoinType, addr string) (string, error) {
+// GetPrivKey get the private key of specific address.
+func (self ExchangeServer) GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error) {
 	entry, err := self.wallet.GetAddressEntry(ct, addr)
 	if err != nil {
 		return "", err
@@ -135,6 +137,7 @@ func (self ExchangeServer) GetPrivKey(ct wallet.CoinType, addr string) (string, 
 	return entry.Secret, nil
 }
 
+// GetNewAddress create new address of specific coin type.
 func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	self.wltMtx.Lock()
 	defer self.wltMtx.Unlock()
@@ -145,7 +148,7 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 	return addrEntry[0].Address
 }
 
-// BtcChooseUtxos choose appropriate bitcoin utxos,
+// ChooseUtxos choose appropriate bitcoin utxos,
 func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error) {
 	switch ct {
 	case wallet.Bitcoin:
@@ -157,6 +160,7 @@ func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm ti
 	}
 }
 
+// PutUtxos set back the utxos of specific coin type.
 func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
 	switch ct {
 	case wallet.Bitcoin:
@@ -172,17 +176,13 @@ func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
 	}
 }
 
-// AddWatchAddress add watch address for utxo manager.
+// AddWatchAddress add watch address to utxo manager.
 func (self *ExchangeServer) WatchAddress(ct wallet.CoinType, addr string) {
 	switch ct {
 	case wallet.Bitcoin:
 		self.btcum.WatchAddresses([]string{addr})
-	}
-}
-
-func (self *ExchangeServer) BtcPutUtxos(utxos []bitcoin.Utxo) {
-	for _, u := range utxos {
-		self.btcum.PutUtxo(u)
+	case wallet.Skycoin:
+		self.skyum.WatchAddresses([]string{addr})
 	}
 }
 
@@ -190,8 +190,8 @@ func (self *ExchangeServer) SaveAccount() error {
 	return self.Save()
 }
 
+// initDataDir init the data dir of skycoin exchange.
 func initDataDir(dir string) string {
-	//DataDir = dir
 	if dir == "" {
 		glog.Error("data directory is nil")
 	}
