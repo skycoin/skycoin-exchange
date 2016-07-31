@@ -13,6 +13,11 @@ type Book struct {
 	askMtx    sync.Mutex
 }
 
+type BookJson struct {
+	BidOrders []Order `json:"bids"`
+	AskOrders []Order `json:"asks"`
+}
+
 type OrderPair struct {
 	Bid Order
 	Ask Order
@@ -44,6 +49,13 @@ func (bk *Book) Copy() Book {
 	copy(newBk.askOrders, bk.askOrders)
 	bk.askMtx.Unlock()
 	return newBk
+}
+
+func (bk Book) getMaxOrderID() uint64 {
+	// sort the book with priority of order id.
+	orders := append(bk.bidOrders, bk.askOrders...)
+	sort.Sort(byOrderID(orders))
+	return orders[0].ID
 }
 
 // Match check if there're bids and asks are matched,
@@ -90,10 +102,32 @@ func (bk *Book) Match() []Order {
 	}
 
 	bk.bidOrders = bk.bidOrders[len(bidOrders):]
-
 	bk.askMtx.Unlock()
 	bk.bidMtx.Unlock()
+
 	return append(bidOrders, askOrders...)
+}
+
+func (bk Book) ToMarshalable() BookJson {
+	bj := BookJson{
+		BidOrders: make([]Order, len(bk.bidOrders)),
+		AskOrders: make([]Order, len(bk.askOrders)),
+	}
+
+	copy(bj.BidOrders, bk.bidOrders)
+	copy(bj.AskOrders, bk.askOrders)
+	return bj
+}
+
+func NewBookFromJson(bj BookJson) *Book {
+	bk := &Book{
+		bidOrders: make([]Order, len(bj.BidOrders)),
+		askOrders: make([]Order, len(bj.AskOrders)),
+	}
+
+	copy(bk.bidOrders, bj.BidOrders)
+	copy(bk.askOrders, bj.AskOrders)
+	return bk
 }
 
 func checkAskOrders(bid Order, askOrders *[]Order) (uint64, uint64) {
