@@ -32,6 +32,20 @@ func (bk *Book) AddAsk(ask Order) {
 	bk.askMtx.Unlock()
 }
 
+func (bk *Book) Copy() Book {
+	newBk := Book{}
+	bk.bidMtx.Lock()
+	newBk.bidOrders = make([]Order, len(bk.bidOrders))
+	copy(newBk.bidOrders, bk.bidOrders)
+	bk.bidMtx.Unlock()
+
+	bk.askMtx.Lock()
+	newBk.askOrders = make([]Order, len(bk.askOrders))
+	copy(newBk.askOrders, bk.askOrders)
+	bk.askMtx.Unlock()
+	return newBk
+}
+
 // Match check if there're bids and asks are matched,
 // if matched, remove from the order book, and return the orders for
 // further use.
@@ -65,6 +79,7 @@ func (bk *Book) Match() []Order {
 
 		// append fullfilled ask orders
 		askOrders = append(askOrders, bk.askOrders[:askOrderNum]...)
+		// remove fullfilled ask orders from book.
 		bk.askOrders = bk.askOrders[askOrderNum:]
 
 		if restAmt == 0 {
@@ -104,7 +119,6 @@ func checkAskOrders(bid Order, askOrders *[]Order) (uint64, uint64) {
 			bid.RestAmt -= ask.RestAmt
 			(*askOrders)[i].RestAmt = 0
 			askNum += 1
-			// }
 		}
 	}
 	return bid.RestAmt, askNum
