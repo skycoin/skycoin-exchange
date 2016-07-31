@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
@@ -43,11 +45,13 @@ type Config struct {
 
 type ExchangeServer struct {
 	account.AccountManager
-	btcum  bitcoin.UtxoManager
-	skyum  skycoin.UtxoManager
-	cfg    Config
-	wallet wallet.Wallet
-	wltMtx sync.RWMutex // mutex for protecting the wallet.
+	btcum         bitcoin.UtxoManager
+	skyum         skycoin.UtxoManager
+	orderManager  *order.Manager
+	cfg           Config
+	wallet        wallet.Wallet
+	wltMtx        sync.RWMutex // mutex for protecting the wallet.
+	orderHandlers map[string]chan order.Order
 }
 
 // New create new server
@@ -60,6 +64,9 @@ func New(cfg Config) engine.Exchange {
 
 	// init the account dir
 	account.InitDir(filepath.Join(path, "account/server"))
+
+	// init the order book dir.
+	order.InitDir(filepath.Join(path, "orderbook"))
 
 	var (
 		acntMgr account.AccountManager
@@ -93,13 +100,29 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
+	// load or create order books.
+	var orderManager *order.Manager
+	orderManager, err = order.LoadManager()
+	if err != nil {
+		if os.IsNotExist(err) {
+			orderManager = order.NewManager()
+		}
+	} else {
+		panic(err)
+	}
+
 	s := &ExchangeServer{
 		cfg:            cfg,
 		wallet:         wlt,
 		AccountManager: acntMgr,
 		btcum:          bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
 		skyum:          skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
+		orderManager:   orderManager,
+		orderHandlers: map[string]chan order.Order{
+			"bitcoin/skycoin": make(chan order.Order, 100),
+		},
 	}
+
 	return s
 }
 
@@ -107,10 +130,18 @@ func New(cfg Config) engine.Exchange {
 func (self *ExchangeServer) Run() {
 	glog.Info(fmt.Sprintf("skycoin-exchange server started, port:", self.cfg.Port))
 
+	// register the order handlers
+	for cp, c := range self.orderHandlers {
+		self.orderManager.RegisterOrderChan(cp, c)
+	}
+
 	// start the utxo manager
 	c := make(chan bool)
 	go self.btcum.Start(c)
 	go self.skyum.Start(c)
+
+	go self.orderManager.Start(1*time.Second, c)
+	self.handleOrders(c)
 
 	// start the api server.
 	r := NewRouter(self)
@@ -208,4 +239,64 @@ func initDataDir(dir string) string {
 		glog.Error("Failed to create directory %s: %v", dir, err)
 	}
 	return dir
+}
+
+func (self *ExchangeServer) handleOrders(c chan bool) {
+	for cp, ch := range self.orderHandlers {
+		go func(cp string, ch chan order.Order, closing chan bool) {
+			for {
+				select {
+				case <-closing:
+					return
+				case order := <-ch:
+					// handle the order
+					self.settleOrder(cp, order)
+				}
+			}
+		}(cp, ch, c)
+	}
+}
+
+func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
+	pk := cipher.MustPubKeyFromHex(od.AccountID)
+	acnt_id := account.AccountID(pk)
+	acnt, err := self.GetAccount(acnt_id)
+	if err != nil {
+		panic("error account id")
+	}
+
+	pair := strings.Split(cp, "/")
+	if len(pair) != 2 {
+		panic("error coin pair")
+	}
+	mainCt, err := wallet.ConvertCoinType(pair[0])
+	if err != nil {
+		panic(err)
+	}
+	subCt, err := wallet.ConvertCoinType(pair[1])
+	if err != nil {
+		panic(err)
+	}
+
+	switch od.Type {
+	case order.Bid:
+		// increase main coin balance
+		if err := acnt.IncreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
+			panic(err)
+		}
+
+		// decrease sub coin balance.
+		if err := acnt.DecreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
+			panic(err)
+		}
+	case order.Ask:
+		// increase sub coin balance.
+		if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
+			panic(err)
+		}
+		// decrease main coin balance.
+		if err := acnt.DecreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
+			panic(err)
+		}
+	}
 }
