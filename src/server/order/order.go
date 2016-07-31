@@ -1,6 +1,11 @@
 package order
 
-import "github.com/skycoin/skycoin-exchange/src/server/account"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/skycoin/skycoin/src/util"
+)
 
 type Type uint8
 
@@ -9,18 +14,25 @@ const (
 	Ask
 )
 
+var (
+	orderDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/orderbook")
+	orderExt string = "ods"
+	idExt    string = "id"
+)
+
 type Order struct {
-	ID          uint64 // order id.
-	AccountId   account.AccountID
-	Type        Type   // order type.
-	Price       uint64 // price of this order.
-	Amount      uint64 // total amount of this order.
-	RestAmt     uint64 // rest amount.
-	CreatedTime uint64 // created time of the order.
+	ID          uint64 `json:"id"` // order id.
+	AccountID   string `json:"account_id"`
+	Type        Type   `json:"type"`         // order type.
+	Price       uint64 `json:"price"`        // price of this order.
+	Amount      uint64 `json:"amount"`       // total amount of this order.
+	RestAmt     uint64 `json:"reset_amt"`    // rest amount.
+	CreatedTime uint64 `json:"created_time"` // created time of the order.
 }
 
 type byPriceThenTimeDesc []Order
 type byPriceThenTimeAsc []Order
+type byOrderID []Order
 
 func (bp byPriceThenTimeDesc) Len() int {
 	return len(bp)
@@ -58,4 +70,30 @@ func (bp byPriceThenTimeAsc) Less(i, j int) bool {
 
 func (bp byPriceThenTimeAsc) Swap(i, j int) {
 	bp[i], bp[j] = bp[j], bp[i]
+}
+
+func (bo byOrderID) Len() int {
+	return len(bo)
+}
+
+func (bo byOrderID) Less(i, j int) bool {
+	return bo[i].ID > bo[j].ID
+}
+
+func (bo byOrderID) Swap(i, j int) {
+	bo[i], bo[j] = bo[j], bo[i]
+}
+
+func InitDir(path string) {
+	if path == "" {
+		path = orderDir
+	} else {
+		orderDir = path
+	}
+	// create the account dir if not exist.
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			panic(err)
+		}
+	}
 }
