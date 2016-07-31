@@ -124,7 +124,7 @@ func (m *Manager) RegisterOrderChan(coinPair string, c chan Order) {
 }
 
 // Run start the manager, tm is the match tick time, closing is used for stopping the manager from running.
-func (m *Manager) Run(tm time.Duration, closing chan bool) {
+func (m *Manager) Start(tm time.Duration, closing chan bool) {
 	// start the id generators
 	for _, g := range m.idg {
 		go g.Run(closing)

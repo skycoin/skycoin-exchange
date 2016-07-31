@@ -17,7 +17,7 @@ func TestManager(t *testing.T) {
 	btcSkyChan := make(chan Order, 100)
 	m.RegisterOrderChan(coinPair, btcSkyChan)
 	closing := make(chan bool)
-	go m.Run(time.Duration(1)*time.Second, closing)
+	go m.Start(time.Duration(1)*time.Second, closing)
 
 	var BidOrderList = []Order{
 		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
