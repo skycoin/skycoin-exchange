@@ -3,13 +3,13 @@ package order
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 )
 
 type Manager struct {
-	books     map[string]*Book
-	chans     map[string]chan Order
-	matchTick time.Duration
+	books map[string]*Book
+	chans map[string]chan Order
 }
 
 func NewManager() *Manager {
@@ -44,21 +44,26 @@ func (m *Manager) RegisterOrderChan(coinPair string, c chan Order) {
 	m.chans[coinPair] = c
 }
 
-func (m *Manager) Run(closing chan bool) {
+// Run start the manager, tm is the match tick time, closing is the used to stop the manager from running.
+func (m *Manager) Run(tm time.Duration, closing chan bool) {
+	wg := sync.WaitGroup{}
 	for p, bk := range m.books {
-		go func(b *Book, orderChan chan Order, c chan bool) {
+		wg.Add(1)
+		go func(b *Book, orderChan chan Order, c chan bool, w *sync.WaitGroup) {
 			orders := []Order{}
 			for {
 				select {
 				case <-c:
+					w.Done()
 					return
-				case <-time.After(m.matchTick):
+				case <-time.After(tm):
 					orders = b.Match()
 					for _, o := range orders {
 						orderChan <- o
 					}
 				}
 			}
-		}(bk, m.chans[p], closing)
+		}(bk, m.chans[p], closing, &wg)
 	}
+	wg.Wait()
 }
