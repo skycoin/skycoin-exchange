@@ -1,6 +1,7 @@
 package order
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -264,4 +265,42 @@ func TestMatchZero(t *testing.T) {
 	// }
 	// fmt.Println("len(ods):", len(ods))
 	assert.Equal(t, len(ods), 0)
+}
+
+func TestCopy(t *testing.T) {
+	var BidOrderList = []Order{
+		Order{Price: 100, CreatedTime: 132424, Amount: 1},
+		Order{Price: 102, CreatedTime: 132425, Amount: 1},
+		Order{Price: 103, CreatedTime: 132428, Amount: 1},
+		Order{Price: 101, CreatedTime: 132429, Amount: 1},
+		Order{Price: 103, CreatedTime: 132430, Amount: 1},
+	}
+
+	var AskOrderList = []Order{
+		Order{Price: 100, CreatedTime: 132424, Amount: 1},
+		Order{Price: 102, CreatedTime: 132425, Amount: 1},
+		Order{Price: 101, CreatedTime: 132429, Amount: 1},
+		Order{Price: 103, CreatedTime: 132428, Amount: 1},
+		Order{Price: 103, CreatedTime: 132438, Amount: 1},
+	}
+
+	bk := Book{}
+	for _, bid := range BidOrderList {
+		bk.AddBid(bid)
+	}
+
+	for _, ask := range AskOrderList {
+		bk.AddAsk(ask)
+	}
+
+	copyBk := bk.Copy()
+	assert.Equal(t, len(bk.bidOrders), len(copyBk.bidOrders))
+	for i := 0; i < len(bk.bidOrders); i++ {
+		assert.NotEqual(t, fmt.Sprintf("%p", &bk.bidOrders[i]), fmt.Sprintf("%p", &copyBk.bidOrders[i]))
+	}
+
+	assert.Equal(t, len(bk.askOrders), len(copyBk.askOrders))
+	for i := 0; i < len(bk.askOrders); i++ {
+		assert.NotEqual(t, fmt.Sprintf("%p", &bk.askOrders[i]), fmt.Sprintf("%p", &copyBk.askOrders[i]))
+	}
 }
