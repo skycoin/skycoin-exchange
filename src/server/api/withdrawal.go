@@ -43,14 +43,12 @@ func Withdraw(ee engine.Exchange) gin.HandlerFunc {
 				break
 			}
 
-			// convert to cipher.PubKey
-			pubkey := pp.BytesToPubKey(wr.GetAccountId())
-			if err := pubkey.Verify(); err != nil {
+			if _, err := cipher.PubKeyFromHex(wr.GetAccountId()); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}
 
-			a, err := ee.GetAccount(account.AccountID(pubkey))
+			a, err := ee.GetAccount(wr.GetAccountId())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
@@ -62,7 +60,6 @@ func Withdraw(ee engine.Exchange) gin.HandlerFunc {
 				break
 			}
 			rp.Values["engine"] = ee
-			rp.Values["pubkey"] = pubkey
 			rp.Values["account"] = a
 			rp.Values["cointype"] = ct
 			rp.Values["amt"] = wr.GetCoins()
@@ -100,6 +97,10 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 	amt := rp.Values["amt"].(uint64)
 	ct := rp.Values["cointype"].(wallet.CoinType)
 	toAddr := rp.Values["toAddr"].(string)
+	// verify the toAddr
+	if _, err := cipher.BitcoinDecodeBase58Address(toAddr); err != nil {
+		return nil, pp.MakeErrRes(errors.New("invalid bitcoin address"))
+	}
 	var success bool
 	var btcTxRlt *BtcTxResult
 	var err error
@@ -137,9 +138,9 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 		ee.WatchAddress(ct, btcTxRlt.ChangeAddr)
 	}
 
-	pk := cipher.PubKey(acnt.GetID())
+	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		AccountId: pk[:],
+		AccountId: &id,
 		NewTxid:   &newTxid,
 	}
 	return &resp, nil
@@ -154,6 +155,11 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 
 	if err := skycoin.VerifyAmount(amt); err != nil {
 		return nil, pp.MakeErrRes(err)
+	}
+
+	// verify the toAddr
+	if _, err := cipher.DecodeBase58Address(toAddr); err != nil {
+		return nil, pp.MakeErrRes(errors.New("invalid skycoin address"))
 	}
 
 	var success bool
@@ -193,9 +199,9 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 		ee.WatchAddress(ct, skyTxRlt.ChangeAddr)
 	}
 
-	pk := cipher.PubKey(acnt.GetID())
+	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		AccountId: pk[:],
+		AccountId: &id,
 		NewTxid:   &newTxid,
 	}
 	return &resp, nil

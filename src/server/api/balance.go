@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 func GetBalance(ee engine.Exchange) gin.HandlerFunc {
@@ -21,13 +21,12 @@ func GetBalance(ee engine.Exchange) gin.HandlerFunc {
 			}
 
 			// convert to cipher.PubKey
-			pubkey := pp.BytesToPubKey(breq.GetAccountId())
-			if err := pubkey.Verify(); err != nil {
+			if _, err := cipher.PubKeyFromHex(breq.GetAccountId()); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}
 
-			a, err := ee.GetAccount(account.AccountID(pubkey))
+			a, err := ee.GetAccount(breq.GetAccountId())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break

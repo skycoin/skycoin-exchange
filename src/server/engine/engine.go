@@ -11,8 +11,8 @@ import (
 
 type Exchange interface {
 	Run()
-	CreateAccountWithPubkey(pubkey cipher.PubKey) (account.Accounter, error)
-	GetAccount(id account.AccountID) (account.Accounter, error)
+	CreateAccountWithPubkey(pubkey string) (account.Accounter, error)
+	GetAccount(id string) (account.Accounter, error)
 	GetBtcFee() uint64
 	GetServPrivKey() cipher.SecKey
 	WatchAddress(ct wallet.CoinType, addr string)
