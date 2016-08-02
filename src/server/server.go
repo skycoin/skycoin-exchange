@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -106,9 +105,10 @@ func New(cfg Config) engine.Exchange {
 	if err != nil {
 		if os.IsNotExist(err) {
 			orderManager = order.NewManager()
+			orderManager.AddBook("bitcoin/skycoin", &order.Book{})
+		} else {
+			panic(err)
 		}
-	} else {
-		panic(err)
 	}
 
 	s := &ExchangeServer{
@@ -221,6 +221,10 @@ func (self *ExchangeServer) SaveAccount() error {
 	return self.Save()
 }
 
+func (self *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error) {
+	return self.orderManager.AddOrder(cp, odr)
+}
+
 // initDataDir init the data dir of skycoin exchange.
 func initDataDir(dir string) string {
 	if dir == "" {
@@ -258,45 +262,50 @@ func (self *ExchangeServer) handleOrders(c chan bool) {
 }
 
 func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
-	pk := cipher.MustPubKeyFromHex(od.AccountID)
-	acnt_id := account.AccountID(pk)
-	acnt, err := self.GetAccount(acnt_id)
-	if err != nil {
-		panic("error account id")
-	}
+	glog.Info(fmt.Sprintf("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount))
+	// pk := cipher.MustPubKeyFromHex(od.AccountID)
+	// acnt_id := account.AccountID(pk)
+	// acnt, err := self.GetAccount(acnt_id)
+	// if err != nil {
+	// 	panic("error account id")
+	// }
+	//
+	// pair := strings.Split(cp, "/")
+	// if len(pair) != 2 {
+	// 	panic("error coin pair")
+	// }
+	// mainCt, err := wallet.ConvertCoinType(pair[0])
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// subCt, err := wallet.ConvertCoinType(pair[1])
+	// if err != nil {
+	// 	panic(err)
+	// }
+	//
+	// switch od.Type {
+	// case order.Bid:
+	// 	// increase main coin balance
+	// 	if err := acnt.IncreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
+	// 		panic(err)
+	// 	}
+	//
+	// 	// decrease sub coin balance.
+	// 	if err := acnt.DecreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
+	// 		panic(err)
+	// 	}
+	// case order.Ask:
+	// 	// increase sub coin balance.
+	// 	if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
+	// 		panic(err)
+	// 	}
+	// 	// decrease main coin balance.
+	// 	if err := acnt.DecreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+}
 
-	pair := strings.Split(cp, "/")
-	if len(pair) != 2 {
-		panic("error coin pair")
-	}
-	mainCt, err := wallet.ConvertCoinType(pair[0])
-	if err != nil {
-		panic(err)
-	}
-	subCt, err := wallet.ConvertCoinType(pair[1])
-	if err != nil {
-		panic(err)
-	}
-
-	switch od.Type {
-	case order.Bid:
-		// increase main coin balance
-		if err := acnt.IncreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
-			panic(err)
-		}
-
-		// decrease sub coin balance.
-		if err := acnt.DecreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
-			panic(err)
-		}
-	case order.Ask:
-		// increase sub coin balance.
-		if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
-			panic(err)
-		}
-		// decrease main coin balance.
-		if err := acnt.DecreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
-			panic(err)
-		}
-	}
+func (self *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error) {
+	return self.orderManager.GetOrders(cp, tp, start, end)
 }
