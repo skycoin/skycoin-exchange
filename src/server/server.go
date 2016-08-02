@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -263,47 +264,43 @@ func (self *ExchangeServer) handleOrders(c chan bool) {
 
 func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	glog.Info(fmt.Sprintf("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount))
-	// pk := cipher.MustPubKeyFromHex(od.AccountID)
-	// acnt_id := account.AccountID(pk)
-	// acnt, err := self.GetAccount(acnt_id)
-	// if err != nil {
-	// 	panic("error account id")
-	// }
-	//
-	// pair := strings.Split(cp, "/")
-	// if len(pair) != 2 {
-	// 	panic("error coin pair")
-	// }
-	// mainCt, err := wallet.ConvertCoinType(pair[0])
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// subCt, err := wallet.ConvertCoinType(pair[1])
-	// if err != nil {
-	// 	panic(err)
-	// }
-	//
-	// switch od.Type {
-	// case order.Bid:
-	// 	// increase main coin balance
-	// 	if err := acnt.IncreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
-	// 		panic(err)
-	// 	}
-	//
-	// 	// decrease sub coin balance.
-	// 	if err := acnt.DecreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
-	// 		panic(err)
-	// 	}
-	// case order.Ask:
-	// 	// increase sub coin balance.
-	// 	if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount*wallet.CoinFactor[subCt]); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	// decrease main coin balance.
-	// 	if err := acnt.DecreaseBalance(mainCt, od.Amount*wallet.CoinFactor[mainCt]); err != nil {
-	// 		panic(err)
-	// 	}
-	// }
+	pk := cipher.MustPubKeyFromHex(od.AccountID)
+	acnt_id := account.AccountID(pk)
+	acnt, err := self.GetAccount(acnt_id)
+	if err != nil {
+		panic("error account id")
+	}
+
+	pair := strings.Split(cp, "/")
+	if len(pair) != 2 {
+		panic("error coin pair")
+	}
+	mainCt, err := wallet.ConvertCoinType(pair[0])
+	if err != nil {
+		panic(err)
+	}
+	subCt, err := wallet.ConvertCoinType(pair[1])
+	if err != nil {
+		panic(err)
+	}
+
+	switch od.Type {
+	case order.Bid:
+		// increase main coin balance
+		if err := acnt.IncreaseBalance(mainCt, od.Amount); err != nil {
+			panic(err)
+		}
+
+	case order.Ask:
+		// increase sub coin balance.
+		if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount); err != nil {
+			panic(err)
+		}
+		// decrease main coin balance.
+		if err := acnt.DecreaseBalance(mainCt, od.Amount); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func (self *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error) {
