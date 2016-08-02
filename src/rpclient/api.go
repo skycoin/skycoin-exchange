@@ -211,3 +211,102 @@ func Withdraw(cli Client) gin.HandlerFunc {
 		c.JSON(200, rlt)
 	}
 }
+
+func BidOrder(cli Client) gin.HandlerFunc {
+	return orderHandler("bid", cli)
+}
+
+func AskOrder(cli Client) gin.HandlerFunc {
+	return orderHandler("ask", cli)
+}
+
+func orderHandler(tp string, cli Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rlt := &pp.EmptyRes{}
+		for {
+			rawReq := pp.OrderReq{}
+			if err := c.BindJSON(&rawReq); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			pk := cli.GetLocalPubKey()
+			rawReq.AccountId = pk[:]
+
+			req, _ := pp.MakeEncryptReq(&rawReq, cli.GetServPubkey().Hex(), cli.GetLocalSecKey().Hex())
+			js, _ := json.Marshal(req)
+			url := fmt.Sprintf("%s/account/%s", cli.GetServApiRoot(), tp)
+			resp, err := http.Post(url, "application/json", bytes.NewBuffer(js))
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			res := pp.EncryptRes{}
+			json.NewDecoder(resp.Body).Decode(&res)
+			defer resp.Body.Close()
+
+			// handle the response
+			if res.Result.GetSuccess() {
+				v := pp.OrderRes{}
+				pp.DecryptRes(res, cli.GetServPubkey().Hex(), cli.GetLocalSecKey().Hex(), &v)
+				c.JSON(200, v)
+				return
+			} else {
+				c.JSON(200, res)
+				return
+			}
+		}
+		c.JSON(200, rlt)
+	}
+}
+
+func GetOrderBook(cli Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rlt := &pp.EmptyRes{}
+		for {
+			tp := c.Param("type")
+			cp := c.Query("coin_pair")
+			st := c.Query("start")
+			ed := c.Query("end")
+			if cp == "" || st == "" || ed == "" || tp == "" {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			start, err := strconv.ParseInt(st, 10, 64)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			end, err := strconv.ParseInt(ed, 10, 64)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			req := pp.GetOrderReq{
+				CoinPair: &cp,
+				Type:     &tp,
+				Start:    &start,
+				End:      &end,
+			}
+			jsn, _ := json.Marshal(req)
+			url := fmt.Sprintf("%s/orders", cli.GetServApiRoot())
+			resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsn))
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			res := pp.GetOrderRes{}
+			defer resp.Body.Close()
+			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			c.JSON(200, res)
+			return
+		}
+		c.JSON(200, rlt)
+	}
+}
