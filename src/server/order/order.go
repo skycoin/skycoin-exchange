@@ -22,13 +22,13 @@ var (
 )
 
 type Order struct {
-	ID          uint64 `json:"id"` // order id.
-	AccountID   string `json:"account_id"`
-	Type        Type   `json:"type"`         // order type.
-	Price       uint64 `json:"price"`        // price of this order.
-	Amount      uint64 `json:"amount"`       // total amount of this order.
-	RestAmt     uint64 `json:"reset_amt"`    // rest amount.
-	CreatedTime int64  `json:"created_time"` // created time of the order.
+	ID        uint64 `json:"id"` // order id.
+	AccountID string `json:"account_id"`
+	Type      Type   `json:"type"`       // order type.
+	Price     uint64 `json:"price"`      // price of this order.
+	Amount    uint64 `json:"amount"`     // total amount of this order.
+	RestAmt   uint64 `json:"reset_amt"`  // rest amount.
+	CreatedAt int64  `json:"created_at"` // created time of the order.
 }
 
 type byPriceThenTimeDesc []Order
@@ -45,7 +45,7 @@ func (bp byPriceThenTimeDesc) Less(i, j int) bool {
 	if a.Price > b.Price {
 		return true
 	} else if a.Price == b.Price {
-		return a.CreatedTime > b.CreatedTime
+		return a.CreatedAt > b.CreatedAt
 	}
 	return false
 }
@@ -64,7 +64,7 @@ func (bp byPriceThenTimeAsc) Less(i, j int) bool {
 	if a.Price < b.Price {
 		return true
 	} else if a.Price == b.Price {
-		return a.CreatedTime > b.CreatedTime
+		return a.CreatedAt > b.CreatedAt
 	}
 	return false
 }
@@ -101,12 +101,12 @@ func InitDir(path string) {
 
 func New(aid string, tp Type, price uint64, amount uint64) *Order {
 	return &Order{
-		AccountID:   aid,
-		Type:        tp,
-		Price:       price,
-		Amount:      amount,
-		RestAmt:     amount,
-		CreatedTime: time.Now().Unix(),
+		AccountID: aid,
+		Type:      tp,
+		Price:     price,
+		Amount:    amount,
+		RestAmt:   amount,
+		CreatedAt: time.Now().Unix(),
 	}
 }
 

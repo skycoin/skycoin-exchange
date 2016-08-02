@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 func BidOrder(egn engine.Exchange) gin.HandlerFunc {
@@ -47,13 +46,12 @@ func GetOrders(egn engine.Exchange) gin.HandlerFunc {
 
 			for i := range ords {
 				res.Orders[i] = &pp.Order{
-					AccountId:   &ords[i].AccountID,
-					Id:          &ords[i].ID,
-					Type:        req.Type,
-					Price:       &ords[i].Price,
-					Amount:      &ords[i].Amount,
-					RestAmt:     &ords[i].RestAmt,
-					CreatedTime: &ords[i].CreatedTime,
+					Id:        &ords[i].ID,
+					Type:      req.Type,
+					Price:     &ords[i].Price,
+					Amount:    &ords[i].Amount,
+					RestAmt:   &ords[i].RestAmt,
+					CreatedAt: &ords[i].CreatedAt,
 				}
 			}
 
@@ -75,10 +73,14 @@ func addOrder(tp order.Type, egn engine.Exchange) gin.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			aid := hex.EncodeToString(req.GetAccountId())
+			aid := req.GetAccountId()
 			// find the account
-			pk := pp.BytesToPubKey(req.GetAccountId())
-			acnt, err := egn.GetAccount(account.AccountID(pk))
+			if _, err := cipher.PubKeyFromHex(aid); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				break
+			}
+
+			acnt, err := egn.GetAccount(aid)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
@@ -95,8 +97,17 @@ func addOrder(tp order.Type, egn engine.Exchange) gin.HandlerFunc {
 				break
 			}
 
+			var success bool
 			if tp == order.Bid {
+				defer func() {
+					if success {
+						egn.SaveAccount()
+					} else {
+						acnt.IncreaseBalance(ct, bal)
+					}
+				}()
 				// decrease the balance, in case of double use the coins.
+				glog.Info(fmt.Sprintf("account:%s decrease %s:%d", acnt.GetID(), ct, bal))
 				if err := acnt.DecreaseBalance(ct, bal); err != nil {
 					rlt = pp.MakeErrRes(err)
 					break
@@ -110,7 +121,7 @@ func addOrder(tp order.Type, egn engine.Exchange) gin.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-
+			success = true
 			glog.Info(fmt.Sprintf("new %s order:%d", tp, oid))
 			res := pp.OrderRes{
 				AccountId: req.AccountId,

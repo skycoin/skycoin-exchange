@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -17,10 +16,10 @@ var (
 	acntDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/account/server")
 )
 
-type AccountID cipher.PubKey
+// type AccountID cipher.PubKey
 
 type Accounter interface {
-	GetID() AccountID                                  // return the account id.
+	GetID() string                                     // return the account id.
 	GetBalance(ct wallet.CoinType) uint64              // return the account's Balance.
 	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
 	DecreaseBalance(ct wallet.CoinType, amt uint64) error
@@ -29,7 +28,7 @@ type Accounter interface {
 
 // ExchangeAccount maintains the account state
 type ExchangeAccount struct {
-	ID          AccountID                    // account id
+	ID          string                       // account id
 	Balance     map[wallet.CoinType]uint64   // the Balance should not be accessed directly.
 	Addresses   map[wallet.CoinType][]string // deposit addresses
 	addr_mtx    sync.Mutex
@@ -37,7 +36,7 @@ type ExchangeAccount struct {
 }
 
 type exchgAcntJson struct {
-	ID        []byte              `json:"id"`
+	ID        string              `json:"id"`
 	Balance   map[string]uint64   `json:"balance"`
 	Addresses map[string][]string `json:"addresses"`
 }
@@ -57,7 +56,7 @@ func InitDir(path string) {
 }
 
 // newExchangeAccount helper function for generating and initialize ExchangeAccount
-func newExchangeAccount(id AccountID) ExchangeAccount {
+func newExchangeAccount(id string) ExchangeAccount {
 	return ExchangeAccount{
 		ID: id,
 		Balance: map[wallet.CoinType]uint64{
@@ -68,7 +67,7 @@ func newExchangeAccount(id AccountID) ExchangeAccount {
 	}
 }
 
-func (self ExchangeAccount) GetID() AccountID {
+func (self ExchangeAccount) GetID() string {
 	return self.ID
 }
 
@@ -97,7 +96,6 @@ func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64
 }
 
 func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
-	glog.Info("decrease balance")
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
@@ -113,7 +111,6 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 }
 
 func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
-	glog.Info("increase balance")
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
@@ -125,9 +122,8 @@ func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) err
 }
 
 func (self ExchangeAccount) ToMarshalable() exchgAcntJson {
-	id := cipher.PubKey(self.ID)
 	eaj := exchgAcntJson{
-		ID:        id[:],
+		ID:        self.ID,
 		Balance:   make(map[string]uint64),
 		Addresses: make(map[string][]string),
 	}
@@ -143,10 +139,10 @@ func (self ExchangeAccount) ToMarshalable() exchgAcntJson {
 }
 
 func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
-	pk := cipher.PubKey{}
-	copy(pk[:], self.ID[0:33])
+	// pk := cipher.PubKey{}
+	// copy(pk[:], self.ID[0:33])
 	at := ExchangeAccount{
-		ID:        AccountID(pk),
+		ID:        self.ID,
 		Balance:   make(map[wallet.CoinType]uint64),
 		Addresses: make(map[wallet.CoinType][]string),
 	}

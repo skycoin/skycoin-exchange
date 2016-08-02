@@ -9,19 +9,19 @@ import (
 
 func TestBook(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Price: 100, CreatedTime: 132424, Amount: 1},
-		Order{Price: 102, CreatedTime: 132425, Amount: 1},
-		Order{Price: 103, CreatedTime: 132428, Amount: 1},
-		Order{Price: 101, CreatedTime: 132429, Amount: 1},
-		Order{Price: 103, CreatedTime: 132430, Amount: 1},
+		Order{Price: 100, CreatedAt: 132424, Amount: 1},
+		Order{Price: 102, CreatedAt: 132425, Amount: 1},
+		Order{Price: 103, CreatedAt: 132428, Amount: 1},
+		Order{Price: 101, CreatedAt: 132429, Amount: 1},
+		Order{Price: 103, CreatedAt: 132430, Amount: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Price: 100, CreatedTime: 132424, Amount: 1},
-		Order{Price: 102, CreatedTime: 132425, Amount: 1},
-		Order{Price: 101, CreatedTime: 132429, Amount: 1},
-		Order{Price: 103, CreatedTime: 132428, Amount: 1},
-		Order{Price: 103, CreatedTime: 132438, Amount: 1},
+		Order{Price: 100, CreatedAt: 132424, Amount: 1},
+		Order{Price: 102, CreatedAt: 132425, Amount: 1},
+		Order{Price: 101, CreatedAt: 132429, Amount: 1},
+		Order{Price: 103, CreatedAt: 132428, Amount: 1},
+		Order{Price: 103, CreatedAt: 132438, Amount: 1},
 	}
 	bk := Book{}
 
@@ -41,26 +41,26 @@ func TestBook(t *testing.T) {
 		t.Fatal("ask price not sorted")
 	}
 
-	if bk.askOrders[3].CreatedTime < bk.askOrders[4].CreatedTime {
+	if bk.askOrders[3].CreatedAt < bk.askOrders[4].CreatedAt {
 		t.Fatal("ask create time not sorted")
 	}
 }
 
 func TestMatch(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 1, RestAmt: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -83,12 +83,12 @@ func TestMatch(t *testing.T) {
 // none match
 func TestNoneMatch(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 3, RestAmt: 3},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 3, RestAmt: 3},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 104, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 104, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -107,19 +107,19 @@ func TestNoneMatch(t *testing.T) {
 // zero bid n asks match.
 func TestMatchZero2N(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 7, RestAmt: 7},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 7, RestAmt: 7},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -141,19 +141,19 @@ func TestMatchZero2N(t *testing.T) {
 // one bid match n asks.
 func TestMatchOne2N(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 3, RestAmt: 3},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 3, RestAmt: 3},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -176,19 +176,19 @@ func TestMatchOne2N(t *testing.T) {
 // n bid match one asks.
 func TestMatchN2One(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 1, RestAmt: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 4, RestAmt: 4},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 4, RestAmt: 4},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -211,20 +211,20 @@ func TestMatchN2One(t *testing.T) {
 // n bid match n asks.
 func TestMatchN2N(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 2, RestAmt: 2},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 2, RestAmt: 2},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 1, RestAmt: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 2, RestAmt: 2},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 102, CreatedTime: 132440, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 2, RestAmt: 2},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 102, CreatedAt: 132440, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	bk := Book{}
@@ -269,19 +269,19 @@ func TestMatchZero(t *testing.T) {
 
 func TestCopy(t *testing.T) {
 	var BidOrderList = []Order{
-		Order{Price: 100, CreatedTime: 132424, Amount: 1},
-		Order{Price: 102, CreatedTime: 132425, Amount: 1},
-		Order{Price: 103, CreatedTime: 132428, Amount: 1},
-		Order{Price: 101, CreatedTime: 132429, Amount: 1},
-		Order{Price: 103, CreatedTime: 132430, Amount: 1},
+		Order{Price: 100, CreatedAt: 132424, Amount: 1},
+		Order{Price: 102, CreatedAt: 132425, Amount: 1},
+		Order{Price: 103, CreatedAt: 132428, Amount: 1},
+		Order{Price: 101, CreatedAt: 132429, Amount: 1},
+		Order{Price: 103, CreatedAt: 132430, Amount: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Price: 100, CreatedTime: 132424, Amount: 1},
-		Order{Price: 102, CreatedTime: 132425, Amount: 1},
-		Order{Price: 101, CreatedTime: 132429, Amount: 1},
-		Order{Price: 103, CreatedTime: 132428, Amount: 1},
-		Order{Price: 103, CreatedTime: 132438, Amount: 1},
+		Order{Price: 100, CreatedAt: 132424, Amount: 1},
+		Order{Price: 102, CreatedAt: 132425, Amount: 1},
+		Order{Price: 101, CreatedAt: 132429, Amount: 1},
+		Order{Price: 103, CreatedAt: 132428, Amount: 1},
+		Order{Price: 103, CreatedAt: 132438, Amount: 1},
 	}
 
 	bk := Book{}

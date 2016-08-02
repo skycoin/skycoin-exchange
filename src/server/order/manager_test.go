@@ -20,19 +20,19 @@ func TestManager(t *testing.T) {
 	go m.Start(time.Duration(1)*time.Second, closing)
 
 	var BidOrderList = []Order{
-		Order{Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Bid, Price: 103, CreatedTime: 132430, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Bid, Price: 103, CreatedAt: 132430, Amount: 1, RestAmt: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{Type: Ask, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	for _, od := range BidOrderList {
@@ -72,19 +72,19 @@ func TestLoadManager(t *testing.T) {
 	coinPair := []string{"test", "sky"}
 	bk := Book{}
 	var BidOrderList = []Order{
-		Order{ID: 1, Type: Bid, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{ID: 2, Type: Bid, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{ID: 3, Type: Bid, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{ID: 4, Type: Bid, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{ID: 5, Type: Bid, Price: 103, CreatedTime: 132430, Amount: 1, RestAmt: 1},
+		Order{ID: 1, Type: Bid, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{ID: 2, Type: Bid, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{ID: 3, Type: Bid, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{ID: 4, Type: Bid, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{ID: 5, Type: Bid, Price: 103, CreatedAt: 132430, Amount: 1, RestAmt: 1},
 	}
 
 	var AskOrderList = []Order{
-		Order{ID: 6, Type: Ask, Price: 100, CreatedTime: 132424, Amount: 1, RestAmt: 1},
-		Order{ID: 7, Type: Ask, Price: 102, CreatedTime: 132425, Amount: 1, RestAmt: 1},
-		Order{ID: 8, Type: Ask, Price: 101, CreatedTime: 132429, Amount: 1, RestAmt: 1},
-		Order{ID: 9, Type: Ask, Price: 103, CreatedTime: 132428, Amount: 1, RestAmt: 1},
-		Order{ID: 10, Type: Ask, Price: 103, CreatedTime: 132438, Amount: 1, RestAmt: 1},
+		Order{ID: 6, Type: Ask, Price: 100, CreatedAt: 132424, Amount: 1, RestAmt: 1},
+		Order{ID: 7, Type: Ask, Price: 102, CreatedAt: 132425, Amount: 1, RestAmt: 1},
+		Order{ID: 8, Type: Ask, Price: 101, CreatedAt: 132429, Amount: 1, RestAmt: 1},
+		Order{ID: 9, Type: Ask, Price: 103, CreatedAt: 132428, Amount: 1, RestAmt: 1},
+		Order{ID: 10, Type: Ask, Price: 103, CreatedAt: 132438, Amount: 1, RestAmt: 1},
 	}
 
 	for _, od := range BidOrderList {
