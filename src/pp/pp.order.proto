@@ -1,15 +1,41 @@
 package pp;
 
+import "pp.common.proto";
+
 message OrderReq {
   optional bytes account_id = 1;
   optional string coin_pair = 10;
   optional uint64 amount = 11;
   optional uint64 price = 12;
-  optional string type = 13;
 }
 
 message OrderRes {
   optional bytes account_id = 1;
   optional uint64 order_id = 10;
+}
+
+
+message Order {
+	optional uint64 id = 1;
+	optional string account_id = 2;
+	optional string type = 3;
+	optional uint64 price = 4;
+	optional uint64 amount = 5;
+	optional uint64 rest_amt = 6;
+	optional int64 created_time  = 7;
+}
+
+message GetOrderReq {
+  optional string coin_pair = 1;
+  optional string type = 2;
+  optional int64 start = 3;
+  optional int64 end = 4;
+}
+
+message GetOrderRes {
+  required Result result = 1;
+
+  optional string coin_pair = 10;
   optional string type = 11;
+  repeated Order orders = 21;
 }

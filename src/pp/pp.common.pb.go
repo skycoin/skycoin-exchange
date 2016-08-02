@@ -12,6 +12,7 @@ It is generated from these files:
 	pp.deposit.proto
 	pp.withdrawal.proto
 	pp.balance.proto
+	pp.order.proto
 
 It has these top-level messages:
 	Result
@@ -26,6 +27,11 @@ It has these top-level messages:
 	WithdrawalRes
 	GetBalanceReq
 	GetBalanceRes
+	OrderReq
+	OrderRes
+	Order
+	GetOrderReq
+	GetOrderRes
 */
 package pp
 
