@@ -38,9 +38,16 @@ func LoadManager() (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(files) == 0 {
+		return nil, os.ErrNotExist
+	}
+
 	m := NewManager()
 	for _, f := range files {
-		p := strings.Split(f.Name(), ".")[0]
+		if !strings.HasSuffix(f.Name(), orderExt) {
+			continue
+		}
 		d, err := ioutil.ReadFile(filepath.Join(orderDir, f.Name()))
 		if err != nil {
 			return nil, err
@@ -49,7 +56,8 @@ func LoadManager() (*Manager, error) {
 		if err := json.Unmarshal(d, &bj); err != nil {
 			return nil, err
 		}
-		pair := strings.Split(p, "_")
+		p := strings.Split(f.Name(), ".")
+		pair := strings.Split(p[0], "_")
 		if len(pair) != 2 {
 			panic("error order book file name")
 		}
@@ -91,12 +99,12 @@ func (m *Manager) IsExist(coinPair string) bool {
 func (m *Manager) AddOrder(coinPair string, order Order) (uint64, error) {
 	bk, ok := m.books[coinPair]
 	if !ok {
-		return 0, fmt.Errorf("coin pair:%s not registerd in manager", coinPair)
+		return 0, fmt.Errorf("coin pair:%s not supported", coinPair)
 	}
 
 	idg, ok := m.idg[coinPair]
 	if !ok {
-		return 0, fmt.Errorf("coin pair:%s's id generator not exist", coinPair)
+		return 0, fmt.Errorf("coin pair:%s's id generator not supported", coinPair)
 	}
 
 	switch order.Type {
@@ -117,6 +125,13 @@ func (m *Manager) AddOrder(coinPair string, order Order) (uint64, error) {
 // the return book is an copy of internal book, for thread safe.
 func (m *Manager) GetBook(coinPair string) Book {
 	return m.books[coinPair].Copy()
+}
+
+func (m *Manager) GetOrders(cp string, tp Type, start, end int64) ([]Order, error) {
+	if _, ok := m.books[cp]; !ok {
+		return []Order{}, errors.New("get orders faile, err: unknow coin pair")
+	}
+	return m.books[cp].GetOrders(tp, start, end), nil
 }
 
 func (m *Manager) RegisterOrderChan(coinPair string, c chan Order) {

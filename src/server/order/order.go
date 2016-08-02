@@ -3,6 +3,7 @@ package order
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -27,7 +28,7 @@ type Order struct {
 	Price       uint64 `json:"price"`        // price of this order.
 	Amount      uint64 `json:"amount"`       // total amount of this order.
 	RestAmt     uint64 `json:"reset_amt"`    // rest amount.
-	CreatedTime uint64 `json:"created_time"` // created time of the order.
+	CreatedTime int64  `json:"created_time"` // created time of the order.
 }
 
 type byPriceThenTimeDesc []Order
@@ -95,5 +96,38 @@ func InitDir(path string) {
 		if err := os.MkdirAll(path, 0755); err != nil {
 			panic(err)
 		}
+	}
+}
+
+func New(aid string, tp Type, price uint64, amount uint64) *Order {
+	return &Order{
+		AccountID:   aid,
+		Type:        tp,
+		Price:       price,
+		Amount:      amount,
+		RestAmt:     amount,
+		CreatedTime: time.Now().Unix(),
+	}
+}
+
+func (tp Type) String() string {
+	switch tp {
+	case Bid:
+		return "bid"
+	case Ask:
+		return "ask"
+	default:
+		return ""
+	}
+}
+
+func MustTypeFromStr(tp string) Type {
+	switch tp {
+	case "bid":
+		return Bid
+	case "ask":
+		return Ask
+	default:
+		panic("unknow order type")
 	}
 }

@@ -51,6 +51,82 @@ func (bk *Book) Copy() Book {
 	return newBk
 }
 
+func (bk *Book) GetOrders(tp Type, start, end int64) []Order {
+	return bk.copyOrders(tp, start, end)
+}
+
+// copy orders of specific type from start index to end.
+func (bk *Book) copyOrders(tp Type, start, end int64) []Order {
+	switch tp {
+	case Bid:
+		bk.bidMtx.Lock()
+		defer bk.bidMtx.Unlock()
+		bidLen := int64(len(bk.bidOrders))
+		if end > bidLen {
+			end = bidLen
+		}
+
+		var l int64 = 0
+		if start < end {
+			l = end - start
+		}
+		orders := make([]Order, 0, l)
+		for i := start; i < end; i++ {
+			orders = append(orders, bk.bidOrders[i])
+		}
+		return orders
+	case Ask:
+		bk.askMtx.Lock()
+		defer bk.askMtx.Unlock()
+		bidLen := int64(len(bk.askOrders))
+		if end > bidLen {
+			end = bidLen
+		}
+
+		var l int64 = 0
+		if start < end {
+			l = end - start
+		}
+		orders := make([]Order, 0, l)
+		for i := start; i < end; i++ {
+			orders = append(orders, bk.askOrders[i])
+		}
+		return orders
+	default:
+		return []Order{}
+	}
+}
+
+// func (bk *Book) CopyN(st, ed int64) (Book, error) {
+// 	if st > ed {
+// 		return Book{}, errors.New("be sure the start index is <= end index")
+// 	}
+//
+// 	newBk := Book{}
+// 	bk.bidMtx.Lock()
+// 	bidLen := int64(len(bk.bidOrders))
+// 	if ed >= bidLen {
+// 		newBk.bidOrders = make([]Order, bidLen-st)
+// 		copy(newBk.bidOrders, bk.bidOrders[st:])
+// 	} else {
+// 		newBk.bidOrders = make([]Order, ed-st+1)
+// 		copy(newBk.bidOrders, bk.bidOrders[st:ed+1])
+// 	}
+// 	bk.bidMtx.Unlock()
+//
+// 	bk.askMtx.Lock()
+// 	askLen := int64(len(bk.askOrders))
+// 	if ed >= askLen {
+// 		newBk.askOrders = make([]Order, askLen-st)
+// 		copy(newBk.askOrders, bk.askOrders[st:])
+// 	} else {
+// 		newBk.askOrders = make([]Order, ed-st+1)
+// 		copy(newBk.askOrders, bk.askOrders[st:ed+1])
+// 	}
+// 	bk.askMtx.Unlock()
+// 	return newBk, nil
+// }
+
 func (bk Book) getMaxOrderID() uint64 {
 	// sort the book with priority of order id.
 	orders := append(bk.bidOrders, bk.askOrders...)
