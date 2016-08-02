@@ -40,10 +40,10 @@ var coinStr = []string{
 	Skycoin: "skycoin",
 }
 
-var CoinFactor = []uint64{
-	Bitcoin: 1e8,
-	Skycoin: 1e6,
-}
+// var CoinFactor = []uint64{
+// 	Bitcoin: 1e8,
+// 	Skycoin: 1e6,
+// }
 
 func (c CoinType) String() string {
 	switch c {
