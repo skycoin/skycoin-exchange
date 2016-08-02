@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -22,4 +23,7 @@ type Exchange interface {
 
 	GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error)
 	SaveAccount() error
+
+	AddOrder(cp string, odr order.Order) (uint64, error)
+	GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error)
 }
