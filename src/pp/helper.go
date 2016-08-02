@@ -69,7 +69,7 @@ func (r *Result) SetCodeAndReason(code ErrCode, reason string) {
 func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, error) {
 	sp := cipher.MustPubKeyFromHex(pubkey)
 	cs := cipher.MustSecKeyFromHex(seckey)
-	cp := cipher.PubKeyFromSecKey(cs)
+	cp := cipher.PubKeyFromSecKey(cs).Hex()
 	nonce := cipher.RandByte(chacha20.NonceSize)
 	d, err := json.Marshal(r)
 	if err != nil {
@@ -80,9 +80,8 @@ func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, 
 	if err != nil {
 		return EncryptReq{}, err
 	}
-
 	return EncryptReq{
-		Pubkey:      []byte(cp[:]),
+		Pubkey:      &cp,
 		Nonce:       nonce,
 		Encryptdata: ed,
 	}, nil
