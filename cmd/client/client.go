@@ -20,7 +20,6 @@ func main() {
 
 	cfg := rpclient.Config{
 		ApiRoot:    *apiUrl,
-		AcntName:   "account.data",
 		ServPubkey: pk,
 	}
 
