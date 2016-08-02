@@ -264,9 +264,7 @@ func (self *ExchangeServer) handleOrders(c chan bool) {
 
 func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	glog.Info(fmt.Sprintf("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount))
-	pk := cipher.MustPubKeyFromHex(od.AccountID)
-	acnt_id := account.AccountID(pk)
-	acnt, err := self.GetAccount(acnt_id)
+	acnt, err := self.GetAccount(od.AccountID)
 	if err != nil {
 		panic("error account id")
 	}
@@ -287,19 +285,24 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	switch od.Type {
 	case order.Bid:
 		// increase main coin balance
+		glog.Info(fmt.Sprintf("account:%s increase %s:%d", od.AccountID, mainCt, od.Amount))
 		if err := acnt.IncreaseBalance(mainCt, od.Amount); err != nil {
 			panic(err)
 		}
 
+		self.SaveAccount()
 	case order.Ask:
 		// increase sub coin balance.
+		glog.Info(fmt.Sprintf("account:%s increase %s:%d", od.AccountID, subCt, od.Price*od.Amount))
 		if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount); err != nil {
 			panic(err)
 		}
 		// decrease main coin balance.
+		glog.Info(fmt.Sprintf("account:%s decrease %s:%d", od.AccountID, mainCt, od.Amount))
 		if err := acnt.DecreaseBalance(mainCt, od.Amount); err != nil {
 			panic(err)
 		}
+		self.SaveAccount()
 	}
 }
 

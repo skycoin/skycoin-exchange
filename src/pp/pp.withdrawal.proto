@@ -1,7 +1,7 @@
 package pp;
 
 message WithdrawalReq {
-  optional bytes account_id = 1;
+  optional string account_id = 1;
   optional string coin_type = 2;
   optional uint64 coins = 3;
   optional string output_address = 4;
@@ -9,6 +9,6 @@ message WithdrawalReq {
 
 message WithdrawalRes {
 
-  optional bytes account_id = 10;
+  optional string account_id = 10;
   optional string new_txid = 20;
 }
