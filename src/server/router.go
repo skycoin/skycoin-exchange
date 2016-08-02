@@ -12,12 +12,18 @@ func NewRouter(ee engine.Exchange) *gin.Engine {
 	r.Use(gin.Recovery())
 
 	// the Authorize middle will decrypt the request, and encrypt the response.
-	v1 := r.Group("/api/v1", api.Authorize(ee))
+	v1 := r.Group("/api/v1")
+	authReq := v1.Group("/", api.Authorize(ee))
 	{
-		v1.POST("/accounts", api.CreateAccount(ee)) // create account
-		v1.POST("/deposit_address", api.GetNewAddress(ee))
-		v1.POST("/account/withdrawal", api.Withdraw(ee))
-		v1.POST("/account/balance", api.GetBalance(ee))
+		authReq.POST("/accounts", api.CreateAccount(ee)) // create account
+		authReq.POST("/deposit_address", api.GetNewAddress(ee))
+		authReq.POST("/account/withdrawal", api.Withdraw(ee))
+		authReq.POST("/account/balance", api.GetBalance(ee))
+
+		authReq.POST("/account/bid", api.BidOrder(ee))
+		authReq.POST("/account/ask", api.AskOrder(ee))
 	}
+
+	v1.POST("/orders", api.GetOrders(ee))
 	return r
 }
