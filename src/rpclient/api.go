@@ -234,18 +234,24 @@ func Withdraw(cli Client) gin.HandlerFunc {
 	}
 }
 
-func BidOrder(cli Client) gin.HandlerFunc {
-	return orderHandler("bid", cli)
-}
+// func BidOrder(cli Client) gin.HandlerFunc {
+// 	return orderHandler("bid", cli)
+// }
+//
+// func AskOrder(cli Client) gin.HandlerFunc {
+// 	return orderHandler("ask", cli)
+// }
 
-func AskOrder(cli Client) gin.HandlerFunc {
-	return orderHandler("ask", cli)
-}
-
-func orderHandler(tp string, cli Client) gin.HandlerFunc {
+func CreateOrder(cli Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
+			// get order type.
+			tp := c.Param("type")
+			if tp == "" {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			rawReq := pp.OrderReq{}
 			if err := c.BindJSON(&rawReq); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -260,7 +266,7 @@ func orderHandler(tp string, cli Client) gin.HandlerFunc {
 			rawReq.AccountId = &id
 			req, _ := pp.MakeEncryptReq(&rawReq, cli.GetServPubkey().Hex(), key)
 			js, _ := json.Marshal(req)
-			url := fmt.Sprintf("%s/account/%s", cli.GetServApiRoot(), tp)
+			url := fmt.Sprintf("%s/account/order/%s", cli.GetServApiRoot(), tp)
 			resp, err := http.Post(url, "application/json", bytes.NewBuffer(js))
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -285,7 +291,7 @@ func orderHandler(tp string, cli Client) gin.HandlerFunc {
 	}
 }
 
-func GetOrderBook(cli Client) gin.HandlerFunc {
+func GetOrders(cli Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
@@ -312,12 +318,11 @@ func GetOrderBook(cli Client) gin.HandlerFunc {
 
 			req := pp.GetOrderReq{
 				CoinPair: &cp,
-				Type:     &tp,
 				Start:    &start,
 				End:      &end,
 			}
 			jsn, _ := json.Marshal(req)
-			url := fmt.Sprintf("%s/orders", cli.GetServApiRoot())
+			url := fmt.Sprintf("%s/orders/%s", cli.GetServApiRoot(), tp)
 			resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsn))
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
