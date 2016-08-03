@@ -14,61 +14,17 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func BidOrder(egn engine.Exchange) gin.HandlerFunc {
-	return addOrder(order.Bid, egn)
-}
-
-func AskOrder(egn engine.Exchange) gin.HandlerFunc {
-	return addOrder(order.Ask, egn)
-}
-
-func GetOrders(egn engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// get start and end.
-		rlt := &pp.EmptyRes{}
-		for {
-			req := pp.GetOrderReq{}
-			if err := c.BindJSON(&req); err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			tp := order.MustTypeFromStr(req.GetType())
-			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			res := pp.GetOrderRes{
-				CoinPair: req.CoinPair,
-				Type:     req.Type,
-				Orders:   make([]*pp.Order, len(ords)),
-			}
-
-			for i := range ords {
-				res.Orders[i] = &pp.Order{
-					Id:        &ords[i].ID,
-					Type:      req.Type,
-					Price:     &ords[i].Price,
-					Amount:    &ords[i].Amount,
-					RestAmt:   &ords[i].RestAmt,
-					CreatedAt: &ords[i].CreatedAt,
-				}
-			}
-
-			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			c.JSON(200, res)
-			return
-		}
-
-		c.JSON(200, rlt)
-	}
-}
-
-func addOrder(tp order.Type, egn engine.Exchange) gin.HandlerFunc {
+func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rlt := &pp.EmptyRes{}
 		req := &pp.OrderReq{}
 		for {
+			tp, err := order.TypeFromStr(c.Param("type"))
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
 			if err := getRequest(c, req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -131,6 +87,53 @@ func addOrder(tp order.Type, egn engine.Exchange) gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, *rlt)
+	}
+}
+
+func GetOrders(egn engine.Exchange) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rlt := &pp.EmptyRes{}
+		for {
+			tp, err := order.TypeFromStr(c.Param("type"))
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			req := pp.GetOrderReq{}
+			if err := c.BindJSON(&req); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+			res := pp.GetOrderRes{
+				CoinPair: req.CoinPair,
+				Type:     pp.PtrString(tp.String()),
+				Orders:   make([]*pp.Order, len(ords)),
+			}
+
+			for i := range ords {
+				res.Orders[i] = &pp.Order{
+					Id:        &ords[i].ID,
+					Type:      pp.PtrString(tp.String()),
+					Price:     &ords[i].Price,
+					Amount:    &ords[i].Amount,
+					RestAmt:   &ords[i].RestAmt,
+					CreatedAt: &ords[i].CreatedAt,
+				}
+			}
+
+			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+			c.JSON(200, res)
+			return
+		}
+
+		c.JSON(200, rlt)
 	}
 }
 
