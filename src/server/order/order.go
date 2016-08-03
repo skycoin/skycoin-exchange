@@ -1,6 +1,7 @@
 package order
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -121,13 +122,13 @@ func (tp Type) String() string {
 	}
 }
 
-func MustTypeFromStr(tp string) Type {
+func TypeFromStr(tp string) (Type, error) {
 	switch tp {
 	case "bid":
-		return Bid
+		return Bid, nil
 	case "ask":
-		return Ask
+		return Ask, nil
 	default:
-		panic("unknow order type")
+		return 0, errors.New("unknow order type")
 	}
 }

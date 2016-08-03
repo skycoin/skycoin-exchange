@@ -20,10 +20,9 @@ func NewRouter(ee engine.Exchange) *gin.Engine {
 		authReq.POST("/account/withdrawal", api.Withdraw(ee))
 		authReq.POST("/account/balance", api.GetBalance(ee))
 
-		authReq.POST("/account/bid", api.BidOrder(ee))
-		authReq.POST("/account/ask", api.AskOrder(ee))
+		authReq.POST("/account/order/:type", api.CreateOrder(ee))
 	}
 
-	v1.POST("/orders", api.GetOrders(ee))
+	v1.POST("/orders/:type", api.GetOrders(ee))
 	return r
 }
