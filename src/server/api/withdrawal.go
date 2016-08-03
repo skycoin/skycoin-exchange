@@ -140,6 +140,7 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 
 	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
+		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 		AccountId: &id,
 		NewTxid:   &newTxid,
 	}
@@ -201,6 +202,7 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 
 	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
+		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 		AccountId: &id,
 		NewTxid:   &newTxid,
 	}

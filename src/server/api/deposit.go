@@ -46,6 +46,7 @@ func GetNewAddress(ee engine.Exchange) gin.HandlerFunc {
 			ee.WatchAddress(ct, addr)
 
 			ds := pp.GetDepositAddrRes{
+				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 				AccountId: dar.AccountId,
 				CoinType:  dar.CoinType,
 				Address:   &addr,

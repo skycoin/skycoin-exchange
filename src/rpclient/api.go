@@ -47,10 +47,12 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 				// store the account
 				// account.Store(cli.GetAcntName(), *act)
 				ret := struct {
-					AccountID string `json:"account_id"`
-					Key       string `json:"key"`
-					CreatedAt int64  `json:"created_at"`
+					Result    pp.Result `json:"result"`
+					AccountID string    `json:"account_id"`
+					Key       string    `json:"key"`
+					CreatedAt int64     `json:"created_at"`
 				}{
+					Result:    *v.Result,
 					AccountID: p.Hex(),
 					Key:       s.Hex(),
 					CreatedAt: v.GetCreatedAt(),

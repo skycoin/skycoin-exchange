@@ -35,6 +35,7 @@ func CreateAccount(ee engine.Exchange) gin.HandlerFunc {
 			}
 
 			res := pp.CreateAccountRes{
+				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 				AccountId: req.Pubkey,
 				CreatedAt: pp.PtrInt64(time.Now().Unix()),
 			}
