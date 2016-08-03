@@ -40,6 +40,7 @@ func GetBalance(ee engine.Exchange) gin.HandlerFunc {
 
 			bal := a.GetBalance(ct)
 			bres := pp.GetBalanceRes{
+				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 				AccountId: breq.AccountId,
 				CoinType:  breq.CoinType,
 				Balance:   &bal,

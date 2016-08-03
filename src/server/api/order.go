@@ -80,6 +80,7 @@ func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
 			success = true
 			glog.Info(fmt.Sprintf("new %s order:%d", tp, oid))
 			res := pp.OrderRes{
+				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 				AccountId: req.AccountId,
 				OrderId:   &oid,
 			}

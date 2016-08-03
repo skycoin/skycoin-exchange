@@ -4,6 +4,7 @@
 ```
 go get github.com/skycoin/skycoin-exchange
 ```
+
 ## Running server
 ```
 cd skycoin-exchange/cmd/server
@@ -29,6 +30,11 @@ mode: POST
 url: /api/v1/accounts
 response json:
 {
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
   "account_id": "03c9852d11d2d84d23356df6390f10a53dbd8026ed4bc58f9ccddd7a7c69e00715",
   "key": "36797b7fe0f8bcc96ac4f4110eaab0d1cb32fbe8961a77bf132c0efa02e760a7",
   "created_at": 1470188576
@@ -47,6 +53,11 @@ params:
 	coin_type: can be bitcoin, skycoin, etc.
 response json:
 {
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
   "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "coin_type": "bitcoin",
   "address": "1HBuSp1G151xTqLpMT3mBDXskC5iVNTAwx"
@@ -63,6 +74,11 @@ params:
 	coin_type: can be bitcoin, skycoin, etc.
 response json:
 {
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
   "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "coin_type": "bitcoin",
   "balance": 480000
@@ -81,6 +97,11 @@ params:
 	toaddr: address you want to receive the coinsns.
 response json:
 {
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
   "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "new_txid": "21b1a9c59a3a631f14b7f91c9b886f6e379c36dd357f7628964107c4d953ea5a"
 }
@@ -97,12 +118,17 @@ params:
 	key: account key.
 request json:
 {
-    "coin_pair":"bitcoin/skycoin",
-    "amount":90000,
-    "price":25
+   "coin_pair":"bitcoin/skycoin",
+   "amount":90000,
+   "price":25
 }
 response json:
 {
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
   "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "order_id": 8
 }
@@ -117,6 +143,34 @@ params:
 	coin_pair: coin pair, joined by '/', like: bitcoin/skycoin.
 	start: start index of the orders.
 	end: end index of the orders.
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "coin_pair": "bitcoin/skycoin",
+  "type": "bid",
+  "orders": [
+    {
+      "id": 8,
+      "type": "bid",
+      "price": 25,
+      "amount": 90000,
+      "rest_amt": 90000,
+      "created_at": 1470193222
+    },
+    {
+      "id": 3,
+      "type": "bid",
+      "price": 25,
+      "amount": 90000,
+      "rest_amt": 90000,
+      "created_at": 1470152057
+    }
+  ]
+}
 ```
 Dependencies
 ---
