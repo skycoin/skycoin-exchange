@@ -343,6 +343,29 @@ func GetOrders(cli Client) gin.HandlerFunc {
 	}
 }
 
+func GetCoins(cli Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rlt := &pp.EmptyRes{}
+		for {
+			url := fmt.Sprintf("%s/coins", cli.GetServApiRoot())
+			resp, err := http.Get(url)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			defer resp.Body.Close()
+			res := pp.CoinsRes{}
+			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			c.JSON(200, res)
+			return
+		}
+		c.JSON(200, rlt)
+	}
+}
+
 func getAccountAndKey(c *gin.Context) (id string, key string, err error) {
 	defer func() {
 		if r := recover(); r != nil {

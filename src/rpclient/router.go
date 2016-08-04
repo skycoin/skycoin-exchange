@@ -7,7 +7,6 @@ func NewRouter(cli Client) *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	// the Authorize middle will decrypt the request, and encrypt the response.
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/accounts", CreateAccount(cli))
@@ -17,6 +16,7 @@ func NewRouter(cli Client) *gin.Engine {
 
 		v1.POST("/account/order/:type", CreateOrder(cli))
 		v1.GET("orders/:type", GetOrders(cli))
+		v1.GET("/coins", GetCoins(cli))
 	}
 	return r
 }

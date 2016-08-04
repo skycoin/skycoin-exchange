@@ -4,4 +4,5 @@ protoc --go_out=./ pp.common.proto \
   pp.deposit.proto \
   pp.withdrawal.proto \
   pp.balance.proto \
-  pp.order.proto
+  pp.order.proto \
+  pp.coin.proto

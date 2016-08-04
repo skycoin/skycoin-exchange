@@ -1,0 +1,9 @@
+package pp;
+
+import "pp.common.proto";
+
+message CoinsRes {
+  required Result result = 1;
+
+  repeated string coins = 10;
+}
