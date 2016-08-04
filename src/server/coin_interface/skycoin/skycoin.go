@@ -97,7 +97,7 @@ func GenerateAddresses(seed []byte, num int) (string, []coin_interface.AddressEn
 // GetUnspentOutputs return the unspent outputs
 func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	var url string
-	if len(addrs) < 0 {
+	if len(addrs) == 0 {
 		return []Utxo{}, nil
 	}
 

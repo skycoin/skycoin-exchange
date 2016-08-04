@@ -41,7 +41,7 @@ response json:
 }
 ```
 
-The rpc client will use the account id and key to communicate with exchange server, most of the following APIs will use the id and key. 
+The rpc client will use the account id and key to communicate with exchange server, most of the following APIs will use the id and key.
 
 #### get deposit address
 ```
@@ -94,7 +94,7 @@ params:
 	key: account key.
 	coin_type: can be bitcoin, skycoin, etc.
 	amount: the coin number you want to withdrawal, btc in satoshis, sky in drops.
-	toaddr: address you want to receive the coinsns.
+	toaddr: address you want to receive the coins.
 response json:
 {
   "result": {
@@ -105,10 +105,10 @@ response json:
   "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "new_txid": "21b1a9c59a3a631f14b7f91c9b886f6e379c36dd357f7628964107c4d953ea5a"
 }
-	
+
 ```
 
-#### create order 
+#### create order
 ```
 mode: POST
 url: /api/v1/account/order/[:type]?id=[:id]&key=[:key]
