@@ -26,4 +26,6 @@ type Exchange interface {
 
 	AddOrder(cp string, odr order.Order) (uint64, error)
 	GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error)
+
+	GetSupportCoins() []string
 }

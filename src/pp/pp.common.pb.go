@@ -13,6 +13,7 @@ It is generated from these files:
 	pp.withdrawal.proto
 	pp.balance.proto
 	pp.order.proto
+	pp.coin.proto
 
 It has these top-level messages:
 	Result
@@ -32,6 +33,7 @@ It has these top-level messages:
 	Order
 	GetOrderReq
 	GetOrderRes
+	CoinsRes
 */
 package pp
 

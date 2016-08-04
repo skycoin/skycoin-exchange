@@ -43,6 +43,24 @@ response json:
 
 The rpc client will use the account id and key to communicate with exchange server, most of the following APIs will use the id and key.
 
+#### get supported coins
+```
+mode:GET
+url: /api/v1/coins
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "coins": [
+    "BTC",
+    "SKY"
+  ]
+}
+```
+
 #### get deposit address
 ```
 mode: GET
