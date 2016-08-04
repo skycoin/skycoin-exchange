@@ -51,6 +51,7 @@ type ExchangeServer struct {
 	wallet        wallet.Wallet
 	wltMtx        sync.RWMutex // mutex for protecting the wallet.
 	orderHandlers map[string]chan order.Order
+	coins         []string
 }
 
 // New create new server
@@ -116,6 +117,7 @@ func New(cfg Config) engine.Exchange {
 		btcum:          bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
 		skyum:          skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
 		orderManager:   orderManager,
+		coins:          []string{"BTC", "SKY"},
 		orderHandlers: map[string]chan order.Order{
 			"bitcoin/skycoin": make(chan order.Order, 100),
 		},
@@ -305,4 +307,8 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 
 func (self *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error) {
 	return self.orderManager.GetOrders(cp, tp, start, end)
+}
+
+func (self ExchangeServer) GetSupportCoins() []string {
+	return self.coins
 }

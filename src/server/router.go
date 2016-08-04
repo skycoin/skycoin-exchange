@@ -24,5 +24,6 @@ func NewRouter(ee engine.Exchange) *gin.Engine {
 	}
 
 	v1.POST("/orders/:type", api.GetOrders(ee))
+	v1.GET("/coins", api.GetCoins(ee))
 	return r
 }
