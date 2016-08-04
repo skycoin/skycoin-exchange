@@ -15,7 +15,6 @@ func registerFlags(cfg *server.Config) {
 	flag.IntVar(&cfg.BtcFee, "btcFee", 10000, "transaction fee in satoish")
 	flag.StringVar(&cfg.DataDir, "dataDir", ".skycoin-exchange", "data directory")
 	flag.StringVar(&cfg.Seed, "seed", "", "wallet's seed")
-	flag.StringVar(&cfg.AcntName, "acntName", "account.data", "accounts file name")
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 
 	flag.Set("logtostderr", "true")

@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	acntDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/account/server")
+	acntDir  string = filepath.Join(util.UserHome(), ".skycoin-exchange/account")
+	acntName string = "account.data"
 )
 
 // type AccountID cipher.PubKey

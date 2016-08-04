@@ -26,7 +26,6 @@ type Config struct {
 	BtcFee       int           // btc transaction fee
 	DataDir      string        // data directory
 	WalletName   string        // wallet name
-	AcntName     string        // accounts file name
 	Seed         string        // seed
 	Seckey       cipher.SecKey // private key
 	UtxoPoolSize int           // utxo pool size.
@@ -60,10 +59,10 @@ func New(cfg Config) engine.Exchange {
 	path := initDataDir(cfg.DataDir)
 
 	// init the wallet dir.
-	wallet.InitDir(filepath.Join(path, "wallets"))
+	wallet.InitDir(filepath.Join(path, "wallet"))
 
 	// init the account dir
-	account.InitDir(filepath.Join(path, "account/server"))
+	account.InitDir(filepath.Join(path, "account"))
 
 	// init the order book dir.
 	order.InitDir(filepath.Join(path, "orderbook"))
@@ -74,12 +73,11 @@ func New(cfg Config) engine.Exchange {
 	)
 
 	// load account manager if exist.
-	acntMgr, err = account.LoadAccountManager(cfg.AcntName)
+	acntMgr, err = account.LoadAccountManager()
 	if err != nil {
-		glog.Error(err)
 		if os.IsNotExist(err) {
 			// create new account manager.
-			acntMgr = account.NewAccountManager(cfg.AcntName)
+			acntMgr = account.NewAccountManager()
 		} else {
 			panic(err)
 		}
@@ -90,7 +88,6 @@ func New(cfg Config) engine.Exchange {
 	wlt, err = wallet.Load(cfg.WalletName)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.Info("wallet file not exist")
 			wlt, err = wallet.New(cfg.WalletName, wallet.Deterministic, cfg.Seed)
 			if err != nil {
 				panic(err)
