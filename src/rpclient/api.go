@@ -9,15 +9,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateAccount handle the request of creating account.
-func CreateAccount(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func CreateAccount(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// generate account pubkey/privkey pair, pubkey is the account id.
+		log.Println("create account")
 		errRlt := &pp.EmptyRes{}
 		for {
 			p, s := cipher.GenerateKeyPair()
@@ -44,8 +44,6 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.CreateAccountRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), s.Hex(), &v)
-				// store the account
-				// account.Store(cli.GetAcntName(), *act)
 				ret := struct {
 					Result    pp.Result `json:"result"`
 					AccountID string    `json:"account_id"`
@@ -57,29 +55,30 @@ func CreateAccount(cli Client) gin.HandlerFunc {
 					Key:       s.Hex(),
 					CreatedAt: v.GetCreatedAt(),
 				}
-				c.JSON(200, &ret)
+				SendJSON(w, &ret)
 				return
 			} else {
-				c.JSON(200, res)
+				SendJSON(w, &res)
 				return
 			}
 		}
-		c.JSON(200, *errRlt)
+		SendJSON(w, errRlt)
 	}
 }
 
-func GetNewAddress(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetNewAddress(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("create deposit address")
 		errRlt := &pp.EmptyRes{}
 		for {
-			id, key, err := getAccountAndKey(c)
+			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
 			}
 
-			cointype, exist := c.GetQuery("coin_type")
-			if !exist {
+			cointype := r.URL.Query().Get("coin_type")
+			if cointype == "" {
 				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
 				break
 			}
@@ -108,29 +107,29 @@ func GetNewAddress(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.GetDepositAddrRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), key, &v)
-				c.JSON(200, v)
+				SendJSON(w, &v)
 				return
 			} else {
-				c.JSON(200, res)
+				SendJSON(w, &res)
 				return
 			}
 		}
-		c.JSON(200, *errRlt)
+		SendJSON(w, errRlt)
 	}
 }
 
-func GetBalance(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetBalance(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("get balance")
 		errRlt := &pp.EmptyRes{}
 		for {
-			id, key, err := getAccountAndKey(c)
+			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
 			}
-
-			coinType, exist := c.GetQuery("coin_type")
-			if !exist {
+			coinType := r.URL.Query().Get("coin_type")
+			if coinType == "" {
 				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
 				break
 			}
@@ -158,41 +157,42 @@ func GetBalance(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.GetBalanceRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), key, &v)
-				c.JSON(200, v)
+				SendJSON(w, &v)
 				return
 			} else {
-				c.JSON(200, res)
+				SendJSON(w, &res)
 				return
 			}
 		}
-		c.JSON(200, *errRlt)
+		SendJSON(w, errRlt)
 	}
 }
 
-func Withdraw(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func Withdraw(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("withdraw")
 		rlt := &pp.EmptyRes{}
 		for {
-			id, key, err := getAccountAndKey(c)
+			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			cointype, exist := c.GetQuery("coin_type")
-			if !exist {
+			cointype := r.URL.Query().Get("coin_type")
+			if cointype == "" {
 				rlt = pp.MakeErrRes(errors.New("coin_type empty"))
 				break
 			}
 
-			amount, exist := c.GetQuery("amount")
-			if !exist {
+			amount := r.URL.Query().Get("amount")
+			if amount == "" {
 				rlt = pp.MakeErrRes(errors.New("amount empty"))
 				break
 			}
 
-			toAddr, exist := c.GetQuery("toaddr")
-			if !exist {
+			toAddr := r.URL.Query().Get("toaddr")
+			if toAddr == "" {
 				rlt = pp.MakeErrRes(errors.New("toaddr empty"))
 				break
 			}
@@ -225,41 +225,36 @@ func Withdraw(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.WithdrawalRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), key, &v)
-				c.JSON(200, v)
+				SendJSON(w, &v)
 				return
 			} else {
-				c.JSON(200, res)
+				SendJSON(w, &res)
 				return
 			}
 		}
-		c.JSON(200, rlt)
+		SendJSON(w, rlt)
 	}
 }
 
-// func BidOrder(cli Client) gin.HandlerFunc {
-// 	return orderHandler("bid", cli)
-// }
-//
-// func AskOrder(cli Client) gin.HandlerFunc {
-// 	return orderHandler("ask", cli)
-// }
+func CreateBidOrder(cli Client) http.HandlerFunc {
+	return createOrder(cli, "bid")
+}
 
-func CreateOrder(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func CreateAskOrder(cli Client) http.HandlerFunc {
+	return createOrder(cli, "ask")
+}
+
+func createOrder(cli Client, tp string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("create ", tp, " order")
 		rlt := &pp.EmptyRes{}
 		for {
-			// get order type.
-			tp := c.Param("type")
-			if tp == "" {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			rawReq := pp.OrderReq{}
-			if err := c.BindJSON(&rawReq); err != nil {
+			if err := BindJSON(r, &rawReq); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			id, key, err := getAccountAndKey(c)
+			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
@@ -282,25 +277,33 @@ func CreateOrder(cli Client) gin.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.OrderRes{}
 				pp.DecryptRes(res, cli.GetServPubkey().Hex(), key, &v)
-				c.JSON(200, v)
+				SendJSON(w, &v)
 				return
 			} else {
-				c.JSON(200, res)
+				SendJSON(w, &res)
 				return
 			}
 		}
-		c.JSON(200, rlt)
+		SendJSON(w, rlt)
 	}
 }
 
-func GetOrders(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetBidOrders(cli Client) http.HandlerFunc {
+	return getOrders(cli, "bid")
+}
+
+func GetAskOrders(cli Client) http.HandlerFunc {
+	return getOrders(cli, "ask")
+}
+
+func getOrders(cli Client, tp string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("get ", tp, " order")
 		rlt := &pp.EmptyRes{}
 		for {
-			tp := c.Param("type")
-			cp := c.Query("coin_pair")
-			st := c.Query("start")
-			ed := c.Query("end")
+			cp := r.URL.Query().Get("coin_pair")
+			st := r.URL.Query().Get("start")
+			ed := r.URL.Query().Get("end")
 			if cp == "" || st == "" || ed == "" || tp == "" {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -336,15 +339,16 @@ func GetOrders(cli Client) gin.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			c.JSON(200, res)
+			SendJSON(w, &res)
 			return
 		}
-		c.JSON(200, rlt)
+		SendJSON(w, rlt)
 	}
 }
 
-func GetCoins(cli Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetCoins(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("get coins")
 		rlt := &pp.EmptyRes{}
 		for {
 			url := fmt.Sprintf("%s/coins", cli.GetServApiRoot())
@@ -359,22 +363,21 @@ func GetCoins(cli Client) gin.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			c.JSON(200, res)
+			SendJSON(w, &res)
 			return
 		}
-		c.JSON(200, rlt)
+		SendJSON(w, rlt)
 	}
 }
 
-func getAccountAndKey(c *gin.Context) (id string, key string, err error) {
+func getAccountAndKey(r *http.Request) (id string, key string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New("invalid id or key")
 		}
 	}()
-	var exist bool
-	id, exist = c.GetQuery("id")
-	if !exist {
+	id = r.URL.Query().Get("id")
+	if id == "" {
 		return "", "", errors.New("id empty")
 	}
 
@@ -382,8 +385,8 @@ func getAccountAndKey(c *gin.Context) (id string, key string, err error) {
 		return "", "", errors.New("invalid id")
 	}
 
-	key, exist = c.GetQuery("key")
-	if !exist {
+	key = r.URL.Query().Get("key")
+	if key == "" {
 		return "", "", errors.New("key empty")
 	}
 
@@ -392,4 +395,16 @@ func getAccountAndKey(c *gin.Context) (id string, key string, err error) {
 	}
 
 	return id, key, nil
+}
+
+// JSON to an http response
+func SendJSON(w http.ResponseWriter, msg interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(msg); err != nil {
+		panic(err)
+	}
+}
+
+func BindJSON(r *http.Request, v interface{}) error {
+	return json.NewDecoder(r.Body).Decode(v)
 }

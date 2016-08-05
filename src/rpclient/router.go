@@ -1,22 +1,21 @@
 package rpclient
 
-import "github.com/gin-gonic/gin"
+import "net/http"
 
-func NewRouter(cli Client) *gin.Engine {
-	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+func NewRouter(cli Client) *http.ServeMux {
+	mux := http.NewServeMux()
+	// base handlers.
+	mux.Handle("/api/v1/coins", GetCoins(cli))
+	mux.Handle("/api/v1/accounts", CreateAccount(cli))
+	mux.Handle("/api/v1/account/deposit_address", GetNewAddress(cli))
+	mux.Handle("/api/v1/account/balance", GetBalance(cli))
+	mux.Handle("/api/v1/account/withdrawal", Withdraw(cli))
 
-	v1 := r.Group("/api/v1")
-	{
-		v1.POST("/accounts", CreateAccount(cli))
-		v1.GET("/account/deposit_address", GetNewAddress(cli))
-		v1.GET("/account/balance", GetBalance(cli))
-		v1.GET("/account/withdrawal", Withdraw(cli))
+	// order handlers
+	mux.Handle("/api/v1/account/order/bid", CreateBidOrder(cli))
+	mux.Handle("/api/v1/account/order/ask", CreateAskOrder(cli))
+	mux.Handle("/api/v1/orders/bid", GetBidOrders(cli))
+	mux.Handle("/api/v1/orders/ask", GetAskOrders(cli))
 
-		v1.POST("/account/order/:type", CreateOrder(cli))
-		v1.GET("orders/:type", GetOrders(cli))
-		v1.GET("/coins", GetCoins(cli))
-	}
-	return r
+	return mux
 }

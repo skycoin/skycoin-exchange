@@ -1,6 +1,11 @@
 package rpclient
 
-import "github.com/skycoin/skycoin/src/cipher"
+import (
+	"log"
+	"net/http"
+
+	"github.com/skycoin/skycoin/src/cipher"
+)
 
 type Client interface {
 	Run(addr string)
@@ -33,5 +38,15 @@ func (rc RpcClient) GetServPubkey() cipher.PubKey {
 
 func (rc *RpcClient) Run(addr string) {
 	r := NewRouter(rc)
-	r.Run(addr)
+	for {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Println(r)
+				}
+			}()
+			log.Println("client started ", addr)
+			log.Fatal(http.ListenAndServe(addr, r))
+		}()
+	}
 }
