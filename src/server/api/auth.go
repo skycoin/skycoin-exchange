@@ -87,16 +87,6 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 	return
 }
 
-// func mustMakeEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{}) *pp.EncryptRes {
-// 	encryptData, nonce := mustEncryptRes(pubkey, seckey, rsp)
-// 	encpt_res := pp.EncryptRes{
-// 		Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
-// 		Encryptdata: encryptData,
-// 		Nonce:       nonce,
-// 	}
-// 	return &encpt_res
-// }
-
 // reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
 func reply(c *gin.Context, r interface{}) {
