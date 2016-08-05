@@ -128,7 +128,7 @@ func New(cfg Config) engine.Exchange {
 
 // Run start the exchange server.
 func (self *ExchangeServer) Run() {
-	glog.Info(fmt.Sprintf("skycoin-exchange server started, port:", self.cfg.Port))
+	glog.Info(fmt.Sprintf("skycoin-exchange server started, port:%d", self.cfg.Port))
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
