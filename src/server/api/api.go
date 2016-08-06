@@ -3,8 +3,12 @@ package api
 import (
 	"encoding/json"
 
+	"gopkg.in/op/go-logging.v1"
+
 	"github.com/gin-gonic/gin"
 )
+
+var logger = logging.MustGetLogger("exchange.api")
 
 func getRequest(c *gin.Context, out interface{}) error {
 	d := c.MustGet("rawdata").([]byte)

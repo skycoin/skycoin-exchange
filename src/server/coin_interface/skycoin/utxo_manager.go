@@ -4,8 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 var CheckTick = 5 * time.Second
@@ -34,7 +32,7 @@ func NewUtxoManager(utxoPoolsize int, watchAddrs []string) UtxoManager {
 }
 
 func (eum *ExUtxoManager) Start(closing chan bool) {
-	glog.Info("start the skycoin utxo manager")
+	logger.Info("start the skycoin utxo manager")
 	t := time.Tick(CheckTick)
 	for {
 		select {
@@ -44,12 +42,13 @@ func (eum *ExUtxoManager) Start(closing chan bool) {
 			// check skycoin new utxos.
 			newUtxos, err := eum.checkNewUtxo()
 			if err != nil {
-				glog.Error(err)
+				logger.Error(err.Error())
 				break
 			}
 
 			for _, utxo := range newUtxos {
-				glog.Info("new skycoin utxo:", utxo.GetHash(), " ", utxo.GetCoins(), " ", utxo.GetHours())
+				logger.Debug("new skycoin utxo: hash:%s coins:%d hours:%d",
+					utxo.GetHash(), utxo.GetCoins(), utxo.GetHours())
 				eum.UtxosCh <- utxo
 			}
 		}
@@ -57,13 +56,13 @@ func (eum *ExUtxoManager) Start(closing chan bool) {
 }
 
 func (eum *ExUtxoManager) PutUtxo(utxo Utxo) {
-	glog.Info("skycoin utxo put back:", utxo.GetHash())
+	logger.Debug("skycoin utxo put back: %s", utxo.GetHash())
 	eum.UtxosCh <- utxo
 }
 
 func (eum *ExUtxoManager) WatchAddresses(addrs []string) {
 	for _, addr := range addrs {
-		glog.Info("skycoin watch address:", addr)
+		logger.Debug("skycoin watch address:%s", addr)
 	}
 	eum.WatchAddress = append(eum.WatchAddress, addrs...)
 }
@@ -97,14 +96,14 @@ func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 // the utxos got before will put back to the utxos pool, and return error.
 // the tm is millisecond
 func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, error) {
-	glog.Info("skycoin choose utxos, amount:", amount)
+	logger.Debug("skycoin choose utxos, amount:%d", amount)
 	var totalAmount uint64
 	// utxos := []bitcoin.UtxoWithkey{}
 	utxos := []Utxo{}
 	for {
 		select {
 		case utxo := <-eum.UtxosCh:
-			glog.Info("get utxo:", utxo.GetHash(), " ", utxo.GetCoins())
+			logger.Debug("get utxo: hash:%s coins:%d", utxo.GetHash(), utxo.GetCoins())
 			utxos = append(utxos, utxo)
 			totalAmount += utxo.GetCoins() * 1e6
 			if totalAmount >= amount {
@@ -113,7 +112,7 @@ func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, 
 
 		case <-time.After(tm):
 			// put utxos back
-			glog.Info("choose time out, put back utxos")
+			logger.Debug("choose time out, put back utxos")
 			for _, u := range utxos {
 				eum.UtxosCh <- u
 			}

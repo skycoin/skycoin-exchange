@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/golang/glog"
+	"gopkg.in/op/go-logging.v1"
+
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -15,6 +16,7 @@ import (
 var (
 	acntDir  string = filepath.Join(util.UserHome(), ".skycoin-exchange/account")
 	acntName string = "account.data"
+	logger          = logging.MustGetLogger("exchange.account")
 )
 
 // type AccountID cipher.PubKey
@@ -103,7 +105,7 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 		return errors.New("unknow coin type")
 	}
 	if self.Balance[ct] < amt {
-		glog.Info("balance:", self.Balance[ct], " amt:", amt)
+		logger.Debug("balance:", self.Balance[ct], " amt:", amt)
 		return errors.New("account balance is not sufficient")
 	}
 

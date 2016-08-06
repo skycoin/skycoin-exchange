@@ -9,7 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
+	"gopkg.in/op/go-logging.v1"
+
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
@@ -19,6 +20,8 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
+
+var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
@@ -128,7 +131,7 @@ func New(cfg Config) engine.Exchange {
 
 // Run start the exchange server.
 func (self *ExchangeServer) Run() {
-	glog.Info(fmt.Sprintf("skycoin-exchange server started, port:%d", self.cfg.Port))
+	logger.Info("server started, port:%d", self.cfg.Port)
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
@@ -228,19 +231,19 @@ func (self *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error)
 // initDataDir init the data dir of skycoin exchange.
 func initDataDir(dir string) string {
 	if dir == "" {
-		glog.Error("data directory is nil")
+		logger.Error("data directory is nil")
 	}
 
 	home := util.UserHome()
 	if home == "" {
-		glog.Warning("Failed to get home directory")
+		logger.Warning("Failed to get home directory")
 		dir = filepath.Join("./", dir)
 	} else {
 		dir = filepath.Join(home, dir)
 	}
 
 	if err := os.MkdirAll(dir, os.FileMode(0700)); err != nil {
-		glog.Error("Failed to create directory %s: %v", dir, err)
+		logger.Error("Failed to create directory %s: %v", dir, err)
 	}
 	return dir
 }
@@ -262,7 +265,7 @@ func (self *ExchangeServer) handleOrders(c chan bool) {
 }
 
 func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
-	glog.Info(fmt.Sprintf("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount))
+	logger.Info("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount)
 	acnt, err := self.GetAccount(od.AccountID)
 	if err != nil {
 		panic("error account id")
@@ -284,7 +287,7 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	switch od.Type {
 	case order.Bid:
 		// increase main coin balance
-		glog.Info(fmt.Sprintf("account:%s increase %s:%d", od.AccountID, mainCt, od.Amount))
+		logger.Info("account:%s increase %s:%d", od.AccountID, mainCt, od.Amount)
 		if err := acnt.IncreaseBalance(mainCt, od.Amount); err != nil {
 			panic(err)
 		}
@@ -292,12 +295,12 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 		self.SaveAccount()
 	case order.Ask:
 		// increase sub coin balance.
-		glog.Info(fmt.Sprintf("account:%s increase %s:%d", od.AccountID, subCt, od.Price*od.Amount))
+		logger.Info("account:%s increase %s:%d", od.AccountID, subCt, od.Price*od.Amount)
 		if err := acnt.IncreaseBalance(subCt, od.Price*od.Amount); err != nil {
 			panic(err)
 		}
 		// decrease main coin balance.
-		glog.Info(fmt.Sprintf("account:%s decrease %s:%d", od.AccountID, mainCt, od.Amount))
+		logger.Info("account:%s decrease %s:%d", od.AccountID, mainCt, od.Amount)
 		if err := acnt.DecreaseBalance(mainCt, od.Amount); err != nil {
 			panic(err)
 		}

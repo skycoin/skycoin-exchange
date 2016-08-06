@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
@@ -63,7 +62,7 @@ func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
 					}
 				}()
 				// decrease the balance, in case of double use the coins.
-				glog.Info(fmt.Sprintf("account:%s decrease %s:%d", acnt.GetID(), ct, bal))
+				logger.Info("account:%s decrease %s:%d", acnt.GetID(), ct, bal)
 				if err := acnt.DecreaseBalance(ct, bal); err != nil {
 					rlt = pp.MakeErrRes(err)
 					break
@@ -73,12 +72,12 @@ func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
 			odr := order.New(aid, tp, req.GetPrice(), req.GetAmount())
 			oid, err := egn.AddOrder(req.GetCoinPair(), *odr)
 			if err != nil {
-				glog.Error(err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			success = true
-			glog.Info(fmt.Sprintf("new %s order:%d", tp, oid))
+			logger.Info(fmt.Sprintf("new %s order:%d", tp, oid))
 			res := pp.OrderRes{
 				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
 				AccountId: req.AccountId,
