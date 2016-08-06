@@ -17,7 +17,6 @@ import (
 func CreateAccount(cli Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// generate account pubkey/privkey pair, pubkey is the account id.
-		log.Println("create account")
 		errRlt := &pp.EmptyRes{}
 		for {
 			p, s := cipher.GenerateKeyPair()
@@ -68,7 +67,6 @@ func CreateAccount(cli Client) http.HandlerFunc {
 
 func GetNewAddress(cli Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("create deposit address")
 		errRlt := &pp.EmptyRes{}
 		for {
 			id, key, err := getAccountAndKey(r)
@@ -120,7 +118,6 @@ func GetNewAddress(cli Client) http.HandlerFunc {
 
 func GetBalance(cli Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("get balance")
 		errRlt := &pp.EmptyRes{}
 		for {
 			id, key, err := getAccountAndKey(r)
@@ -170,7 +167,6 @@ func GetBalance(cli Client) http.HandlerFunc {
 
 func Withdraw(cli Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("withdraw")
 		rlt := &pp.EmptyRes{}
 		for {
 			id, key, err := getAccountAndKey(r)
@@ -246,7 +242,6 @@ func CreateAskOrder(cli Client) http.HandlerFunc {
 
 func createOrder(cli Client, tp string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("create ", tp, " order")
 		rlt := &pp.EmptyRes{}
 		for {
 			rawReq := pp.OrderReq{}
@@ -298,7 +293,6 @@ func GetAskOrders(cli Client) http.HandlerFunc {
 
 func getOrders(cli Client, tp string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("get ", tp, " order")
 		rlt := &pp.EmptyRes{}
 		for {
 			cp := r.URL.Query().Get("coin_pair")
@@ -348,7 +342,6 @@ func getOrders(cli Client, tp string) http.HandlerFunc {
 
 func GetCoins(cli Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("get coins")
 		rlt := &pp.EmptyRes{}
 		for {
 			url := fmt.Sprintf("%s/coins", cli.GetServApiRoot())
