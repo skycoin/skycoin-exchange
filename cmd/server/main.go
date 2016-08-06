@@ -47,8 +47,8 @@ func initConfig() server.Config {
 	cfg := server.Config{}
 	registerFlags(&cfg)
 	if cfg.Seed == "" {
-		logger.Error("seed must be set")
 		flag.Usage()
+		panic("seed must be set")
 	}
 	cfg.WalletName = cfg.Seed + ".wlt"
 
