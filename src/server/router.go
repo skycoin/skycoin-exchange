@@ -8,7 +8,7 @@ import (
 
 func NewRouter(ee engine.Exchange) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Logger())
+	r.Use(Logger())
 	r.Use(gin.Recovery())
 
 	// the Authorize middle will decrypt the request, and encrypt the response.

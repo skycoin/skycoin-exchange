@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 var CheckTick = 5 * time.Second
@@ -41,7 +39,7 @@ func NewUtxoManager(utxoPoolsize int, watchAddrs []string) UtxoManager {
 }
 
 func (eum *ExUtxoManager) Start(closing chan bool) {
-	glog.Info("start the bitcoin utxo manager")
+	logger.Info("start the bitcoin utxo manager")
 	t := time.Tick(CheckTick)
 	for {
 		select {
@@ -51,12 +49,12 @@ func (eum *ExUtxoManager) Start(closing chan bool) {
 			// check bitcoin new utxos.
 			newUtxos, err := eum.checkNewUtxo()
 			if err != nil {
-				glog.Error(err)
+				logger.Error(err.Error())
 				break
 			}
 
 			for _, utxo := range newUtxos {
-				glog.Info("new bitcoin utxo:", utxo.GetTxid(), " ", utxo.GetVout(), " ", utxo.GetAmount())
+				logger.Debug("new bitcoin utxo: txid:%s void:%d amt:%d", utxo.GetTxid(), utxo.GetVout(), utxo.GetAmount())
 				eum.UtxosCh <- utxo
 			}
 		}
@@ -68,7 +66,8 @@ func (eum *ExUtxoManager) GetUtxo() chan Utxo {
 }
 
 func (eum *ExUtxoManager) PutUtxo(utxo Utxo) {
-	glog.Info("bitcoin utxo put back:", utxo.GetAddress(), " ", utxo.GetTxid(), " ", utxo.GetVout())
+	logger.Debug("bitcoin utxo put back: addr:%s txid:%s vout:%d",
+		utxo.GetAddress(), utxo.GetTxid(), utxo.GetVout())
 	eum.UtxosCh <- utxo
 }
 
@@ -105,14 +104,14 @@ func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 // the utxos got before will put back to the utxos pool, and return error.
 // the tm is millisecond
 func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, error) {
-	glog.Info("bitcoin choose utxos, amount:", amount)
+	logger.Debug("bitcoin choose utxos, amount:%d", amount)
 	var totalAmount uint64
 	// utxos := []bitcoin.UtxoWithkey{}
 	utxos := []Utxo{}
 	for {
 		select {
 		case utxo := <-eum.UtxosCh:
-			glog.Info("get utxo:", utxo.GetAddress(), " ", utxo.GetAmount())
+			logger.Debug("get utxo: addr:%s amt:%d", utxo.GetAddress(), utxo.GetAmount())
 			utxos = append(utxos, utxo)
 			totalAmount += utxo.GetAmount()
 			if totalAmount >= amount {
@@ -121,7 +120,7 @@ func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, 
 
 		case <-time.After(tm):
 			// put utxos back
-			glog.Info("choose time out, put back utxos")
+			logger.Debug("choose time out, put back utxos")
 			for _, u := range utxos {
 				eum.UtxosCh <- u
 			}

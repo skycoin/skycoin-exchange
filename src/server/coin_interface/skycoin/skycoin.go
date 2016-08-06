@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/op/go-logging.v1"
+
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/coin"
@@ -18,6 +20,7 @@ import (
 var (
 	HideSeckey bool   = false
 	ServeAddr  string = "http://127.0.0.1:6420"
+	logger            = logging.MustGetLogger("exchange.skycoin")
 )
 
 type Utxo interface {

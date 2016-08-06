@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
@@ -15,7 +14,7 @@ func GetBalance(ee engine.Exchange) gin.HandlerFunc {
 		for {
 			breq := pp.GetBalanceReq{}
 			if err := getRequest(c, &breq); err != nil {
-				glog.Error(err)
+				logger.Error(err.Error())
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}

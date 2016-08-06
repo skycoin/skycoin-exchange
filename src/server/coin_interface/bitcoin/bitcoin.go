@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/op/go-logging.v1"
+
 	"net/http"
 
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
@@ -16,6 +18,7 @@ import (
 
 var (
 	HideSeckey = false
+	logger     = logging.MustGetLogger("exchange.bitcoin")
 )
 
 // Utxo unspent output

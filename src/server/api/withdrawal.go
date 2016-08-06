@@ -6,7 +6,6 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
@@ -128,13 +127,13 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 
 	newTxid, err := bitcoin.BroadcastTx(btcTxRlt.Tx)
 	if err != nil {
-		glog.Error(err)
+		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
 	}
 
 	success = true
 	if btcTxRlt.ChangeAddr != "" {
-		glog.Info("change address:", btcTxRlt.ChangeAddr)
+		logger.Debug("change address:%s", btcTxRlt.ChangeAddr)
 		ee.WatchAddress(ct, btcTxRlt.ChangeAddr)
 	}
 
@@ -190,13 +189,13 @@ func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRe
 
 	newTxid, err := skycoin.BroadcastTx(*skyTxRlt.Tx)
 	if err != nil {
-		glog.Error(err)
+		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
 	}
 
 	success = true
 	if skyTxRlt.ChangeAddr != "" {
-		glog.Info("change address:", skyTxRlt.ChangeAddr)
+		logger.Debug("change address:%s", skyTxRlt.ChangeAddr)
 		ee.WatchAddress(ct, skyTxRlt.ChangeAddr)
 	}
 
@@ -220,7 +219,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 	utxos := uxs.([]bitcoin.Utxo)
 
 	for _, u := range utxos {
-		glog.Info("using utxos:", u.GetTxid(), " ", u.GetVout())
+		logger.Debug("using utxos: txid:%s vout:%d", u.GetTxid(), u.GetVout())
 	}
 
 	var success bool
@@ -254,10 +253,10 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		return nil, err
 	}
 
-	glog.Info("creating transaction...")
+	logger.Debug("creating transaction...")
 	tx, err := bitcoin.NewTransaction(utxoKeys, outAddrs)
 	if err != nil {
-		glog.Error(err)
+		logger.Error(err.Error())
 		return nil, err
 	}
 	success = true
@@ -277,7 +276,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 	utxos := uxs.([]skycoin.Utxo)
 
 	for _, u := range utxos {
-		glog.Info("using skycoin utxos:", u.GetHash())
+		logger.Debug("using skycoin utxos:%s", u.GetHash())
 	}
 
 	var success bool
@@ -317,7 +316,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 		keys[i] = cipher.MustSecKeyFromHex(k)
 	}
 
-	glog.Info("creating skycoin transaction...")
+	logger.Debug("creating skycoin transaction...")
 	tx := skycoin.NewTransaction(utxos, keys, outAddrs)
 	if err := tx.Verify(); err != nil {
 		return nil, err

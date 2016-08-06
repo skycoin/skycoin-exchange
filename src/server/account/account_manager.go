@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/golang/glog"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -101,7 +100,7 @@ func (self *ExchangeAccountManager) Save() error {
 
 // persistance to disc. Save as JSON
 func (self *ExchangeAccountManager) save() error {
-	glog.Info("save accounts")
+	logger.Debug("save accounts")
 	a := self.ToMarshalable()
 	// for self.Accounts
 	return util.SaveJSON(filepath.Join(acntDir, acntName), a, 0600)
