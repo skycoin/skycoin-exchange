@@ -106,7 +106,7 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 
 	rsp, err := http.Get(url)
 	if err != nil {
-		return []Utxo{}, fmt.Errorf("get outputs from %s faild", url)
+		return []Utxo{}, errors.New("get skycoin outputs failed")
 	}
 	defer rsp.Body.Close()
 	outputs := []SkyUtxo{}
