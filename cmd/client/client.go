@@ -16,6 +16,7 @@ func main() {
 	apiUrl := flag.String("api_url", "http://localhost:8080/api/v1", "server api root")
 	port := flag.Int("port", 6060, "rpc port")
 	flag.Parse()
+
 	pk := cipher.MustPubKeyFromHex(ServPubkey)
 
 	cfg := rpclient.Config{
