@@ -3,14 +3,14 @@ package api
 import (
 	"encoding/json"
 
-	"gopkg.in/op/go-logging.v1"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 
-	"github.com/gin-gonic/gin"
+	"gopkg.in/op/go-logging.v1"
 )
 
 var logger = logging.MustGetLogger("exchange.api")
 
-func getRequest(c *gin.Context, out interface{}) error {
+func getRequest(c *net.Context, out interface{}) error {
 	d := c.MustGet("rawdata").([]byte)
 	return json.Unmarshal(d, out)
 }

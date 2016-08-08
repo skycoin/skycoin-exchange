@@ -6,15 +6,15 @@ import (
 	"regexp"
 
 	"github.com/codahale/chacha20"
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // Authorize will decrypt the request, and encrypt the response.
-func Authorize(ee engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func Authorize(ee engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		var (
 			cnt_req pp.EncryptReq
 			errRlt  = &pp.EmptyRes{}
@@ -31,14 +31,12 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
 				if err != nil {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
-					c.Abort()
 					break
 				}
 
 				ok, err := regexp.MatchString(`^\{.*\}$`, string(data))
 				if err != nil || !ok {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
-					c.Abort()
 					break
 				}
 
@@ -46,24 +44,22 @@ func Authorize(ee engine.Exchange) gin.HandlerFunc {
 
 				c.Next()
 
-				// get response code
-				if rsp, isExist := c.Get("response"); isExist {
-					// encrypt the response.
-					encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
-					encpt_res := pp.EncryptRes{
-						Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
-						Encryptdata: encryptData,
-						Nonce:       nonce,
-					}
-
-					c.JSON(200, encpt_res)
+				rsp := c.MustGet("response")
+				// encrypt the response.
+				encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
+				encpt_res := pp.EncryptRes{
+					Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
+					Encryptdata: encryptData,
+					Nonce:       nonce,
 				}
+
+				c.JSON(encpt_res)
 				return
 			}
 			errRlt = pp.MakeErrRes(errors.New("bad request"))
 			break
 		}
-		c.JSON(200, *errRlt)
+		c.JSON(errRlt)
 	}
 }
 
@@ -89,6 +85,6 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 
 // reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
-func reply(c *gin.Context, r interface{}) {
+func reply(c *net.Context, r interface{}) {
 	c.Set("response", r)
 }

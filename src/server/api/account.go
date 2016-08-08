@@ -3,15 +3,15 @@ package api
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateAccount create account with specific pubkey,
-func CreateAccount(ee engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func CreateAccount(ee engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			req := pp.CreateAccountReq{}
@@ -43,6 +43,6 @@ func CreateAccount(ee engine.Exchange) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, *errRlt)
+		c.JSON(errRlt)
 	}
 }

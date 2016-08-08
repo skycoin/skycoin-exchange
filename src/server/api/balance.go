@@ -1,15 +1,15 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func GetBalance(ee engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetBalance(ee engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			breq := pp.GetBalanceReq{}
@@ -48,6 +48,6 @@ func GetBalance(ee engine.Exchange) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, *errRlt)
+		c.JSON(errRlt)
 	}
 }
