@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -147,8 +146,9 @@ func (self *ExchangeServer) Run() {
 	self.handleOrders(c)
 
 	// start the api server.
-	r := NewRouter(self)
-	r.Run(fmt.Sprintf(":%d", self.cfg.Port))
+	// r := NewRouter(self)
+	r := NewNet(self)
+	r.Run(self.cfg.Port)
 }
 
 // GetBtcFee get transaction fee of bitcoin.
