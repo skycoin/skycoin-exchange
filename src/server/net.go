@@ -6,8 +6,9 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/net"
 )
 
-func NewNet(ee engine.Exchange) *net.Engine {
-	engine := net.New()
-	engine.Register("/getcoins", api.GetCoins(ee))
-	return engine
+func NewNet(ee engine.Exchange, quit chan bool) *net.Engine {
+	nt := net.New(quit)
+	nt.Use(api.Authorize(ee))
+	nt.Register("/get/coins", api.GetCoins(ee))
+	return nt
 }
