@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -353,6 +354,47 @@ func GetCoins(cli Client) http.HandlerFunc {
 			defer resp.Body.Close()
 			res := pp.CoinsRes{}
 			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			SendJSON(w, &res)
+			return
+		}
+		SendJSON(w, rlt)
+	}
+}
+
+func GetCoinsTcp(cli Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rlt := &pp.EmptyRes{}
+		for {
+			c, err := net.Dial("tcp", "localhost:8080")
+			if err != nil {
+				log.Println(err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+
+				break
+			}
+
+			defer c.Close()
+
+			req := MakeRequest("/getcoins", []byte("hello world"))
+			if err := req.Write(c); err != nil {
+				log.Println(err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
+			resp := Response{}
+			if err := resp.Read(c); err != nil {
+				log.Println(err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
+			res := pp.CoinsRes{}
+			if err := json.NewDecoder(bytes.NewBuffer(resp.Body)).Decode(&res); err != nil {
+				log.Println(err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
