@@ -2,6 +2,7 @@ package net
 
 import (
 	"net"
+	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 )
@@ -46,15 +47,36 @@ func process(id int, c net.Conn, engine *Engine) {
 			Data:    make(map[string]interface{}),
 		}
 
-		if h, ok := engine.handlerFunc[r.GetPath()]; ok {
-			context.handlers = append(engine.handlers, h)
+		// check if the path belongs to group.
+		hds, find := engine.findGroupHandlers(r.GetPath())
+		if find {
+			context.handlers = append(engine.handlers, hds...)
 		} else {
-			logger.Error("no handler for path: %s", r.GetPath())
-			res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-			context.JSON(res)
-			return
+			if h, ok := engine.handlerFunc[r.GetPath()]; ok {
+				context.handlers = append(engine.handlers, h)
+			} else {
+				logger.Error("no handler for path: %s", r.GetPath())
+				res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				context.JSON(res)
+				return
+			}
 		}
 
 		context.handlers[0](&context)
 	}
+}
+
+func (engine *Engine) findGroupHandlers(path string) (handlers []HandlerFunc, find bool) {
+	for p, gp := range engine.groupHandlers {
+		if strings.Contains(path, p) {
+			h, ok := gp.handlers[path]
+			if !ok {
+				return
+			}
+			handlers = append(gp.midHandlers, h)
+			find = true
+			break
+		}
+	}
+	return
 }
