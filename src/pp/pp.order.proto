@@ -31,8 +31,9 @@ message GetOrderReq {
   optional string router = 1;
 
   optional string coin_pair = 10;
-  optional int64 start = 11;
-  optional int64 end = 12;
+  optional string type = 11;
+  optional int64 start = 12;
+  optional int64 end = 13;
 }
 
 message GetOrderRes {
