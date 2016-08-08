@@ -147,7 +147,7 @@ func (self *ExchangeServer) Run() {
 
 	// start the api server.
 	// r := NewRouter(self)
-	r := NewNet(self)
+	r := NewNet(self, c)
 	r.Run(self.cfg.Port)
 }
 
