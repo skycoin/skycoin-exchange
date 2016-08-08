@@ -1,13 +1,13 @@
 package rpclient
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
-	"log"
 )
 
 type Response struct {
-	Body []byte
+	Body *bytes.Buffer
 }
 
 func (res *Response) Read(r io.Reader) error {
@@ -15,10 +15,10 @@ func (res *Response) Read(r io.Reader) error {
 	if err := binary.Read(r, binary.BigEndian, &len); err != nil {
 		return err
 	}
-	log.Println("resp len:", len)
-	res.Body = make([]byte, len)
-	if err := binary.Read(r, binary.BigEndian, &res.Body); err != nil {
+	d := make([]byte, len)
+	if err := binary.Read(r, binary.BigEndian, &d); err != nil {
 		return err
 	}
+	res.Body = bytes.NewBuffer(d)
 	return nil
 }
