@@ -28,7 +28,6 @@ func process(id int, c net.Conn, engine *Engine) {
 	logger.Debug("[%d] working", id)
 	r := &Request{}
 	w := &NetResponse{c: c}
-	w.c = c
 
 	defer func() {
 		c.Close()
