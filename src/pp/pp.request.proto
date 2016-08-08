@@ -1,0 +1,6 @@
+package pp;
+
+message Request {
+  required string path = 1;
+  optional bytes data = 10;
+}
