@@ -8,17 +8,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func CreateOrder(egn engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		rlt := &pp.EmptyRes{}
 		req := &pp.OrderReq{}
 		for {
-			tp, err := order.TypeFromStr(c.Param("type"))
+			tp, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -86,7 +87,7 @@ func CreateOrder(egn engine.Exchange) gin.HandlerFunc {
 			reply(c, res)
 			return
 		}
-		c.JSON(200, *rlt)
+		c.JSON(rlt)
 	}
 }
 

@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/wire"
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
+	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -30,8 +30,8 @@ type SkyTxResult struct {
 }
 
 // Withdraw api handler for generating withdraw transaction.
-func Withdraw(ee engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func Withdraw(ee engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			rp := NewReqParams()
@@ -73,24 +73,24 @@ func Withdraw(ee engine.Exchange) gin.HandlerFunc {
 			reply(c, *resp)
 			return
 		}
-		c.JSON(200, *errRlt)
+		c.JSON(errRlt)
 	}
 }
 
-func withdrawlWork(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
+func withdrawlWork(c *net.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ct := rp.Values["cointype"].(wallet.CoinType)
 	switch ct {
 	case wallet.Bitcoin:
-		return btcWithdraw(c, rp)
+		return btcWithdraw(rp)
 	case wallet.Skycoin:
-		return skyWithdrawl(c, rp)
+		return skyWithdrawl(rp)
 		// return nil, pp.MakeErrRes(errors.New("skycoin withdrawal not support yet"))
 	default:
 		return nil, pp.MakeErrRes(errors.New("unknow coin type"))
 	}
 }
 
-func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
+func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ee := rp.Values["engine"].(engine.Exchange)
 	acnt := rp.Values["account"].(account.Accounter)
 	amt := rp.Values["amt"].(uint64)
@@ -146,7 +146,7 @@ func btcWithdraw(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes
 	return &resp, nil
 }
 
-func skyWithdrawl(c *gin.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
+func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ee := rp.Values["engine"].(engine.Exchange)
 	acnt := rp.Values["account"].(account.Accounter)
 	amt := rp.Values["amt"].(uint64)
