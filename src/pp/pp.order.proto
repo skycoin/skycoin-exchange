@@ -3,10 +3,11 @@ package pp;
 import "pp.common.proto";
 
 message OrderReq {
-  optional string account_id = 1;
-  optional string coin_pair = 10;
-  optional uint64 amount = 11;
-  optional uint64 price = 12;
+  optional string account_id = 10;
+  optional string coin_pair = 11;
+  optional string type = 12;
+  optional uint64 amount = 13;
+  optional uint64 price = 14;
 }
 
 message OrderRes {
@@ -27,6 +28,8 @@ message Order {
 }
 
 message GetOrderReq {
+  optional string router = 1;
+
   optional string coin_pair = 10;
   optional int64 start = 11;
   optional int64 end = 12;
