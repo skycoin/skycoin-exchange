@@ -7,40 +7,38 @@ import (
 	"gopkg.in/op/go-logging.v1"
 )
 
-var logger = logging.MustGetLogger("exchange.net")
+var (
+	logger    = logging.MustGetLogger("exchange.net")
+	QueueSize = 1000
+)
 
-type HandlerFunc func(w ResponseWriter, r *Request) error
+type HandlerFunc func(c *Context)
 
 type Engine struct {
-	handlerFunc   map[string]HandlerFunc
-	beforeHandler []HandlerFunc
-	afterHandler  []HandlerFunc
-	workPool      chan worker
+	handlerFunc map[string]HandlerFunc
+	handlers    []HandlerFunc
+	connPool    chan net.Conn
 }
 
-func New() *Engine {
+func New(quit chan bool) *Engine {
 	e := &Engine{
 		handlerFunc: make(map[string]HandlerFunc),
-		workPool:    make(chan worker, 1000),
+		connPool:    make(chan net.Conn, QueueSize),
 	}
 
-	for i := 0; i < 1000; i++ {
-		w := &NetWorker{
-			Pool: e.workPool,
+	for i := 0; i < QueueSize; i++ {
+		w := &Worker{
 			ID:   i,
+			Enge: e,
 		}
-		e.workPool <- w
+		w.Start(quit)
 	}
 	return e
 }
 
 // add middleware
-func (engine *Engine) Before(handler HandlerFunc) {
-	engine.beforeHandler = append(engine.beforeHandler, handler)
-}
-
-func (engine *Engine) After(handler HandlerFunc) {
-	engine.afterHandler = append(engine.afterHandler, handler)
+func (engine *Engine) Use(handler HandlerFunc) {
+	engine.handlers = append(engine.handlers, handler)
 }
 
 func (engine *Engine) Register(path string, handler HandlerFunc) {
@@ -61,7 +59,6 @@ func (engine *Engine) Run(port int) {
 			panic(err)
 		}
 		logger.Debug("new connection:%s", c.RemoteAddr())
-		w := <-engine.workPool
-		w.Work(c, engine)
+		engine.connPool <- c
 	}
 }
