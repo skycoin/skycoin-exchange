@@ -3,8 +3,8 @@ package pp;
 import "pp.common.proto";
 
 message GetBalanceReq {
-  optional string account_id = 1;
-  optional string coin_type = 2;
+  optional string account_id = 10;
+  optional string coin_type = 11;
 }
 
 message GetBalanceRes {

@@ -3,10 +3,10 @@ package pp;
 import "pp.common.proto";
 
 message WithdrawalReq {
-  optional string account_id = 1;
-  optional string coin_type = 2;
-  optional uint64 coins = 3;
-  optional string output_address = 4;
+  optional string account_id = 10;
+  optional string coin_type = 11;
+  optional uint64 coins = 12;
+  optional string output_address = 13;
 }
 
 message WithdrawalRes {

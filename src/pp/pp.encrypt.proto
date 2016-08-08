@@ -3,9 +3,9 @@ package pp;
 import "pp.common.proto";
 
 message EncryptReq {
-  optional string pubkey = 1;
-  optional bytes nonce = 2;
-  optional bytes encryptdata = 3;
+  optional string pubkey = 10;
+  optional bytes nonce = 11;
+  optional bytes encryptdata = 12;
 }
 
 message EncryptRes {

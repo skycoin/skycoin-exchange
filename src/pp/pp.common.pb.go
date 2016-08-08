@@ -14,6 +14,7 @@ It is generated from these files:
 	pp.balance.proto
 	pp.order.proto
 	pp.coin.proto
+	pp.request.proto
 
 It has these top-level messages:
 	Result
@@ -34,6 +35,7 @@ It has these top-level messages:
 	GetOrderReq
 	GetOrderRes
 	CoinsRes
+	Request
 */
 package pp
 

@@ -3,7 +3,7 @@ package pp;
 import "pp.common.proto";
 
 message CreateAccountReq {
-  optional string pubkey = 1;
+  optional string pubkey = 10;
 }
 
 message CreateAccountRes {
