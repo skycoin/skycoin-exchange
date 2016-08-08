@@ -6,26 +6,33 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
-type worker interface {
-	Work(c net.Conn, engine *Engine)
-}
-
-type NetWorker struct {
-	Pool chan worker
+type Worker struct {
 	ID   int
+	Enge *Engine
 }
 
-func (nw *NetWorker) Work(c net.Conn, engine *Engine) {
-	logger.Debug("[%d] working", nw.ID)
+func (wk *Worker) Start(quit chan bool) {
+	go func() {
+		for {
+			select {
+			case c := <-wk.Enge.connPool:
+				process(wk.ID, c, wk.Enge)
+			case <-quit:
+				return
+			}
+		}
+	}()
+}
+
+func process(id int, c net.Conn, engine *Engine) {
+	logger.Debug("[%d] working", id)
 	r := &Request{}
-	w := &NetResponse{
-		c: c,
-	}
-	// set back the worker to pool
+	w := &NetResponse{c: c}
+	w.c = c
+
 	defer func() {
 		c.Close()
-		nw.Pool <- nw
-		logger.Debug("[%d] worker done", nw.ID)
+		logger.Debug("[%d] worker done", id)
 	}()
 
 	var err error
@@ -34,32 +41,21 @@ func (nw *NetWorker) Work(c net.Conn, engine *Engine) {
 		if err = r.Read(c); err != nil {
 			return
 		}
-		for _, h := range engine.beforeHandler {
-			if err = h(w, r); err != nil {
-				logger.Error("%s", err)
-				res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				w.SendJSON(res)
-				return
-			}
+		context := Context{
+			Request: r,
+			Resp:    w,
+			Data:    make(map[string]interface{}),
 		}
 
-		h, ok := engine.handlerFunc[r.GetPath()]
-		if !ok {
-			logger.Error("no handler for router: %s", r.GetPath())
+		if h, ok := engine.handlerFunc[r.GetPath()]; ok {
+			context.handlers = append(engine.handlers, h)
+		} else {
+			logger.Error("no handler for path: %s", r.GetPath())
 			res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-			w.SendJSON(res)
+			context.JSON(res)
 			return
 		}
 
-		h(w, r)
-
-		for _, h := range engine.afterHandler {
-			if err = h(w, r); err != nil {
-				logger.Error("%s", err)
-				res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				w.SendJSON(res)
-				return
-			}
-		}
+		context.handlers[0](&context)
 	}
 }
