@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"gopkg.in/op/go-logging.v1"
 )
@@ -15,15 +16,17 @@ var (
 type HandlerFunc func(c *Context)
 
 type Engine struct {
-	handlerFunc map[string]HandlerFunc
-	handlers    []HandlerFunc
-	connPool    chan net.Conn
+	handlerFunc   map[string]HandlerFunc
+	handlers      []HandlerFunc
+	groupHandlers map[string]*Group
+	connPool      chan net.Conn
 }
 
 func New(quit chan bool) *Engine {
 	e := &Engine{
-		handlerFunc: make(map[string]HandlerFunc),
-		connPool:    make(chan net.Conn, QueueSize),
+		handlerFunc:   make(map[string]HandlerFunc),
+		groupHandlers: make(map[string]*Group),
+		connPool:      make(chan net.Conn, QueueSize),
 	}
 
 	for i := 0; i < QueueSize; i++ {
@@ -46,6 +49,30 @@ func (engine *Engine) Register(path string, handler HandlerFunc) {
 		panic(fmt.Sprintf("duplicate router %s", path))
 	}
 	engine.handlerFunc[path] = handler
+}
+
+func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
+	// check if the group path conflict.
+	ps := strings.Split(path, "/")
+	if len(ps) == 0 {
+		panic("empty path")
+	}
+
+	root := ps[0]
+	for p := range engine.groupHandlers {
+		if strings.HasPrefix(p, root) {
+			panic(fmt.Sprintf("conflict group path name:%s with %s", path, p))
+		}
+	}
+
+	gp := &Group{
+		Path:        path,
+		midHandlers: handlers,
+		handlers:    make(map[string]HandlerFunc),
+	}
+
+	engine.groupHandlers[path] = gp
+	return gp
 }
 
 func (engine *Engine) Run(port int) {
