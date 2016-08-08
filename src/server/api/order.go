@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/net"
@@ -91,22 +90,20 @@ func CreateOrder(egn engine.Exchange) net.HandlerFunc {
 	}
 }
 
-func GetOrders(egn engine.Exchange) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetOrders(egn engine.Exchange) net.HandlerFunc {
+	return func(c *net.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
-			tp, err := order.TypeFromStr(c.Param("type"))
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
 			req := pp.GetOrderReq{}
 			if err := c.BindJSON(&req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-
+			tp, err := order.TypeFromStr(req.GetType())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -114,14 +111,14 @@ func GetOrders(egn engine.Exchange) gin.HandlerFunc {
 			}
 			res := pp.GetOrderRes{
 				CoinPair: req.CoinPair,
-				Type:     pp.PtrString(tp.String()),
+				Type:     req.Type,
 				Orders:   make([]*pp.Order, len(ords)),
 			}
 
 			for i := range ords {
 				res.Orders[i] = &pp.Order{
 					Id:        &ords[i].ID,
-					Type:      pp.PtrString(tp.String()),
+					Type:      req.Type,
 					Price:     &ords[i].Price,
 					Amount:    &ords[i].Amount,
 					RestAmt:   &ords[i].RestAmt,
@@ -130,11 +127,11 @@ func GetOrders(egn engine.Exchange) gin.HandlerFunc {
 			}
 
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			c.JSON(200, res)
+			c.JSON(res)
 			return
 		}
 
-		c.JSON(200, rlt)
+		c.JSON(rlt)
 	}
 }
 
