@@ -12,6 +12,6 @@ func GetCoins(egn engine.Exchange) net.HandlerFunc {
 			Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 			Coins:  egn.GetSupportCoins(),
 		}
-		c.JSON(coins)
+		reply(c, &coins)
 	}
 }
