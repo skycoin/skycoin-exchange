@@ -9,6 +9,7 @@ import (
 func NewNet(ee engine.Exchange, quit chan bool) *net.Engine {
 	nt := net.New(quit)
 	nt.Use(net.Recovery())
+	nt.Use(net.Logger())
 
 	auth := nt.Group("/auth", api.Authorize(ee))
 	{
