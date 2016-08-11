@@ -127,7 +127,7 @@ func GetOrders(egn engine.Exchange) net.HandlerFunc {
 			}
 
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			c.JSON(res)
+			reply(c, &res)
 			return
 		}
 
