@@ -36,7 +36,7 @@ func (c *Context) Set(key string, v interface{}) {
 	c.Data[key] = v
 }
 
-// Get read data of key.
+// Get read data of key from context.Data.
 func (c *Context) Get(key string) (interface{}, bool) {
 	if v, ok := c.Data[key]; ok {
 		return v, true
