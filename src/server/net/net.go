@@ -14,8 +14,10 @@ var (
 	QueueSize = 1000
 )
 
+// HandlerFunc important element for implementing the middleware function.
 type HandlerFunc func(c *Context)
 
+// Engine is the core of the net package.
 type Engine struct {
 	handlerFunc   map[string]HandlerFunc
 	handlers      []HandlerFunc
@@ -23,6 +25,7 @@ type Engine struct {
 	connPool      chan net.Conn
 }
 
+// New create an engine.
 func New(quit chan bool) *Engine {
 	e := &Engine{
 		handlerFunc:   make(map[string]HandlerFunc),
@@ -40,11 +43,12 @@ func New(quit chan bool) *Engine {
 	return e
 }
 
-// add middleware
+// Use add middleware.
 func (engine *Engine) Use(handler HandlerFunc) {
 	engine.handlers = append(engine.handlers, handler)
 }
 
+// Register add request handlers.
 func (engine *Engine) Register(path string, handler HandlerFunc) {
 	if _, ok := engine.handlerFunc[path]; ok {
 		panic(fmt.Sprintf("duplicate router %s", path))
@@ -52,6 +56,7 @@ func (engine *Engine) Register(path string, handler HandlerFunc) {
 	engine.handlerFunc[path] = handler
 }
 
+// Group create request handler group, and bind middleware to this group.
 func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
 	// check if the group path conflict.
 	ps := strings.Split(path, "/")
@@ -76,6 +81,7 @@ func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
 	return gp
 }
 
+// Run start the engine.
 func (engine *Engine) Run(port int) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -104,6 +110,7 @@ func Recovery() HandlerFunc {
 	}
 }
 
+// Logger middleware
 func Logger() HandlerFunc {
 	return func(c *Context) {
 		logger.Debug("request path:%s", c.Request.GetPath())
