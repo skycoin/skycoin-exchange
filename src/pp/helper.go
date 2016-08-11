@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/codahale/chacha20"
-	"github.com/golang/protobuf/proto"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -66,7 +65,7 @@ func (r *Result) SetCodeAndReason(code ErrCode, reason string) {
 	r.SetReason(reason)
 }
 
-func MakeEncryptReq(r proto.Message, pubkey string, seckey string) (EncryptReq, error) {
+func MakeEncryptReq(r interface{}, pubkey string, seckey string) (EncryptReq, error) {
 	sp := cipher.MustPubKeyFromHex(pubkey)
 	cs := cipher.MustSecKeyFromHex(seckey)
 	cp := cipher.PubKeyFromSecKey(cs).Hex()
