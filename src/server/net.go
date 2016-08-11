@@ -8,6 +8,8 @@ import (
 
 func NewNet(ee engine.Exchange, quit chan bool) *net.Engine {
 	nt := net.New(quit)
+	nt.Use(net.Recovery())
+
 	auth := nt.Group("/auth", api.Authorize(ee))
 	{
 		auth.Register("/create/account", api.CreateAccount(ee))
@@ -15,8 +17,9 @@ func NewNet(ee engine.Exchange, quit chan bool) *net.Engine {
 		auth.Register("/get/balance", api.GetBalance(ee))
 		auth.Register("/withdrawl", api.Withdraw(ee))
 		auth.Register("/create/order", api.CreateOrder(ee))
+		auth.Register("/get/coins", api.GetCoins(ee))
+		auth.Register("/get/orders", api.GetOrders(ee))
 	}
-	nt.Register("/get/coins", api.GetCoins(ee))
-	nt.Register("/get/orders", api.GetOrders(ee))
+
 	return nt
 }
