@@ -12,8 +12,7 @@ func NewRouter(cli Client) *http.ServeMux {
 	mux.Handle("/api/v1/account/withdrawal", Withdraw(cli))
 
 	// order handlers
-	mux.Handle("/api/v1/account/order/bid", CreateBidOrder(cli))
-	mux.Handle("/api/v1/account/order/ask", CreateAskOrder(cli))
+	mux.Handle("/api/v1/account/order", CreateOrder(cli))
 	mux.Handle("/api/v1/orders/bid", GetBidOrders(cli))
 	mux.Handle("/api/v1/orders/ask", GetAskOrders(cli))
 
