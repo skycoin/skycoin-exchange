@@ -32,18 +32,18 @@ func (c *Context) Set(key string, v interface{}) {
 	c.Data[key] = v
 }
 
-func (c *Context) Get(key string) (interface{}, error) {
+func (c *Context) Get(key string) (interface{}, bool) {
 	if v, ok := c.Data[key]; ok {
-		return v, nil
+		return v, true
 	}
 
-	return nil, fmt.Errorf("%s does not exist", key)
+	return nil, false
 }
 
 func (c *Context) MustGet(key string) interface{} {
-	v, err := c.Get(key)
-	if err != nil {
-		panic(err)
+	v, exist := c.Get(key)
+	if !exist {
+		panic(fmt.Sprintf("%s does not exist", key))
 	}
 	return v
 }
