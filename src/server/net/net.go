@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"net"
+	"runtime/debug"
 	"strings"
 
 	"gopkg.in/op/go-logging.v1"
@@ -96,8 +97,16 @@ func Recovery() HandlerFunc {
 		defer func() {
 			if r := recover(); r != nil {
 				logger.Critical("%s", r)
+				debug.PrintStack()
 			}
 		}()
+		c.Next()
+	}
+}
+
+func Logger() HandlerFunc {
+	return func(c *Context) {
+		logger.Debug("request path:%s", c.Request.GetPath())
 		c.Next()
 	}
 }
