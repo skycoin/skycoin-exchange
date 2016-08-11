@@ -6,19 +6,23 @@ import (
 	"net"
 )
 
+// ResponseWriter interface for writing response.
 type ResponseWriter interface {
 	Write(p []byte) (n int, err error)
 	SendJSON(data interface{}) error
 }
 
+// NetResponse concrete response writer.
 type NetResponse struct {
 	c net.Conn
 }
 
+// Write write data directly.
 func (res *NetResponse) Write(p []byte) (n int, err error) {
 	return res.c.Write(p)
 }
 
+// SendJSON marshal the data into json, and then send.
 func (res *NetResponse) SendJSON(data interface{}) error {
 	d, err := json.Marshal(data)
 	if err != nil {
