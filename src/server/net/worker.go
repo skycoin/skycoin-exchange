@@ -7,11 +7,13 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
+// Worker tcp handler.
 type Worker struct {
 	ID   int
 	Enge *Engine
 }
 
+// Start start the worker.
 func (wk *Worker) Start(quit chan bool) {
 	go func() {
 		for {
@@ -25,6 +27,8 @@ func (wk *Worker) Start(quit chan bool) {
 	}()
 }
 
+// process handle the incoming connection, will read request from conn, setup the middle,
+// and dispatch the request.
 func process(id int, c net.Conn, engine *Engine) {
 	logger.Debug("[%d] working", id)
 	r := &Request{}
@@ -66,6 +70,7 @@ func process(id int, c net.Conn, engine *Engine) {
 	}
 }
 
+// findGroupHandlers find group of specific path.
 func (engine *Engine) findGroupHandlers(path string) (handlers []HandlerFunc, find bool) {
 	for p, gp := range engine.groupHandlers {
 		if strings.Contains(path, p) {
