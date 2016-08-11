@@ -69,11 +69,11 @@ func process(id int, c net.Conn, engine *Engine) {
 func (engine *Engine) findGroupHandlers(path string) (handlers []HandlerFunc, find bool) {
 	for p, gp := range engine.groupHandlers {
 		if strings.Contains(path, p) {
-			h, ok := gp.handlers[path]
+			h, ok := gp.regHandlers[path]
 			if !ok {
 				return
 			}
-			handlers = append(gp.midHandlers, h)
+			handlers = append(gp.preHandlers, h)
 			find = true
 			break
 		}

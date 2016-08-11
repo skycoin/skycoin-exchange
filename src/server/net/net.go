@@ -68,8 +68,8 @@ func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
 
 	gp := &Group{
 		Path:        path,
-		midHandlers: handlers,
-		handlers:    make(map[string]HandlerFunc),
+		preHandlers: handlers,
+		regHandlers: make(map[string]HandlerFunc),
 	}
 
 	engine.groupHandlers[path] = gp
