@@ -1,7 +1,7 @@
 package order
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -129,6 +129,6 @@ func TypeFromStr(tp string) (Type, error) {
 	case "ask":
 		return Ask, nil
 	default:
-		return 0, errors.New("unknow order type")
+		return 0, fmt.Errorf("unknow order type:%s", tp)
 	}
 }
