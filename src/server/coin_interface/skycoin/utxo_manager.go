@@ -2,7 +2,9 @@ package skycoin_interface
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -19,6 +21,7 @@ type ExUtxoManager struct {
 	WatchAddress []string
 	UtxosCh      chan Utxo
 	UtxoStateMap map[string]Utxo
+	mutx         sync.Mutex
 }
 
 func NewUtxoManager(utxoPoolsize int, watchAddrs []string) UtxoManager {
@@ -81,6 +84,7 @@ func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 	}
 
 	//get new
+	eum.mutx.Lock()
 	newUtxos := []Utxo{}
 	for id, utxo := range latestUxMap {
 		if _, ok := eum.UtxoStateMap[id]; !ok {
@@ -89,7 +93,17 @@ func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 	}
 
 	eum.UtxoStateMap = latestUxMap
+	eum.mutx.Unlock()
 	return newUtxos, nil
+}
+
+func (eum *ExUtxoManager) mustGetUtxos(hash string) Utxo {
+	eum.mutx.Lock()
+	defer eum.mutx.Unlock()
+	if u, ok := eum.UtxoStateMap[hash]; ok {
+		return u
+	}
+	panic(fmt.Sprintf("utxo:%s not found", hash))
 }
 
 // chooseUtxos choose appropriate utxos, if time out, and not found enough utxos,
@@ -98,13 +112,17 @@ func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
 func (eum *ExUtxoManager) chooseUtxos(amount uint64, tm time.Duration) ([]Utxo, error) {
 	logger.Debug("skycoin choose utxos, amount:%d", amount)
 	var totalAmount uint64
-	// utxos := []bitcoin.UtxoWithkey{}
 	utxos := []Utxo{}
 	for {
 		select {
 		case utxo := <-eum.UtxosCh:
-			logger.Debug("get utxo: hash:%s coins:%d", utxo.GetHash(), utxo.GetCoins())
-			utxos = append(utxos, utxo)
+			u := eum.mustGetUtxos(utxo.GetHash())
+			if u.GetCoins() != utxo.GetCoins() {
+				panic("utxo coins not equal")
+			}
+			logger.Debug("get utxo: hash:%s coins:%d hours:%d",
+				utxo.GetHash(), utxo.GetCoins(), utxo.GetHours())
+			utxos = append(utxos, u)
 			totalAmount += utxo.GetCoins() * 1e6
 			if totalAmount >= amount {
 				return utxos, nil
