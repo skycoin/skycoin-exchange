@@ -89,3 +89,15 @@ func (engine *Engine) Run(port int) {
 		engine.connPool <- c
 	}
 }
+
+// Recovery is middleware for catching panic.
+func Recovery() HandlerFunc {
+	return func(c *Context) {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Critical("%s", r)
+			}
+		}()
+		c.Next()
+	}
+}
