@@ -84,7 +84,6 @@ func withdrawlWork(c *net.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyR
 		return btcWithdraw(rp)
 	case wallet.Skycoin:
 		return skyWithdrawl(rp)
-		// return nil, pp.MakeErrRes(errors.New("skycoin withdrawal not support yet"))
 	default:
 		return nil, pp.MakeErrRes(errors.New("unknow coin type"))
 	}

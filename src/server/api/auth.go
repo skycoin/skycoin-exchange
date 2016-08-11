@@ -24,18 +24,21 @@ func Authorize(ee engine.Exchange) net.HandlerFunc {
 			if c.BindJSON(&cnt_req) == nil {
 				cliPubkey, err := cipher.PubKeyFromHex(cnt_req.GetPubkey())
 				if err != nil {
+					logger.Error("%s", err)
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 					break
 				}
 
 				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
 				if err != nil {
+					logger.Error("%s", err)
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
 
 				ok, err := regexp.MatchString(`^\{.*\}$`, string(data))
 				if err != nil || !ok {
+					logger.Error("%s", err)
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
@@ -44,16 +47,17 @@ func Authorize(ee engine.Exchange) net.HandlerFunc {
 
 				c.Next()
 
-				rsp := c.MustGet("response")
-				// encrypt the response.
-				encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
-				encpt_res := pp.EncryptRes{
-					Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
-					Encryptdata: encryptData,
-					Nonce:       nonce,
+				rsp, exist := c.Get("response")
+				if exist {
+					// encrypt the response.
+					encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
+					encpt_res := pp.EncryptRes{
+						Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
+						Encryptdata: encryptData,
+						Nonce:       nonce,
+					}
+					c.JSON(encpt_res)
 				}
-
-				c.JSON(encpt_res)
 				return
 			}
 			errRlt = pp.MakeErrRes(errors.New("bad request"))

@@ -18,37 +18,44 @@ func CreateOrder(egn engine.Exchange) net.HandlerFunc {
 		rlt := &pp.EmptyRes{}
 		req := &pp.OrderReq{}
 		for {
-			tp, err := order.TypeFromStr(req.GetType())
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
 			if err := getRequest(c, req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err.Error())
 				break
 			}
 			aid := req.GetAccountId()
+			tp, err := order.TypeFromStr(req.GetType())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err.Error())
+				break
+			}
+
 			// find the account
 			if _, err := cipher.PubKeyFromHex(aid); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				logger.Error("%s", err.Error())
 				break
 			}
 
 			acnt, err := egn.GetAccount(aid)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				logger.Error("%s", err.Error())
 				break
 			}
 
 			ct, bal, err := needBalance(tp, req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err.Error())
 				break
 			}
 
 			if acnt.GetBalance(ct) < bal {
-				rlt = pp.MakeErrRes(fmt.Errorf("%s balance is not sufficient", ct))
+				err := fmt.Errorf("%s balance is not sufficient", ct)
+				rlt = pp.MakeErrRes(err)
+				logger.Debug("%s", err.Error())
 				break
 			}
 
@@ -65,6 +72,7 @@ func CreateOrder(egn engine.Exchange) net.HandlerFunc {
 				logger.Info("account:%s decrease %s:%d", acnt.GetID(), ct, bal)
 				if err := acnt.DecreaseBalance(ct, bal); err != nil {
 					rlt = pp.MakeErrRes(err)
+					logger.Error("%s", err.Error())
 					break
 				}
 			}
@@ -95,18 +103,20 @@ func GetOrders(egn engine.Exchange) net.HandlerFunc {
 		rlt := &pp.EmptyRes{}
 		for {
 			req := pp.GetOrderReq{}
-			if err := c.BindJSON(&req); err != nil {
+			if err := getRequest(c, &req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			tp, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err)
 				break
 			}
 			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err)
 				break
 			}
 			res := pp.GetOrderRes{
@@ -130,7 +140,6 @@ func GetOrders(egn engine.Exchange) net.HandlerFunc {
 			reply(c, &res)
 			return
 		}
-
 		c.JSON(rlt)
 	}
 }
