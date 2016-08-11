@@ -9,8 +9,8 @@ import (
 )
 
 type Request struct {
-	Raw []byte
-	pp.Request
+	Raw        []byte // raw bytes
+	pp.Request        // constructed request.
 }
 
 func (r *Request) Reset() {
@@ -18,6 +18,7 @@ func (r *Request) Reset() {
 	r.Request.Reset()
 }
 
+// Read serialise request from reader.
 func (req *Request) Read(r io.Reader) error {
 	var len uint32
 	if err := binary.Read(r, binary.BigEndian, &len); err != nil {
