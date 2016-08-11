@@ -34,6 +34,7 @@ It has these top-level messages:
 	Order
 	GetOrderReq
 	GetOrderRes
+	GetCoinsReq
 	CoinsRes
 	Request
 */
