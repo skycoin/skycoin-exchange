@@ -129,13 +129,13 @@ response json:
 #### create order
 ```
 mode: POST
-url: /api/v1/account/order/[:type]?id=[:id]&key=[:key]
+url: /api/v1/account/order?id=[:id]&key=[:key]
 params:
-	type: order type, can be bid or ask.
 	id: account id.
 	key: account key.
 request json:
 {
+   "type": "bid", // bid or ask
    "coin_pair":"bitcoin/skycoin",
    "amount":90000,
    "price":25
