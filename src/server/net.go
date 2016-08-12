@@ -6,6 +6,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/net"
 )
 
+// NewNet create net engine and register handlers.
 func NewNet(ee engine.Exchange, quit chan bool) *net.Engine {
 	nt := net.New(quit)
 	nt.Use(net.Recovery())
