@@ -33,27 +33,16 @@ type Config struct {
 	UtxoPoolSize int           // utxo pool size.
 }
 
-/*
-	The server gets events from the client and processes them
-	- get balance/status
-	- get deposit addresses
-	- withdrawl bitcoin
-	- withdrawl skycoin
-	- add bid
-	- add ask
-	- get order book
-*/
-
 type ExchangeServer struct {
-	account.AccountManager
+	account.Manager
 	btcum         bitcoin.UtxoManager
 	skyum         skycoin.UtxoManager
 	orderManager  *order.Manager
 	cfg           Config
 	wallet        wallet.Wallet
-	wltMtx        sync.RWMutex // mutex for protecting the wallet.
-	orderHandlers map[string]chan order.Order
-	coins         []string
+	wltMtx        sync.RWMutex                // mutex for protecting the wallet.
+	orderHandlers map[string]chan order.Order // order handlers, for handleing bid and ask.
+	coins         []string                    // supported coins
 }
 
 // New create new server
@@ -71,16 +60,16 @@ func New(cfg Config) engine.Exchange {
 	order.InitDir(filepath.Join(path, "orderbook"))
 
 	var (
-		acntMgr account.AccountManager
+		acntMgr account.Manager
 		err     error
 	)
 
 	// load account manager if exist.
-	acntMgr, err = account.LoadAccountManager()
+	acntMgr, err = account.LoadManager()
 	if err != nil {
 		if os.IsNotExist(err) {
 			// create new account manager.
-			acntMgr = account.NewAccountManager()
+			acntMgr = account.NewManager()
 		} else {
 			panic(err)
 		}
@@ -113,13 +102,13 @@ func New(cfg Config) engine.Exchange {
 	}
 
 	s := &ExchangeServer{
-		cfg:            cfg,
-		wallet:         wlt,
-		AccountManager: acntMgr,
-		btcum:          bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
-		skyum:          skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
-		orderManager:   orderManager,
-		coins:          []string{"BTC", "SKY"},
+		cfg:          cfg,
+		wallet:       wlt,
+		Manager:      acntMgr,
+		btcum:        bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
+		skyum:        skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
+		orderManager: orderManager,
+		coins:        []string{"BTC", "SKY"},
 		orderHandlers: map[string]chan order.Order{
 			"bitcoin/skycoin": make(chan order.Order, 100),
 		},
