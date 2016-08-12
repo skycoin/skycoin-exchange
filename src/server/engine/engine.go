@@ -10,22 +10,38 @@ import (
 )
 
 type Exchange interface {
-	Run()
+	Server
+	Accounter
+	Addresser
+	Order
+	Utxor
+}
+
+type Accounter interface {
 	CreateAccountWithPubkey(pubkey string) (account.Accounter, error)
 	GetAccount(id string) (account.Accounter, error)
-	GetBtcFee() uint64
-	GetServPrivKey() cipher.SecKey
+	SaveAccount() error
+}
+
+type Addresser interface {
 	WatchAddress(ct wallet.CoinType, addr string)
 	GetNewAddress(coinType wallet.CoinType) string
-
-	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
-	PutUtxos(ct wallet.CoinType, utxos interface{})
-
 	GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error)
-	SaveAccount() error
+}
 
+type Order interface {
 	AddOrder(cp string, odr order.Order) (uint64, error)
 	GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error)
+}
 
+type Utxor interface {
+	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
+	PutUtxos(ct wallet.CoinType, utxos interface{})
+}
+
+type Server interface {
+	Run()
+	GetBtcFee() uint64
+	GetServPrivKey() cipher.SecKey
 	GetSupportCoins() []string
 }
