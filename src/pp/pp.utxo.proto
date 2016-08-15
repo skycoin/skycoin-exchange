@@ -1,0 +1,11 @@
+package pp;
+
+message GetUtxoReq {
+	optional string coin_type = 1; 	
+	repeated string addresses = 10;
+}
+
+message GetUtxoRes {
+	optional string coin_type = 1;
+	optional string utxos = 10;
+}
