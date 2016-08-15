@@ -4,22 +4,21 @@ import (
 	"net/http"
 
 	"github.com/skycoin/skycoin-exchange/src/rpclient/api"
-	"github.com/skycoin/skycoin-exchange/src/rpclient/model"
 )
 
-func New(cli *model.Client) *http.ServeMux {
+func New(se api.Servicer) *http.ServeMux {
 	mux := http.NewServeMux()
 	// base handlers.
-	mux.Handle("/api/v1/coins", api.GetCoins(cli))
-	mux.Handle("/api/v1/accounts", api.CreateAccount(cli))
-	mux.Handle("/api/v1/account/deposit_address", api.GetNewAddress(cli))
-	mux.Handle("/api/v1/account/balance", api.GetBalance(cli))
-	mux.Handle("/api/v1/account/withdrawal", api.Withdraw(cli))
+	mux.Handle("/api/v1/coins", api.GetCoins(se))
+	mux.Handle("/api/v1/accounts", api.CreateAccount(se))
+	mux.Handle("/api/v1/account/deposit_address", api.GetNewAddress(se))
+	mux.Handle("/api/v1/account/balance", api.GetBalance(se))
+	mux.Handle("/api/v1/account/withdrawal", api.Withdraw(se))
 
 	// order handlers
-	mux.Handle("/api/v1/account/order", api.CreateOrder(cli))
-	mux.Handle("/api/v1/orders/bid", api.GetBidOrders(cli))
-	mux.Handle("/api/v1/orders/ask", api.GetAskOrders(cli))
+	mux.Handle("/api/v1/account/order", api.CreateOrder(se))
+	mux.Handle("/api/v1/orders/bid", api.GetBidOrders(se))
+	mux.Handle("/api/v1/orders/ask", api.GetAskOrders(se))
 
 	return mux
 }
