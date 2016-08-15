@@ -31,7 +31,7 @@ func GetBalance(ee engine.Exchange) net.HandlerFunc {
 				break
 			}
 
-			ct, err := wallet.ConvertCoinType(breq.GetCoinType())
+			ct, err := wallet.CoinTypeFromStr(breq.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
