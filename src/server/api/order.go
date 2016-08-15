@@ -7,14 +7,14 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func CreateOrder(egn engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		rlt := &pp.EmptyRes{}
 		req := &pp.OrderReq{}
 		for {
@@ -98,8 +98,8 @@ func CreateOrder(egn engine.Exchange) net.HandlerFunc {
 	}
 }
 
-func GetOrders(egn engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
 			req := pp.GetOrderReq{}

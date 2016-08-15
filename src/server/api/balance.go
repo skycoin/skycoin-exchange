@@ -3,13 +3,13 @@ package api
 import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func GetBalance(ee engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			breq := pp.GetBalanceReq{}

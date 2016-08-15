@@ -8,13 +8,13 @@ import (
 	"github.com/codahale/chacha20"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // Authorize will decrypt the request, and encrypt the response.
-func Authorize(ee engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func Authorize(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		var (
 			cnt_req pp.EncryptReq
 			errRlt  = &pp.EmptyRes{}
@@ -89,6 +89,6 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 
 // reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
-func reply(c *net.Context, r interface{}) {
+func reply(c *sknet.Context, r interface{}) {
 	c.Set("response", r)
 }

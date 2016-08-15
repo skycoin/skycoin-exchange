@@ -3,14 +3,14 @@ package api
 import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // GetNewAddress account create new address for depositing.
-func GetNewAddress(ee engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			dar := pp.GetDepositAddrReq{}

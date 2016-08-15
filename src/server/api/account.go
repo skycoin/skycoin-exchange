@@ -5,13 +5,13 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateAccount create account with specific pubkey,
-func CreateAccount(ee engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			req := pp.CreateAccountReq{}

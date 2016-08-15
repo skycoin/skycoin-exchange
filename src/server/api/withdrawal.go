@@ -10,8 +10,8 @@ import (
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/net"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -30,8 +30,8 @@ type SkyTxResult struct {
 }
 
 // Withdraw api handler for generating withdraw transaction.
-func Withdraw(ee engine.Exchange) net.HandlerFunc {
-	return func(c *net.Context) {
+func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
 		errRlt := &pp.EmptyRes{}
 		for {
 			rp := NewReqParams()
@@ -77,7 +77,7 @@ func Withdraw(ee engine.Exchange) net.HandlerFunc {
 	}
 }
 
-func withdrawlWork(c *net.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
+func withdrawlWork(c *sknet.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ct := rp.Values["cointype"].(wallet.CoinType)
 	switch ct {
 	case wallet.Bitcoin:
