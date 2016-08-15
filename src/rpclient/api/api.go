@@ -9,13 +9,17 @@ import (
 	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/rpclient/model"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+type Servicer interface {
+	GetServKey() cipher.PubKey
+	GetServAddr() string
+}
+
 // CreateAccount handle the request of creating account.
-func CreateAccount(cli *model.Client) http.HandlerFunc {
+func CreateAccount(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// generate account pubkey/privkey pair, pubkey is the account id.
 		errRlt := &pp.EmptyRes{}
@@ -25,8 +29,8 @@ func CreateAccount(cli *model.Client) http.HandlerFunc {
 				Pubkey: pp.PtrString(p.Hex()),
 			}
 
-			req, _ := pp.MakeEncryptReq(&r, cli.ServPubkey.Hex(), s.Hex())
-			rsp, err := sknet.Get(cli.ServApiRoot, "/auth/create/account", req)
+			req, _ := pp.MakeEncryptReq(&r, se.GetServKey().Hex(), s.Hex())
+			rsp, err := sknet.Get(se.GetServAddr(), "/auth/create/account", req)
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -38,7 +42,7 @@ func CreateAccount(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.CreateAccountRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), s.Hex(), &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), s.Hex(), &v)
 				ret := struct {
 					Result    pp.Result `json:"result"`
 					AccountID string    `json:"account_id"`
@@ -61,7 +65,7 @@ func CreateAccount(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func GetNewAddress(cli *model.Client) http.HandlerFunc {
+func GetNewAddress(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		errRlt := &pp.EmptyRes{}
 		for {
@@ -82,8 +86,8 @@ func GetNewAddress(cli *model.Client) http.HandlerFunc {
 				CoinType:  pp.PtrString(cointype),
 			}
 
-			req, _ := pp.MakeEncryptReq(&r, cli.ServPubkey.Hex(), key)
-			resp, err := sknet.Get(cli.ServApiRoot, "/auth/create/deposit_address", req)
+			req, _ := pp.MakeEncryptReq(&r, se.GetServKey().Hex(), key)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/create/deposit_address", req)
 			if err != nil {
 				log.Println(err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -96,7 +100,7 @@ func GetNewAddress(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.GetDepositAddrRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -108,7 +112,7 @@ func GetNewAddress(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func GetBalance(cli *model.Client) http.HandlerFunc {
+func GetBalance(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		errRlt := &pp.EmptyRes{}
 		for {
@@ -128,8 +132,8 @@ func GetBalance(cli *model.Client) http.HandlerFunc {
 				CoinType:  pp.PtrString(coinType),
 			}
 
-			req, _ := pp.MakeEncryptReq(&gbr, cli.ServPubkey.Hex(), key)
-			resp, err := sknet.Get(cli.ServApiRoot, "/auth/get/balance", req)
+			req, _ := pp.MakeEncryptReq(&gbr, se.GetServKey().Hex(), key)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/balance", req)
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -141,7 +145,7 @@ func GetBalance(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.GetBalanceRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -153,7 +157,7 @@ func GetBalance(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func Withdraw(cli *model.Client) http.HandlerFunc {
+func Withdraw(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
@@ -193,8 +197,8 @@ func Withdraw(cli *model.Client) http.HandlerFunc {
 				OutputAddress: &toAddr,
 			}
 
-			req, _ := pp.MakeEncryptReq(&wr, cli.ServPubkey.Hex(), key)
-			resp, err := sknet.Get(cli.ServApiRoot, "/auth/withdrawl", req)
+			req, _ := pp.MakeEncryptReq(&wr, se.GetServKey().Hex(), key)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/withdrawl", req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -205,7 +209,7 @@ func Withdraw(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.WithdrawalRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -217,7 +221,7 @@ func Withdraw(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func CreateOrder(cli *model.Client) http.HandlerFunc {
+func CreateOrder(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
@@ -233,8 +237,8 @@ func CreateOrder(cli *model.Client) http.HandlerFunc {
 			}
 
 			rawReq.AccountId = &id
-			req, _ := pp.MakeEncryptReq(&rawReq, cli.ServPubkey.Hex(), key)
-			resp, err := sknet.Get(cli.ServApiRoot, fmt.Sprintf("/auth/create/order"), req)
+			req, _ := pp.MakeEncryptReq(&rawReq, se.GetServKey().Hex(), key)
+			resp, err := sknet.Get(se.GetServAddr(), fmt.Sprintf("/auth/create/order"), req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -245,7 +249,7 @@ func CreateOrder(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.OrderRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -257,15 +261,15 @@ func CreateOrder(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func GetBidOrders(cli *model.Client) http.HandlerFunc {
-	return getOrders(cli, "bid")
+func GetBidOrders(se Servicer) http.HandlerFunc {
+	return getOrders(se, "bid")
 }
 
-func GetAskOrders(cli *model.Client) http.HandlerFunc {
-	return getOrders(cli, "ask")
+func GetAskOrders(se Servicer) http.HandlerFunc {
+	return getOrders(se, "ask")
 }
 
-func getOrders(cli *model.Client, tp string) http.HandlerFunc {
+func getOrders(se Servicer, tp string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
@@ -301,12 +305,12 @@ func getOrders(cli *model.Client, tp string) http.HandlerFunc {
 				End:      &end,
 			}
 
-			req, err := pp.MakeEncryptReq(&getOrderReq, cli.ServPubkey.Hex(), key)
+			req, err := pp.MakeEncryptReq(&getOrderReq, se.GetServKey().Hex(), key)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			resp, err := sknet.Get(cli.ServApiRoot, "/auth/get/orders", req)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/orders", req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -317,7 +321,7 @@ func getOrders(cli *model.Client, tp string) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.CoinsRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -329,7 +333,7 @@ func getOrders(cli *model.Client, tp string) http.HandlerFunc {
 	}
 }
 
-func GetCoins(cli *model.Client) http.HandlerFunc {
+func GetCoins(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
@@ -342,13 +346,13 @@ func GetCoins(cli *model.Client) http.HandlerFunc {
 				AccountId: pp.PtrString(id),
 			}
 
-			req, err := pp.MakeEncryptReq(&rq, cli.ServPubkey.Hex(), key)
+			req, err := pp.MakeEncryptReq(&rq, se.GetServKey().Hex(), key)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			rsp, err := sknet.Get(cli.ServApiRoot, "/auth/get/coins", req)
+			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/coins", req)
 			if err != nil {
 				log.Println(err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -361,7 +365,7 @@ func GetCoins(cli *model.Client) http.HandlerFunc {
 			// handle the response
 			if res.Result.GetSuccess() {
 				v := pp.CoinsRes{}
-				pp.DecryptRes(res, cli.ServPubkey.Hex(), key, &v)
+				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
 				SendJSON(w, &v)
 				return
 			} else {
@@ -373,7 +377,7 @@ func GetCoins(cli *model.Client) http.HandlerFunc {
 	}
 }
 
-func GetUtxos(cli model.Client) http.HandlerFunc {
+func GetUtxos(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
