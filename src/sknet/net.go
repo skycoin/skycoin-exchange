@@ -154,9 +154,20 @@ func Write(w io.Writer, v interface{}) error {
 	return nil
 }
 
-// WriteRsp send request to server, then read response and return.
-func WriteRsp(rw io.ReadWriter, v interface{}) (*Response, error) {
-	d, err := json.Marshal(v)
+// Get send request to server, then read response and return.
+func Get(addr string, path string, v interface{}) (*Response, error) {
+	c, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	r, err := MakeRequest(path, v)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := json.Marshal(r)
 	if err != nil {
 		return nil, err
 	}
@@ -164,12 +175,12 @@ func WriteRsp(rw io.ReadWriter, v interface{}) (*Response, error) {
 	buf := make([]byte, 4+len(d))
 	binary.BigEndian.PutUint32(buf[:], uint32(len(d)))
 	copy(buf[4:], d)
-	if err := binary.Write(rw, binary.BigEndian, buf); err != nil {
+	if err := binary.Write(c, binary.BigEndian, buf); err != nil {
 		return nil, err
 	}
 
 	rsp := Response{}
-	if err := Read(rw, &rsp); err != nil {
+	if err := Read(c, &rsp); err != nil {
 		return nil, err
 	}
 	return &rsp, nil
