@@ -150,11 +150,11 @@ func needBalance(tp order.Type, req *pp.OrderReq) (wallet.CoinType, uint64, erro
 		return -1, 0, errors.New("error coin pair")
 	}
 
-	mainCt, err := wallet.ConvertCoinType(pair[0])
+	mainCt, err := wallet.CoinTypeFromStr(pair[0])
 	if err != nil {
 		return -1, 0, err
 	}
-	subCt, err := wallet.ConvertCoinType(pair[1])
+	subCt, err := wallet.CoinTypeFromStr(pair[1])
 	if err != nil {
 		return -1, 0, err
 	}

@@ -53,7 +53,7 @@ func Withdraw(ee engine.Exchange) net.HandlerFunc {
 				break
 			}
 
-			ct, err := wallet.ConvertCoinType(wr.GetCoinType())
+			ct, err := wallet.CoinTypeFromStr(wr.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break

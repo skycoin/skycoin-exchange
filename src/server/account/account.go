@@ -152,7 +152,7 @@ func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
 
 	// convert balance.
 	for ct, bal := range self.Balance {
-		t, err := wallet.ConvertCoinType(ct)
+		t, err := wallet.CoinTypeFromStr(ct)
 		if err != nil {
 			panic(err)
 		}
@@ -161,7 +161,7 @@ func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
 
 	// convert address
 	for ct, addrs := range self.Addresses {
-		t, err := wallet.ConvertCoinType(ct)
+		t, err := wallet.CoinTypeFromStr(ct)
 		if err != nil {
 			panic(err)
 		}

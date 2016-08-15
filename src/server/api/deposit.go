@@ -32,7 +32,7 @@ func GetNewAddress(ee engine.Exchange) net.HandlerFunc {
 				break
 			}
 
-			ct, err := wallet.ConvertCoinType(dar.GetCoinType())
+			ct, err := wallet.CoinTypeFromStr(dar.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
