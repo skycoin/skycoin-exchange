@@ -2,6 +2,7 @@ package pp
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/codahale/chacha20"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -65,7 +66,12 @@ func (r *Result) SetCodeAndReason(code ErrCode, reason string) {
 	r.SetReason(reason)
 }
 
-func MakeEncryptReq(r interface{}, pubkey string, seckey string) (EncryptReq, error) {
+func MakeEncryptReq(r interface{}, pubkey string, seckey string) (req EncryptReq, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("encrypt faild")
+		}
+	}()
 	sp := cipher.MustPubKeyFromHex(pubkey)
 	cs := cipher.MustSecKeyFromHex(seckey)
 	cp := cipher.PubKeyFromSecKey(cs).Hex()
@@ -74,8 +80,8 @@ func MakeEncryptReq(r interface{}, pubkey string, seckey string) (EncryptReq, er
 	if err != nil {
 		return EncryptReq{}, err
 	}
-
-	ed, err := cipher.Chacha20Encrypt([]byte(d), sp, cs, nonce)
+	key := cipher.ECDH(sp, cs)
+	ed, err := cipher.Chacha20Encrypt([]byte(d), key, nonce)
 	if err != nil {
 		return EncryptReq{}, err
 	}
@@ -86,10 +92,17 @@ func MakeEncryptReq(r interface{}, pubkey string, seckey string) (EncryptReq, er
 	}, nil
 }
 
-func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) error {
+func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("encrypt faild")
+		}
+	}()
+
 	p := cipher.MustPubKeyFromHex(pubkey)
 	s := cipher.MustSecKeyFromHex(seckey)
-	d, err := cipher.Chacha20Decrypt(res.Encryptdata, p, s, res.GetNonce())
+	key := cipher.ECDH(p, s)
+	d, err := cipher.Chacha20Decrypt(res.Encryptdata, key, res.GetNonce())
 	if err != nil {
 		return err
 	}
