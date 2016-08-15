@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin-exchange/src/server/api"
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ import (
 
 var (
 	cli = New(Config{
-		ApiRoot:    "http://localhost:8080/api/v1",
+		ApiRoot:    "localhost:8080",
 		ServPubkey: cipher.MustPubKeyFromHex("02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"),
 	})
 )
@@ -36,7 +37,7 @@ func TestGetCoins(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	GetCoins(cli)(w, req)
+	api.GetCoins(cli)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
