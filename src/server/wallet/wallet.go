@@ -57,7 +57,7 @@ func (c CoinType) String() string {
 	}
 }
 
-func ConvertCoinType(ct string) (CoinType, error) {
+func CoinTypeFromStr(ct string) (CoinType, error) {
 	switch ct {
 	case "bitcoin":
 		return Bitcoin, nil
