@@ -10,23 +10,23 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/api"
+	"github.com/skycoin/skycoin-exchange/src/rpclient/api"
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/stretchr/testify/assert"
 )
 
-// mux.Handle("/api/v1/account/balance", GetBalance(cli))
-// mux.Handle("/api/v1/account/withdrawal", Withdraw(cli))
+// mux.Handle("/api/v1/account/balance", GetBalance(se))
+// mux.Handle("/api/v1/account/withdrawal", Withdraw(se))
 //
 // // order handlers
-// mux.Handle("/api/v1/account/order/bid", CreateBidOrder(cli))
-// mux.Handle("/api/v1/account/order/ask", CreateAskOrder(cli))
-// mux.Handle("/api/v1/orders/bid", GetBidOrders(cli))
-// mux.Handle("/api/v1/orders/ask", GetAskOrders(cli))
+// mux.Handle("/api/v1/account/order/bid", CreateBidOrder(se))
+// mux.Handle("/api/v1/account/order/ask", CreateAskOrder(se))
+// mux.Handle("/api/v1/orders/bid", GetBidOrders(se))
+// mux.Handle("/api/v1/orders/ask", GetAskOrders(se))
 
 var (
-	cli = New(Config{
+	se = New(Config{
 		ApiRoot:    "localhost:8080",
 		ServPubkey: cipher.MustPubKeyFromHex("02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"),
 	})
@@ -37,7 +37,7 @@ func TestGetCoins(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	api.GetCoins(cli)(w, req)
+	api.GetCoins(se)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
@@ -51,7 +51,7 @@ func createAccount() (string, string, error) {
 	}
 
 	w := httptest.NewRecorder()
-	CreateAccount(cli)(w, req)
+	api.CreateAccount(se)(w, req)
 	res := struct {
 		Result    pp.Result `json:"result"`
 		ID        string    `json:"account_id"`
@@ -82,7 +82,7 @@ func TestDeposit(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	GetNewAddress(cli)(w, req)
+	api.GetNewAddress(se)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
@@ -99,7 +99,7 @@ func TestGetBalance(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	GetBalance(cli)(w, req)
+	api.GetBalance(se)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
@@ -112,7 +112,7 @@ func TestGetBidOrders(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	GetBidOrders(cli)(w, req)
+	api.GetBidOrders(se)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
@@ -125,7 +125,7 @@ func TestGetAskOrders(t *testing.T) {
 	assert.Nil(t, err)
 
 	w := httptest.NewRecorder()
-	GetAskOrders(cli)(w, req)
+	api.GetAskOrders(se)(w, req)
 	res := pp.EmptyRes{}
 	err = json.NewDecoder(w.Body).Decode(&res)
 	assert.Nil(t, err)
