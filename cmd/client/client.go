@@ -13,17 +13,17 @@ const (
 )
 
 func main() {
-	apiUrl := flag.String("api_url", "http://localhost:8080/api/v1", "server api root")
+	servAddr := flag.String("s", "localhost:8080", "server address")
 	port := flag.Int("port", 6060, "rpc port")
 	flag.Parse()
 
 	pk := cipher.MustPubKeyFromHex(ServPubkey)
 
 	cfg := rpclient.Config{
-		ApiRoot:    *apiUrl,
+		ApiRoot:    *servAddr,
 		ServPubkey: pk,
 	}
 
-	cli := rpclient.New(cfg)
-	cli.Run(fmt.Sprintf(":%d", *port))
+	svr := rpclient.New(cfg)
+	svr.Run(fmt.Sprintf(":%d", *port))
 }
