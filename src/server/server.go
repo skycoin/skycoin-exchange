@@ -15,6 +15,7 @@ import (
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
+	"github.com/skycoin/skycoin-exchange/src/server/router"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
@@ -136,7 +137,7 @@ func (self *ExchangeServer) Run() {
 
 	// start the api server.
 	// r := NewRouter(self)
-	r := NewNet(self, c)
+	r := router.New(self, c)
 	r.Run(self.cfg.Port)
 }
 
@@ -264,11 +265,11 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	if len(pair) != 2 {
 		panic("error coin pair")
 	}
-	mainCt, err := wallet.ConvertCoinType(pair[0])
+	mainCt, err := wallet.CoinTypeFromStr(pair[0])
 	if err != nil {
 		panic(err)
 	}
-	subCt, err := wallet.ConvertCoinType(pair[1])
+	subCt, err := wallet.CoinTypeFromStr(pair[1])
 	if err != nil {
 		panic(err)
 	}
