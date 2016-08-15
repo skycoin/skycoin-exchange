@@ -28,8 +28,8 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 					break
 				}
-
-				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), cliPubkey, ee.GetServPrivKey(), cnt_req.GetNonce())
+				key := cipher.ECDH(cliPubkey, ee.GetServPrivKey())
+				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), key, cnt_req.GetNonce())
 				if err != nil {
 					logger.Error("%s", err)
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
@@ -80,7 +80,8 @@ func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{})
 	}
 
 	nonce = cipher.RandByte(chacha20.NonceSize)
-	encryptData, err = cipher.Chacha20Encrypt(d, pubkey, seckey, nonce)
+	key := cipher.ECDH(pubkey, seckey)
+	encryptData, err = cipher.Chacha20Encrypt(d, key, nonce)
 	if err != nil {
 		panic(err)
 	}
