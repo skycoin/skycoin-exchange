@@ -39,6 +39,8 @@ It has these top-level messages:
 	CoinsRes
 	Request
 	GetUtxoReq
+	BtcUtxo
+	SkyUtxo
 	GetUtxoRes
 */
 package pp

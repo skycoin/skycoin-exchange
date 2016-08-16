@@ -1,11 +1,32 @@
 package pp;
 
+import "pp.common.proto";
+
 message GetUtxoReq {
-	optional string coin_type = 1; 	
+	optional string coin_type = 1;
 	repeated string addresses = 10;
 }
 
+message BtcUtxo {
+	optional string address = 10;
+	optional string txid = 11;
+	optional uint32 vout = 12;
+	optional string script_pubkey = 13;
+	optional uint64 amount = 14;
+	optional uint64 confirms = 15;
+}
+
+message SkyUtxo {
+	optional string hash = 10;
+	optional string src_tx = 11;
+	optional string address = 12;
+	optional uint64 coins = 13;
+	optional uint64 hours = 14;
+}
+
 message GetUtxoRes {
-	optional string coin_type = 1;
-	optional string utxos = 10;
+	optional Result result = 1;
+
+	repeated BtcUtxo btc_utxos = 11;
+	repeated SkyUtxo sky_utxos = 12;
 }
