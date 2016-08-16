@@ -46,7 +46,10 @@ The rpc client will use the account id and key to communicate with exchange serv
 #### get supported coins
 ```
 mode:GET
-url: /api/v1/coins
+url: /api/v1/coins?id=[:id]&key=[:key]
+params:
+	id: account id.
+	key: account key.
 response json:
 {
   "result": {
@@ -155,8 +158,10 @@ response json:
 #### get orders
 ```
 mode: GET
-url: /api/v1/orders/[:type]?coin_pair=[:coin_pair]&start=[:start]&end=[:end]
+url: /api/v1/orders/[:type]?coin_pair=[:coin_pair]&start=[:start]&end=[:end]&id=[:id]&key=[:key]
 params:
+	id: account id.
+	key: account key.
 	type: order type, can be bid or ask.
 	coin_pair: coin pair, joined by '/', like: bitcoin/skycoin.
 	start: start index of the orders.
@@ -186,6 +191,38 @@ response json:
       "amount": 90000,
       "rest_amt": 90000,
       "created_at": 1470152057
+    }
+  ]
+}
+```
+#### get utxos
+```
+mode: GET
+url: /api/v1/utxos?coin_type=[:coin_type]&addrs=[:addrs]&id=[:id]&key=[:key]
+params:
+coin_type: coin type, can be bitcoin or skycoin.
+addrs: addresses, joined with `,`.
+id: account id.
+key: account key.
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "btc_utxos": [
+    {
+      "address": "1EknG7EauSW4zxFtSrCQSHe5PJenks55s6",
+      "txid": "c5ab911556a4628a5a98ee5386a8a3b465831c66953d288bbfeb4221e95158d8d",
+      "vout": 0,
+      "amount": 90000
+    },
+    {
+      "address": "1EknG7EauSW4zxFtSrCQSHe5PJenks55s6",
+      "txid": "a9a1ef0525b1446232fcb69bb4ef99ef239f78a7046f784b972f22a60348d963",
+      "vout": 0,
+      "amount": 90000
     }
   ]
 }
