@@ -22,7 +22,12 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 		auth.Register("/get/coins", api.GetCoins(ee))
 		auth.Register("/get/orders", api.GetOrders(ee))
 
+		// utxos handler
 		auth.Register("/get/utxos", api.GetUtxos(ee))
+
+		// transaction handler
+		auth.Register("/inject/txn", api.InjectTxn(ee))
+		auth.Register("/get/rawtxn", api.GetRawTxn(ee))
 	}
 
 	return nt
