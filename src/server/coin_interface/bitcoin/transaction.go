@@ -32,12 +32,16 @@ type sendTxJson struct {
 	RawTx string `json:"rawtx"`
 }
 
+type Transaction struct {
+	wire.MsgTx
+}
+
 // NewTransaction create transaction,
 // utxos is an interface which need to be a slice type, and each item
 // of the slice is an UtxoWithPrivkey interface.
 // outAddrs is the output address array.
 // using the api of blockchain.info to get the raw trasaction info of txid.
-func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) {
+func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*Transaction, error) {
 	s := reflect.ValueOf(utxos)
 	if s.Kind() != reflect.Slice {
 		return nil, errors.New("error utxo type")
@@ -86,23 +90,14 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) 
 	// sign the transaction
 	for i, r := range ret {
 		utxo := r.(UtxoWithkey)
-		sig, err := signRawTransaction(tx, i, utxo.GetPrivKey(), oldTxOuts[i].PkScript)
+		sig, err := signRawTransaction(&Transaction{*tx}, i, utxo.GetPrivKey(), oldTxOuts[i].PkScript)
 		if err != nil {
 			return nil, err
 		}
 		tx.TxIn[i].SignatureScript = sig
 	}
-	return tx, nil
+	return &Transaction{*tx}, nil
 }
-
-// func BroadcastTx(tx []byte) (string, error) {
-// 	t := wire.MsgTx{}
-// 	if err := t.Deserialize(bytes.NewBuffer(tx)); err != nil {
-// 		return "", err
-// 	}
-//
-// 	return broadcastTx(&t)
-// }
 
 // BroadcastTx tries to send the transaction using an api that will broadcast
 // a submitted transaction on behalf of the user.
@@ -110,7 +105,7 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*wire.MsgTx, error) 
 // The transaction is broadcast to the bitcoin network using this API:
 //    https://github.com/bitpay/insight-api
 //
-func BroadcastTx(tx *wire.MsgTx) (string, error) {
+func BroadcastTx(tx *Transaction) (string, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
 	tx.Serialize(buf)
 	hexstr := hex.EncodeToString(buf.Bytes())
@@ -146,7 +141,7 @@ func BroadcastTx(tx *wire.MsgTx) (string, error) {
 	return v.Txid, nil
 }
 
-func DumpTxBytes(tx *wire.MsgTx) []byte {
+func DumpTxBytes(tx *Transaction) []byte {
 	b := bytes.Buffer{}
 	tx.Serialize(&b)
 	return b.Bytes()
@@ -155,7 +150,7 @@ func DumpTxBytes(tx *wire.MsgTx) []byte {
 // signRawTransaction requires a transaction, a private key, and the bytes of the raw
 // scriptPubKey. It will then generate a signature over all of the outputs of
 // the provided tx. This is the last step of creating a valid transaction.
-func signRawTransaction(tx *wire.MsgTx, index int, wifPrivKey string, scriptPubKey []byte) ([]byte, error) {
+func signRawTransaction(tx *Transaction, index int, wifPrivKey string, scriptPubKey []byte) ([]byte, error) {
 	wif, err := btcutil.DecodeWIF(wifPrivKey)
 	if err != nil {
 		return []byte{}, err
@@ -163,7 +158,7 @@ func signRawTransaction(tx *wire.MsgTx, index int, wifPrivKey string, scriptPubK
 
 	// The all important signature. Each input is documented below.
 	scriptSig, err := txscript.SignatureScript(
-		tx,                  // The tx to be signed.
+		&tx.MsgTx,           // The tx to be signed.
 		index,               // The index of the txin the signature is for.
 		scriptPubKey,        // The other half of the script from the PubKeyHash.
 		txscript.SigHashAll, // The signature flags that indicate what the sig covers.
