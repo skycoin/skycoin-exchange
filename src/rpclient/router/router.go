@@ -11,6 +11,7 @@ func New(se api.Servicer) *http.ServeMux {
 	registerBaseHandlers(mux, se)
 	registerOrderHandlers(mux, se)
 	registerUtxoHandlers(mux, se)
+	registerTxnHandlers(mux, se)
 	return mux
 }
 
@@ -33,4 +34,9 @@ func registerOrderHandlers(mux *http.ServeMux, se api.Servicer) {
 // utxos handlers
 func registerUtxoHandlers(mux *http.ServeMux, se api.Servicer) {
 	mux.Handle("/api/v1/utxos", api.GetUtxos(se))
+}
+
+// transaction handlers.
+func registerTxnHandlers(mux *http.ServeMux, se api.Servicer) {
+	mux.Handle("/api/v1/inject_tx", api.InjectTx(se))
 }
