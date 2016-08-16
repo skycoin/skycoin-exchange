@@ -53,13 +53,13 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.GetUtxoRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, rlt)
+		sendJSON(w, rlt)
 	}
 }

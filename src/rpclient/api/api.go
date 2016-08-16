@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,6 +24,10 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 		// generate account pubkey/privkey pair, pubkey is the account id.
 		errRlt := &pp.EmptyRes{}
 		for {
+			if r.Method != "POST" {
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			p, s := cipher.GenerateKeyPair()
 			r := pp.CreateAccountReq{
 				Pubkey: pp.PtrString(p.Hex()),
@@ -34,7 +39,6 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-
 			res := pp.EncryptRes{}
 			json.NewDecoder(rsp.Body).Decode(&res)
 
@@ -53,14 +57,14 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 					Key:       s.Hex(),
 					CreatedAt: v.GetCreatedAt(),
 				}
-				SendJSON(w, &ret)
+				sendJSON(w, &ret)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, errRlt)
+		sendJSON(w, errRlt)
 	}
 }
 
@@ -68,6 +72,10 @@ func GetNewAddress(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		errRlt := &pp.EmptyRes{}
 		for {
+			if r.Method != "POST" {
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
@@ -100,14 +108,14 @@ func GetNewAddress(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.GetDepositAddrRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, errRlt)
+		sendJSON(w, errRlt)
 	}
 }
 
@@ -115,6 +123,10 @@ func GetBalance(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		errRlt := &pp.EmptyRes{}
 		for {
+			if r.Method != "GET" {
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
@@ -145,14 +157,14 @@ func GetBalance(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.GetBalanceRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, errRlt)
+		sendJSON(w, errRlt)
 	}
 }
 
@@ -160,6 +172,10 @@ func Withdraw(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
+			if r.Method != "POST" {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
@@ -209,14 +225,14 @@ func Withdraw(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.WithdrawalRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, rlt)
+		sendJSON(w, rlt)
 	}
 }
 
@@ -224,6 +240,10 @@ func GetCoins(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
 		for {
+			if r.Method != "GET" {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
@@ -253,14 +273,14 @@ func GetCoins(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.CoinsRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, rlt)
+		sendJSON(w, rlt)
 	}
 }
 
@@ -292,15 +312,30 @@ func getAccountAndKey(r *http.Request) (id string, key string, err error) {
 }
 
 // JSON to an http response
-func SendJSON(w http.ResponseWriter, msg interface{}) {
+func sendJSON(w http.ResponseWriter, msg interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if err := json.NewEncoder(w).Encode(msg); err != nil {
 		panic(err)
 	}
 }
 
-func BindJSON(r *http.Request, v interface{}) error {
+func bindJSON(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
+}
+
+func decodeRsp(r io.Reader, pubkey string, seckey string, v interface{}) (interface{}, error) {
+	res := pp.EncryptRes{}
+	json.NewDecoder(r).Decode(&res)
+
+	// handle the response
+	if res.Result.GetSuccess() {
+		if err := pp.DecryptRes(res, pubkey, seckey, v); err != nil {
+			return nil, err
+		}
+		return v, nil
+	} else {
+		return res, nil
+	}
 }
 
 // func sendRequest(path string, data interface{}) (*sknet.Response, error) {
