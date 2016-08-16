@@ -15,6 +15,7 @@ It is generated from these files:
 	pp.order.proto
 	pp.coin.proto
 	pp.request.proto
+	pp.utxo.proto
 
 It has these top-level messages:
 	Result
@@ -37,6 +38,8 @@ It has these top-level messages:
 	GetCoinsReq
 	CoinsRes
 	Request
+	GetUtxoReq
+	GetUtxoRes
 */
 package pp
 
