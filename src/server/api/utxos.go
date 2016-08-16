@@ -1,11 +1,9 @@
 package api
 
 import (
-	"encoding/json"
-
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -28,41 +26,54 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				logger.Error("%s", err.Error())
 				break
 			}
-
-			var utxos interface{}
-			switch tp {
-			case wallet.Bitcoin:
-				utxos, err = bitcoin_interface.GetUnspentOutputs(req.GetAddresses())
-			case wallet.Skycoin:
-				utxos, err = skycoin_interface.GetUnspentOutputs(req.GetAddresses())
-			}
-
+			res, err := getUtxos(tp, req.GetAddresses())
 			if err != nil {
-				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error("%s", err.Error())
 				break
 			}
-			v, err := utxos2Str(utxos)
-			if err != nil {
-				logger.Error("%s", err)
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-
-			res := pp.GetUtxoRes{
-				CoinType: req.CoinType,
-				Utxos:    pp.PtrString(v),
-			}
-			reply(c, &res)
+			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+			reply(c, res)
+			return
 		}
 		c.JSON(rlt)
 	}
 }
 
-func utxos2Str(utxos interface{}) (string, error) {
-	d, err := json.Marshal(utxos)
-	if err != nil {
-		return "", err
+func getUtxos(tp wallet.CoinType, addrs []string) (*pp.GetUtxoRes, error) {
+	var res pp.GetUtxoRes
+	switch tp {
+	case wallet.Bitcoin:
+		utxos, err := bitcoin.GetUnspentOutputs(addrs)
+		if err != nil {
+			return nil, err
+		}
+		btcUxs := make([]*pp.BtcUtxo, len(utxos))
+		for i, u := range utxos {
+			btcUxs[i] = &pp.BtcUtxo{
+				Address: pp.PtrString(u.GetAddress()),
+				Txid:    pp.PtrString(u.GetTxid()),
+				Vout:    pp.PtrUint32(u.GetVout()),
+				Amount:  pp.PtrUint64(u.GetAmount()),
+			}
+		}
+		res.BtcUtxos = btcUxs
+	case wallet.Skycoin:
+		utxos, err := skycoin.GetUnspentOutputs(addrs)
+		if err != nil {
+			return nil, err
+		}
+		skyUxs := make([]*pp.SkyUtxo, len(utxos))
+		for i, u := range utxos {
+			skyUxs[i] = &pp.SkyUtxo{
+				Hash:    pp.PtrString(u.GetHash()),
+				SrcTx:   pp.PtrString(u.GetSrcTx()),
+				Address: pp.PtrString(u.GetAddress()),
+				Coins:   pp.PtrUint64(u.GetCoins()),
+				Hours:   pp.PtrUint64(u.GetHours()),
+			}
+		}
+		res.SkyUtxos = skyUxs
 	}
-	return string(d), nil
+	return &res, nil
 }
