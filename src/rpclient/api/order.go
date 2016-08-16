@@ -15,7 +15,7 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 		rlt := &pp.EmptyRes{}
 		for {
 			rawReq := pp.OrderReq{}
-			if err := BindJSON(r, &rawReq); err != nil {
+			if err := bindJSON(r, &rawReq); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -39,14 +39,14 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.OrderRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, rlt)
+		sendJSON(w, rlt)
 	}
 }
 
@@ -111,13 +111,13 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 			if res.Result.GetSuccess() {
 				v := pp.CoinsRes{}
 				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				SendJSON(w, &v)
+				sendJSON(w, &v)
 				return
 			} else {
-				SendJSON(w, &res)
+				sendJSON(w, &res)
 				return
 			}
 		}
-		SendJSON(w, rlt)
+		sendJSON(w, rlt)
 	}
 }
