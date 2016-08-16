@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/op/go-logging.v1"
 
+	"github.com/skycoin/encoder"
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/coin"
@@ -173,4 +174,11 @@ func BroadcastTx(tx Transaction) (string, error) {
 		return rslt.Txid, nil
 	}
 	return "", errors.New(rslt.Reason)
+}
+
+func (tx *Transaction) Deserialize(b []byte) error {
+	if err := encoder.DeserializeRaw(b, tx); err != nil {
+		return err
+	}
+	return nil
 }
