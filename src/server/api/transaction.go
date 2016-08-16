@@ -12,8 +12,8 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// InjectTxn inject transaction.
-func InjectTxn(egn engine.Exchange) sknet.HandlerFunc {
+// InjectTx inject transaction.
+func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var rlt *pp.EmptyRes
 		for {
@@ -28,7 +28,7 @@ func InjectTxn(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			txid, err := injectTxn(tp, req.GetTx())
+			txid, err := injectTx(tp, req.GetTx())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -45,13 +45,13 @@ func InjectTxn(egn engine.Exchange) sknet.HandlerFunc {
 }
 
 // GetRawTxn get transaction by id or hex.
-func GetRawTxn(egn engine.Exchange) sknet.HandlerFunc {
+func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 
 	}
 }
 
-func injectTxn(tp wallet.CoinType, tx []byte) (string, error) {
+func injectTx(tp wallet.CoinType, tx []byte) (string, error) {
 	switch tp {
 	case wallet.Bitcoin:
 		btctx := bitcoin.Transaction{}
