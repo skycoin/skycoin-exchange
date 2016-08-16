@@ -16,15 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// mux.Handle("/api/v1/account/balance", GetBalance(se))
-// mux.Handle("/api/v1/account/withdrawal", Withdraw(se))
-//
-// // order handlers
-// mux.Handle("/api/v1/account/order/bid", CreateBidOrder(se))
-// mux.Handle("/api/v1/account/order/ask", CreateAskOrder(se))
-// mux.Handle("/api/v1/orders/bid", GetBidOrders(se))
-// mux.Handle("/api/v1/orders/ask", GetAskOrders(se))
-
 var (
 	se = New(Config{
 		ApiRoot:    "localhost:8080",
