@@ -1,0 +1,13 @@
+package pp;
+
+import "pp.common.proto";
+
+message InjectTxnReq {
+  optional string coin_type = 10;
+  optional bytes tx = 20;
+}
+
+message InjectTxnRes {
+  optional Result result = 1;
+  optional string txid = 10;
+}

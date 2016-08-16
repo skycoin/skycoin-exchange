@@ -16,6 +16,7 @@ It is generated from these files:
 	pp.coin.proto
 	pp.request.proto
 	pp.utxo.proto
+	pp.transaction.proto
 
 It has these top-level messages:
 	Result
@@ -42,6 +43,8 @@ It has these top-level messages:
 	BtcUtxo
 	SkyUtxo
 	GetUtxoRes
+	InjectTxnReq
+	InjectTxnRes
 */
 package pp
 
