@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/btcsuite/btcd/wire"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
@@ -18,7 +17,7 @@ import (
 var ChooseUtxoTmout = 5 * time.Second
 
 type BtcTxResult struct {
-	Tx         *wire.MsgTx
+	Tx         *bitcoin.Transaction
 	UsingUtxos []bitcoin.Utxo
 	ChangeAddr string
 }
