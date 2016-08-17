@@ -1,11 +1,9 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"regexp"
 
-	"github.com/codahale/chacha20"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -50,13 +48,18 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 				rsp, exist := c.Get("response")
 				if exist {
 					// encrypt the response.
-					encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
-					encpt_res := pp.EncryptRes{
+					encData, nonce, err := pp.Encrypt(rsp, cliPubkey.Hex(), ee.GetServPrivKey().Hex())
+					if err != nil {
+						panic(err)
+					}
+
+					// encryptData, nonce := mustEncryptRes(cliPubkey, ee.GetServPrivKey(), rsp)
+					res := pp.EncryptRes{
 						Result:      pp.MakeResultWithCode(pp.ErrCode_Success),
-						Encryptdata: encryptData,
+						Encryptdata: encData,
 						Nonce:       nonce,
 					}
-					c.JSON(encpt_res)
+					c.JSON(res)
 				}
 				return
 			}
@@ -69,24 +72,24 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 
 // mustEncryptRes marshal and encrypt the response object,
 // return the encrypted data and the random nonce.
-func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{}) (encryptData []byte, nonce []byte) {
-	var (
-		d   []byte
-		err error
-	)
-	d, err = json.Marshal(rsp)
-	if err != nil {
-		panic(err)
-	}
-
-	nonce = cipher.RandByte(chacha20.NonceSize)
-	key := cipher.ECDH(pubkey, seckey)
-	encryptData, err = cipher.Chacha20Encrypt(d, key, nonce)
-	if err != nil {
-		panic(err)
-	}
-	return
-}
+// func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{}) (encryptData []byte, nonce []byte) {
+// 	var (
+// 		d   []byte
+// 		err error
+// 	)
+// 	d, err = json.Marshal(rsp)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+//
+// 	nonce = cipher.RandByte(chacha20.NonceSize)
+// 	key := cipher.ECDH(pubkey, seckey)
+// 	encryptData, err = cipher.Chacha20Encrypt(d, key, nonce)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return
+// }
 
 // reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
