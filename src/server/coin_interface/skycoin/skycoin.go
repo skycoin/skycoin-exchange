@@ -26,20 +26,6 @@ var (
 	GatewayIns        = Gateway{}
 )
 
-type Gateway struct{}
-
-func (gw *Gateway) GetTx(txid string) (Transaction, error) {
-	return Transaction{}, nil
-}
-
-func (gw *Gateway) GetRawTx(txid string) (string, error) {
-	return "skycoin hello world", nil
-}
-
-func (gw *Gateway) DecodeRawTx(rawtx string) (Transaction, error) {
-	return Transaction{}, nil
-}
-
 type Utxo interface {
 	GetHash() string
 	GetSrcTx() string
