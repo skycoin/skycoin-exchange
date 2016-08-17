@@ -26,8 +26,8 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 		auth.Register("/get/utxos", api.GetUtxos(ee))
 
 		// transaction handler
-		auth.Register("/inject/txn", api.InjectTx(ee))
-		auth.Register("/get/rawtxn", api.GetRawTx(ee))
+		auth.Register("/inject/tx", api.InjectTx(ee))
+		auth.Register("/get/tx", api.GetTx(ee))
 	}
 
 	return nt
