@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
@@ -44,10 +45,42 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-// GetRawTxn get transaction by id or hex.
-func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
+// GetTx get transaction by id.
+func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
+		var rlt *pp.EmptyRes
+		for {
+			req := pp.GetTxReq{}
+			if err := getRequest(c, &req); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 
+			tp, err := wallet.CoinTypeFromStr(req.GetCoinType())
+			if err != nil {
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			gateway, err := coin_interface.GetGateway(tp)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			tx, err := gateway.GetTx(req.GetTxid())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+			res := pp.GetTxRes{
+				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
+				CoinType: req.CoinType,
+				Tx:       tx.ToPPTx(),
+			}
+			reply(c, &res)
+			return
+		}
+		c.JSON(rlt)
 	}
 }
 
