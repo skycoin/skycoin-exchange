@@ -22,21 +22,6 @@ var (
 	GatewayIns = Gateway{}
 )
 
-type Gateway struct {
-}
-
-func (gw *Gateway) GetTx(txid string) (Transaction, error) {
-	return Transaction{}, nil
-}
-
-func (gw *Gateway) GetRawTx(txid string) (string, error) {
-	return "bitcoin hello world", nil
-}
-
-func (gw *Gateway) DecodeRawTx(rawtx string) (Transaction, error) {
-	return Transaction{}, nil
-}
-
 // Utxo unspent output
 type Utxo interface {
 	GetTxid() string
