@@ -11,6 +11,7 @@ import (
 	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
@@ -121,6 +122,9 @@ func New(cfg Config) engine.Exchange {
 // Run start the exchange server.
 func (self *ExchangeServer) Run() {
 	logger.Info("server started, port:%d", self.cfg.Port)
+	// register coins
+	coin_interface.RegisterCoinHandler(wallet.Bitcoin, &bitcoin.GatewayIns)
+	coin_interface.RegisterCoinHandler(wallet.Skycoin, &skycoin.GatewayIns)
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
