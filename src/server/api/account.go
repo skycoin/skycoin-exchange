@@ -16,19 +16,20 @@ func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
 		for {
 			req := pp.CreateAccountReq{}
 			if err := getRequest(c, &req); err != nil {
-				logger.Error(err.Error())
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			if _, err := cipher.PubKeyFromHex(req.GetPubkey()); err != nil {
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}
 
 			// create account with pubkey.
 			if _, err := ee.CreateAccountWithPubkey(req.GetPubkey()); err != nil {
-				logger.Error(err.Error())
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
