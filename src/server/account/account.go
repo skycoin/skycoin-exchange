@@ -105,7 +105,7 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 		return errors.New("unknow coin type")
 	}
 	if self.Balance[ct] < amt {
-		logger.Debug("balance:%d", self.Balance[ct], " amt:%d", amt)
+		logger.Debug("balance:%d amt:%d", self.Balance[ct], amt)
 		return errors.New("account balance is not sufficient")
 	}
 
