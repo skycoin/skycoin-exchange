@@ -29,7 +29,7 @@ func InjectTx(se Servicer) http.HandlerFunc {
 			}
 
 			// get tx
-			tx := r.URL.Query().Get("tx")
+			tx := r.FormValue("tx")
 			if tx == "" {
 				logger.Error("empty tx")
 				rlt = pp.MakeErrRes(errors.New("empty tx"))
@@ -37,7 +37,7 @@ func InjectTx(se Servicer) http.HandlerFunc {
 			}
 
 			// get coin type
-			tp := r.URL.Query().Get("coin_type")
+			tp := r.FormValue("coin_type")
 			if tp == "" {
 				logger.Error("empty coin type")
 				rlt = pp.MakeErrRes(errors.New("empty coin type"))
@@ -63,7 +63,7 @@ func InjectTx(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/orders", enc_req)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/inject/tx", enc_req)
 			if err != nil {
 				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)

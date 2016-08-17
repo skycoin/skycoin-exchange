@@ -25,14 +25,14 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			tp := r.URL.Query().Get("coin_type")
+			tp := r.FormValue("coin_type")
 			if tp == "" {
 				logger.Error("coin type empty")
 				rlt = pp.MakeErrRes(errors.New("coin type empty"))
 				break
 			}
 
-			addrs := r.URL.Query().Get("addrs")
+			addrs := r.FormValue("addrs")
 			if addrs == "" {
 				logger.Error("addrs empty")
 				rlt = pp.MakeErrRes(errors.New("addrs empty"))

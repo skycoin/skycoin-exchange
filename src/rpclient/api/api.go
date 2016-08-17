@@ -95,7 +95,7 @@ func GetNewAddress(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			cointype := r.URL.Query().Get("coin_type")
+			cointype := r.FormValue("coin_type")
 			if cointype == "" {
 				err := errors.New("coin type empty")
 				logger.Error("%s", err)
@@ -150,7 +150,7 @@ func GetBalance(se Servicer) http.HandlerFunc {
 				errRlt = pp.MakeErrRes(err)
 				break
 			}
-			coinType := r.URL.Query().Get("coin_type")
+			coinType := r.FormValue("coin_type")
 			if coinType == "" {
 				err := errors.New("coin type empty")
 				logger.Error("%s", err)
@@ -205,7 +205,7 @@ func Withdraw(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			cointype := r.URL.Query().Get("coin_type")
+			cointype := r.FormValue("coin_type")
 			if cointype == "" {
 				err := errors.New("coin_type empty")
 				logger.Error("%s", err)
@@ -213,13 +213,13 @@ func Withdraw(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			amount := r.URL.Query().Get("amount")
+			amount := r.FormValue("amount")
 			if amount == "" {
 				rlt = pp.MakeErrRes(errors.New("amount empty"))
 				break
 			}
 
-			toAddr := r.URL.Query().Get("toaddr")
+			toAddr := r.FormValue("toaddr")
 			if toAddr == "" {
 				rlt = pp.MakeErrRes(errors.New("toaddr empty"))
 				break
@@ -314,7 +314,7 @@ func getAccountAndKey(r *http.Request) (id string, key string, err error) {
 			err = errors.New("invalid id or key")
 		}
 	}()
-	id = r.URL.Query().Get("id")
+	id = r.FormValue("id")
 	if id == "" {
 		return "", "", errors.New("id empty")
 	}
@@ -323,7 +323,7 @@ func getAccountAndKey(r *http.Request) (id string, key string, err error) {
 		return "", "", errors.New("invalid id")
 	}
 
-	key = r.URL.Query().Get("key")
+	key = r.FormValue("key")
 	if key == "" {
 		return "", "", errors.New("key empty")
 	}
