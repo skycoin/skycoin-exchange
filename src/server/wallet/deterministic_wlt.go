@@ -31,10 +31,10 @@ var DeterMetaStr = []string{
 // DeterministicWallet generate and store addresses for various coin types.
 // This wallet is not thread safe.
 type DeterministicWallet struct {
-	ID             string                    // wallet id
-	InitSeed       string                    // Init seed, used to recover the wallet.
-	Seed           map[CoinType]string       // key: coin type, value: used to track the latset seed
-	AddressEntries map[string][]AddressEntry // key: coin type, value: address entries.
+	ID             string                             // wallet id
+	InitSeed       string                             // Init seed, used to recover the wallet.
+	Seed           map[coin_interface.CoinType]string // key: coin type, value: used to track the latset seed
+	AddressEntries map[string][]AddressEntry          // key: coin type, value: address entries.
 	// addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
 	// fileLock       sync.Mutex // lock for protecting wallet file.
 }
@@ -42,7 +42,7 @@ type DeterministicWallet struct {
 // NewAddresses generate new addresses base on the coin type, and then store the address.
 // NewAddress must be Sequential，cause the seed.
 // this function is not thread safe, should not be used concrrently.
-func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]AddressEntry, error) {
+func (self *DeterministicWallet) NewAddresses(coinType coin_interface.CoinType, num int) ([]AddressEntry, error) {
 	addrEntries := make([]AddressEntry, num)
 	seed := self.Seed[coinType]
 	switch coinType {
@@ -83,8 +83,8 @@ func (self *DeterministicWallet) NewAddresses(coinType CoinType, num int) ([]Add
 	return addrEntries, nil
 }
 
-func (self DeterministicWallet) GetCoinTypes() []CoinType {
-	cts := []CoinType{}
+func (self DeterministicWallet) GetCoinTypes() []coin_interface.CoinType {
+	cts := []coin_interface.CoinType{}
 	for ct, _ := range self.Seed {
 		cts = append(cts, ct)
 	}
@@ -107,11 +107,11 @@ func (self *DeterministicWallet) GetID() string {
 	return self.ID
 }
 
-func (self DeterministicWallet) GetAddressEntries(bt CoinType) []AddressEntry {
+func (self DeterministicWallet) GetAddressEntries(bt coin_interface.CoinType) []AddressEntry {
 	return self.AddressEntries[bt.String()]
 }
 
-func (self DeterministicWallet) GetAddresses(ct CoinType) []string {
+func (self DeterministicWallet) GetAddresses(ct coin_interface.CoinType) []string {
 	entries := self.AddressEntries[ct.String()]
 	addrs := make([]string, len(entries))
 	for i, entry := range entries {
@@ -142,7 +142,7 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 }
 
 // GetAddressEntry get address entry by coin type and address.
-func (self DeterministicWallet) GetAddressEntry(ct CoinType, addr string) (AddressEntry, error) {
+func (self DeterministicWallet) GetAddressEntry(ct coin_interface.CoinType, addr string) (AddressEntry, error) {
 	if aes, ok := self.AddressEntries[ct.String()]; ok {
 		for _, a := range aes {
 			if a.Address == addr {
@@ -181,7 +181,7 @@ func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error)
 
 	wlt := &DeterministicWallet{
 		ID: id,
-		Seed: map[CoinType]string{
+		Seed: map[coin_interface.CoinType]string{
 			Bitcoin: btc_seed, Skycoin: sky_seed},
 		InitSeed:       init_seed,
 		AddressEntries: make(map[string][]AddressEntry),
@@ -206,7 +206,7 @@ func validateWallet(wlt *DeterministicWallet) error {
 	return nil
 }
 
-func (self *DeterministicWallet) addAddresses(coinType CoinType, addrs []AddressEntry) {
+func (self *DeterministicWallet) addAddresses(coinType coin_interface.CoinType, addrs []AddressEntry) {
 	// self.addrLock.Lock()
 	self.AddressEntries[coinType.String()] = append(self.AddressEntries[coinType.String()], addrs...)
 	// self.addrLock.Unlock()

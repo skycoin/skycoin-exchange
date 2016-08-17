@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
-type CoinType int8
 type WalletType int8
 type WalletID string
 
@@ -20,52 +20,11 @@ var (
 )
 
 const (
-	Bitcoin CoinType = iota
-	Skycoin
-	// Shellcoin
-	// Ethereum
-	// other coins...
-)
-
-const (
 	Deterministic WalletType = iota // default wallet type
 )
 
 var walletTypeStr = []string{
 	Deterministic: "deterministic",
-}
-
-var coinStr = []string{
-	Bitcoin: "bitcoin",
-	Skycoin: "skycoin",
-}
-
-// var CoinFactor = []uint64{
-// 	Bitcoin: 1e8,
-// 	Skycoin: 1e6,
-// }
-
-func (c CoinType) String() string {
-	switch c {
-	case Bitcoin:
-		return coinStr[c]
-	case Skycoin:
-		return coinStr[c]
-	default:
-		// return fmt.Sprintf("unknow coin type:%d", c)
-		panic(fmt.Sprintf("unknow coin type:%d", c))
-	}
-}
-
-func CoinTypeFromStr(ct string) (CoinType, error) {
-	switch ct {
-	case "bitcoin":
-		return Bitcoin, nil
-	case "skycoin":
-		return Skycoin, nil
-	default:
-		return -1, fmt.Errorf("unknow coin type:%s", ct)
-	}
 }
 
 func (w WalletType) String() string {
@@ -81,11 +40,11 @@ func (w WalletType) String() string {
 type Wallet interface {
 	SetID(id string)
 	GetID() string
-	NewAddresses(coinType CoinType, num int) ([]AddressEntry, error)
-	GetAddresses(coinType CoinType) []string
-	GetAddressEntries(coinType CoinType) []AddressEntry
-	GetAddressEntry(coinType CoinType, addr string) (AddressEntry, error)
-	GetCoinTypes() []CoinType
+	NewAddresses(coinType coin_interface.CoinType, num int) ([]AddressEntry, error)
+	GetAddresses(coinType coin_interface.CoinType) []string
+	GetAddressEntries(coinType coin_interface.CoinType) []AddressEntry
+	GetAddressEntry(coinType coin_interface.CoinType, addr string) (AddressEntry, error)
+	GetCoinTypes() []coin_interface.CoinType
 }
 
 // WalletBase, used to serialise wallet into json, and unserialise wallet from json.
@@ -110,7 +69,7 @@ func New(name string, wltType WalletType, seed string) (Wallet, error) {
 	case Deterministic:
 		wlt := &DeterministicWallet{
 			ID:             name,
-			Seed:           map[CoinType]string{Bitcoin: seed, Skycoin: seed},
+			Seed:           map[coin_interface.CoinType]string{Bitcoin: seed, Skycoin: seed},
 			InitSeed:       seed,
 			AddressEntries: make(map[string][]AddressEntry)}
 		if err := wlt.save(); err != nil {
