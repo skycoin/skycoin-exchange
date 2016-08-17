@@ -12,6 +12,7 @@ import (
 	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/encoder"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/coin"
@@ -22,7 +23,22 @@ var (
 	HideSeckey bool   = false
 	ServeAddr  string = "http://127.0.0.1:6420"
 	logger            = logging.MustGetLogger("exchange.skycoin")
+	GatewayIns        = Gateway{}
 )
+
+type Gateway struct{}
+
+func (gw *Gateway) GetTx(txid string) (Transaction, error) {
+	return Transaction{}, nil
+}
+
+func (gw *Gateway) GetRawTx(txid string) (string, error) {
+	return "skycoin hello world", nil
+}
+
+func (gw *Gateway) DecodeRawTx(rawtx string) (Transaction, error) {
+	return Transaction{}, nil
+}
 
 type Utxo interface {
 	GetHash() string
@@ -181,4 +197,8 @@ func (tx *Transaction) Deserialize(b []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (tx *Transaction) ToPPTx() *pp.Tx {
+	return &pp.Tx{}
 }
