@@ -4,9 +4,13 @@ import (
 	"log"
 	"net/http"
 
+	"gopkg.in/op/go-logging.v1"
+
 	"github.com/skycoin/skycoin-exchange/src/rpclient/router"
 	"github.com/skycoin/skycoin/src/cipher"
 )
+
+var logger = logging.MustGetLogger("client.model")
 
 type Service struct {
 	ServAddr   string        // exchange server addr.
@@ -27,10 +31,10 @@ func (se *Service) Run(addr string) {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					log.Println(r)
+					logger.Critical("%s", r)
 				}
 			}()
-			log.Println("client started ", addr)
+			logger.Info("client started, listen on port%s", addr)
 			log.Fatal(http.ListenAndServe(addr, r))
 		}()
 	}

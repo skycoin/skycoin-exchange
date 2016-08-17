@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
+
+	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
+
+var logger = logging.MustGetLogger("client.api")
 
 type Servicer interface {
 	GetServKey() cipher.PubKey
@@ -25,6 +28,7 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 		errRlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "POST" {
+				logger.Error("require POST method")
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -33,36 +37,43 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 				Pubkey: pp.PtrString(p.Hex()),
 			}
 
-			req, _ := pp.MakeEncryptReq(&r, se.GetServKey().Hex(), s.Hex())
+			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), s.Hex())
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			rsp, err := sknet.Get(se.GetServAddr(), "/auth/create/account", req)
 			if err != nil {
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res := pp.EncryptRes{}
-			json.NewDecoder(rsp.Body).Decode(&res)
+			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), s.Hex(), &pp.CreateAccountRes{})
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
 
-			// handle the response
-			if res.Result.GetSuccess() {
-				v := pp.CreateAccountRes{}
-				pp.DecryptRes(res, se.GetServKey().Hex(), s.Hex(), &v)
+			acntRes := res.(*pp.CreateAccountRes)
+			if !acntRes.GetResult().GetSuccess() {
+				sendJSON(w, res)
+			} else {
 				ret := struct {
 					Result    pp.Result `json:"result"`
 					AccountID string    `json:"account_id"`
 					Key       string    `json:"key"`
 					CreatedAt int64     `json:"created_at"`
 				}{
-					Result:    *v.Result,
+					Result:    *acntRes.Result,
 					AccountID: p.Hex(),
 					Key:       s.Hex(),
-					CreatedAt: v.GetCreatedAt(),
+					CreatedAt: acntRes.GetCreatedAt(),
 				}
 				sendJSON(w, &ret)
-				return
-			} else {
-				sendJSON(w, &res)
-				return
 			}
+			return
 		}
 		sendJSON(w, errRlt)
 	}
@@ -73,18 +84,22 @@ func GetNewAddress(se Servicer) http.HandlerFunc {
 		errRlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "POST" {
+				logger.Error("require POST method")
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrRes(err)
 				break
 			}
 
 			cointype := r.URL.Query().Get("coin_type")
 			if cointype == "" {
-				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
+				err := errors.New("coin type empty")
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrRes(err)
 				break
 			}
 
@@ -93,27 +108,28 @@ func GetNewAddress(se Servicer) http.HandlerFunc {
 				CoinType:  pp.PtrString(cointype),
 			}
 
-			req, _ := pp.MakeEncryptReq(&r, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), key)
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
 			resp, err := sknet.Get(se.GetServAddr(), "/auth/create/deposit_address", req)
 			if err != nil {
-				log.Println(err)
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res := pp.EncryptRes{}
-			json.NewDecoder(resp.Body).Decode(&res)
-
-			// handle the response
-			if res.Result.GetSuccess() {
-				v := pp.GetDepositAddrRes{}
-				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				sendJSON(w, &v)
-				return
-			} else {
-				sendJSON(w, &res)
-				return
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetDepositAddrRes{})
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
 			}
+			sendJSON(w, res)
+			return
 		}
 		sendJSON(w, errRlt)
 	}
@@ -124,17 +140,21 @@ func GetBalance(se Servicer) http.HandlerFunc {
 		errRlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "GET" {
+				logger.Error("require GET method")
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrRes(err)
 				break
 			}
 			coinType := r.URL.Query().Get("coin_type")
 			if coinType == "" {
-				errRlt = pp.MakeErrRes(errors.New("coin type empty"))
+				err := errors.New("coin type empty")
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrRes(err)
 				break
 			}
 
@@ -143,26 +163,27 @@ func GetBalance(se Servicer) http.HandlerFunc {
 				CoinType:  pp.PtrString(coinType),
 			}
 
-			req, _ := pp.MakeEncryptReq(&gbr, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&gbr, se.GetServKey().Hex(), key)
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/balance", req)
 			if err != nil {
+				logger.Error("%s", err)
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res := pp.EncryptRes{}
-			json.NewDecoder(resp.Body).Decode(&res)
-
-			// handle the response
-			if res.Result.GetSuccess() {
-				v := pp.GetBalanceRes{}
-				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				sendJSON(w, &v)
-				return
-			} else {
-				sendJSON(w, &res)
-				return
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetBalanceRes{})
+			if err != nil {
+				logger.Error("%s", err)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
 			}
+			sendJSON(w, res)
+			return
 		}
 		sendJSON(w, errRlt)
 	}
@@ -173,18 +194,22 @@ func Withdraw(se Servicer) http.HandlerFunc {
 		rlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "POST" {
+				logger.Error("require POST method")
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			cointype := r.URL.Query().Get("coin_type")
 			if cointype == "" {
-				rlt = pp.MakeErrRes(errors.New("coin_type empty"))
+				err := errors.New("coin_type empty")
+				logger.Error("%s", err)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
@@ -212,25 +237,27 @@ func Withdraw(se Servicer) http.HandlerFunc {
 				OutputAddress: &toAddr,
 			}
 
-			req, _ := pp.MakeEncryptReq(&wr, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&wr, se.GetServKey().Hex(), key)
+			if err != nil {
+				logger.Error("%s", err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
 			resp, err := sknet.Get(se.GetServAddr(), "/auth/withdrawl", req)
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res := pp.EncryptRes{}
-			json.NewDecoder(resp.Body).Decode(&res)
 
-			// handle the response
-			if res.Result.GetSuccess() {
-				v := pp.WithdrawalRes{}
-				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				sendJSON(w, &v)
-				return
-			} else {
-				sendJSON(w, &res)
-				return
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.WithdrawalRes{})
+			if err != nil {
+				logger.Error("%s", err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
 			}
+			sendJSON(w, res)
+			return
 		}
 		sendJSON(w, rlt)
 	}
@@ -241,11 +268,13 @@ func GetCoins(se Servicer) http.HandlerFunc {
 		rlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "GET" {
+				logger.Error("require GET method")
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -253,32 +282,27 @@ func GetCoins(se Servicer) http.HandlerFunc {
 				AccountId: pp.PtrString(id),
 			}
 
-			req, err := pp.MakeEncryptReq(&rq, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&rq, se.GetServKey().Hex(), key)
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/coins", req)
 			if err != nil {
-				log.Println(err)
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-
-			res := pp.EncryptRes{}
-			json.NewDecoder(rsp.Body).Decode(&res)
-
-			// handle the response
-			if res.Result.GetSuccess() {
-				v := pp.CoinsRes{}
-				pp.DecryptRes(res, se.GetServKey().Hex(), key, &v)
-				sendJSON(w, &v)
-				return
-			} else {
-				sendJSON(w, &res)
-				return
+			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), key, &pp.CoinsRes{})
+			if err != nil {
+				logger.Error("%s", err)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
 			}
+			sendJSON(w, res)
+			return
 		}
 		sendJSON(w, rlt)
 	}
@@ -323,13 +347,38 @@ func bindJSON(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
+func makeEncryptReq(r interface{}, pubkey string, seckey string) (*pp.EncryptReq, error) {
+	encData, nonce, err := pp.Encrypt(r, pubkey, seckey)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := cipher.SecKeyFromHex(seckey)
+	if err != nil {
+		return nil, err
+	}
+
+	p := cipher.PubKeyFromSecKey(s)
+	return &pp.EncryptReq{
+		Pubkey:      pp.PtrString(p.Hex()),
+		Nonce:       nonce,
+		Encryptdata: encData,
+	}, nil
+}
+
 func decodeRsp(r io.Reader, pubkey string, seckey string, v interface{}) (interface{}, error) {
 	res := pp.EncryptRes{}
-	json.NewDecoder(r).Decode(&res)
+	if err := json.NewDecoder(r).Decode(&res); err != nil {
+		return nil, err
+	}
 
 	// handle the response
 	if res.Result.GetSuccess() {
-		if err := pp.DecryptRes(res, pubkey, seckey, v); err != nil {
+		d, err := pp.Decrypt(res.Encryptdata, res.GetNonce(), pubkey, seckey)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(d, v); err != nil {
 			return nil, err
 		}
 		return v, nil
@@ -337,17 +386,3 @@ func decodeRsp(r io.Reader, pubkey string, seckey string, v interface{}) (interf
 		return res, nil
 	}
 }
-
-// func sendRequest(path string, data interface{}) (*sknet.Response, error) {
-// 	c, err := net.Dial("tcp", "localhost:8080")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer c.Close()
-//
-// 	r, err := sknet.MakeRequest(path, data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return sknet.Get(c, r)
-// }
