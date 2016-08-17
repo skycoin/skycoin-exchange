@@ -81,9 +81,9 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-			cp := r.URL.Query().Get("coin_pair")
-			st := r.URL.Query().Get("start")
-			ed := r.URL.Query().Get("end")
+			cp := r.FormValue("coin_pair")
+			st := r.FormValue("start")
+			ed := r.FormValue("end")
 			if cp == "" || st == "" || ed == "" || tp == "" {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
