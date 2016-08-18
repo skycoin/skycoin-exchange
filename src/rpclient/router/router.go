@@ -40,4 +40,5 @@ func registerUtxoHandlers(mux *http.ServeMux, se api.Servicer) {
 func registerTxnHandlers(mux *http.ServeMux, se api.Servicer) {
 	mux.Handle("/api/v1/inject_tx", api.InjectTx(se))
 	mux.Handle("/api/v1/tx", api.GetTx(se))
+	mux.Handle("/api/v1/rawtx", api.GetRawTx(se))
 }
