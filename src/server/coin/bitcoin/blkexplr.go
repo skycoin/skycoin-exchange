@@ -75,3 +75,30 @@ func getUtxosBlkExplr(addrs []string) ([]Utxo, error) {
 	}
 	return utxos, nil
 }
+
+// get tx verbose from blockexplorer.com
+func getTxVerboseExplr(txid string) (*TxRawResult, error) {
+	d, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/tx/%s", txid))
+	if err != nil {
+		return nil, err
+	}
+	tx := TxRawResult{}
+	if err := json.Unmarshal(d, &tx); err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func getRawtxExplr(txid string) (string, error) {
+	d, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/rawtx/%s", txid))
+	if err != nil {
+		return "", err
+	}
+	v := struct {
+		Rawtx string `json:"rawtx"`
+	}{}
+	if err := json.Unmarshal(d, &v); err != nil {
+		return "", err
+	}
+	return v.Rawtx, nil
+}
