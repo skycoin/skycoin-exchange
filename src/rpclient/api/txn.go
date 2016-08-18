@@ -82,3 +82,53 @@ func InjectTx(se Servicer) http.HandlerFunc {
 		sendJSON(w, rlt)
 	}
 }
+
+func GetTx(se Servicer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var rlt *pp.EmptyRes
+		for {
+			_, key, err := getAccountAndKey(r)
+			if err != nil {
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			// get coin type
+			tp := r.FormValue("coin_type")
+			if tp == "" {
+				rlt = pp.MakeErrRes(errors.New("no coin type"))
+				break
+			}
+
+			// get txid
+			txid := r.FormValue("txid")
+			if txid == "" {
+				rlt = pp.MakeErrRes(errors.New("no txid"))
+				break
+			}
+			req := pp.GetTxReq{
+				CoinType: pp.PtrString(tp),
+				Txid:     pp.PtrString(txid),
+			}
+			encReq, err := makeEncryptReq(req, se.GetServKey().Hex(), key)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
+			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/tx", encReq)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), key, &pp.GetTxRes{})
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			sendJSON(w, res)
+			return
+		}
+		logger.Error("%s", rlt.GetResult().GetReason())
+		sendJSON(w, rlt)
+	}
+}
