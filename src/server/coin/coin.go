@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// CoinHandlers records the handlers for different coin.
+// gateways records the handlers for different coin.
 var gateways = map[Type]Gateway{}
 
 type AddressEntry struct {
@@ -42,6 +42,7 @@ func (c Type) String() string {
 	}
 }
 
+//TypeFromStr convert string to Type
 func TypeFromStr(ct string) (Type, error) {
 	switch ct {
 	case "bitcoin":
@@ -61,11 +62,12 @@ type Transaction interface {
 	Bytes() ([]byte, error)
 }
 
-// CoinHandler interface for handlering all coin relevance things.
+// Gateway interface for handlering all coin relevance things.
 type Gateway interface {
 	TxHandler
 }
 
+// TxHandler transaction handlers interface for gateway.
 type TxHandler interface {
 	GetTx(txid string) (Transaction, error)
 	GetRawTx(txid string) (string, error)
@@ -73,6 +75,7 @@ type TxHandler interface {
 	InjectTx(tx Transaction) (string, error)
 }
 
+// RegisterGateway register gateway for specific coin.
 func RegisterGateway(tp Type, gw Gateway) {
 	if _, ok := gateways[tp]; ok {
 		panic(fmt.Errorf("%s gateway already registered"))
@@ -80,6 +83,7 @@ func RegisterGateway(tp Type, gw Gateway) {
 	gateways[tp] = gw
 }
 
+// GetGateway get gateway of specific coin.
 func GetGateway(tp Type) (Gateway, error) {
 	if c, ok := gateways[tp]; ok {
 		return c, nil
