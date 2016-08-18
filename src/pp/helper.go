@@ -152,3 +152,9 @@ func BytesToPubKey(b []byte) cipher.PubKey {
 	copy(pk[:], b[:])
 	return pk
 }
+
+func NewTx(data string) *Tx {
+	return &Tx{
+		Value: PtrString(data),
+	}
+}
