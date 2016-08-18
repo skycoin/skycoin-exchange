@@ -69,15 +69,15 @@ func (fa FakeAccount) GetID() account.AccountID {
 	return account.AccountID(d)
 }
 
-func (fa FakeAccount) GetNewAddress(ct wallet.CoinType) string {
+func (fa FakeAccount) GetNewAddress(ct coin.Type) string {
 	return fa.Addr
 }
 
-func (fa FakeAccount) GetBalance(ct wallet.CoinType) uint64 {
+func (fa FakeAccount) GetBalance(ct coin.Type) uint64 {
 	return fa.Balance
 }
 
-func (fa FakeAccount) GenerateWithdrawlTx(ct wallet.CoinType, Amount uint64, toAdd string, fee uint64) ([]byte, error) {
+func (fa FakeAccount) GenerateWithdrawlTx(ct coin.Type, Amount uint64, toAdd string, fee uint64) ([]byte, error) {
 	return []byte{}, nil
 }
 
@@ -85,19 +85,19 @@ func (fa FakeAccount) GetAddressBalance(addr string) (uint64, error) {
 	return uint64(0), nil
 }
 
-func (fa FakeAccount) GetAddressEntries(coinType wallet.CoinType) ([]wallet.AddressEntry, error) {
+func (fa FakeAccount) GetAddressEntries(coinType coin.Type) ([]wallet.AddressEntry, error) {
 	return []wallet.AddressEntry{}, nil
 }
 
-func (fa *FakeAccount) AddDepositAddress(ct wallet.CoinType, addr string) {
+func (fa *FakeAccount) AddDepositAddress(ct coin.Type, addr string) {
 
 }
 
-func (fa *FakeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
+func (fa *FakeAccount) DecreaseBalance(ct coin.Type, amt uint64) error {
 	return nil
 }
 
-func (fa *FakeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
+func (fa *FakeAccount) IncreaseBalance(ct coin.Type, amt uint64) error {
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (fs *FakeServer) Run() {
 
 }
 
-func (fs *FakeServer) PutUtxos(ct wallet.CoinType, utxos []bitcoin.UtxoWithkey) {
+func (fs *FakeServer) PutUtxos(ct coin.Type, utxos []bitcoin.UtxoWithkey) {
 
 }
 
@@ -128,14 +128,14 @@ func (fs FakeServer) GetBtcFee() uint64 {
 func (fs FakeServer) GetServPrivKey() cipher.SecKey {
 	return fs.Seckey
 }
-func (fs *FakeServer) AddWatchAddress(ct wallet.CoinType, addr string) {
+func (fs *FakeServer) AddWatchAddress(ct coin.Type, addr string) {
 
 }
 
-func (fs *FakeServer) ChooseUtxos(coinType wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error) {
+func (fs *FakeServer) ChooseUtxos(coinType coin.Type, amount uint64, tm time.Duration) (interface{}, error) {
 	return []bitcoin.UtxoWithkey{}, nil
 }
 
-func (fs *FakeServer) GetNewAddress(ct wallet.CoinType) string {
+func (fs *FakeServer) GetNewAddress(ct coin.Type) string {
 	return ""
 }
