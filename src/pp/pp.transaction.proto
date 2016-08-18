@@ -13,7 +13,7 @@ message InjectTxnRes {
 }
 
 message Tx {
-
+  optional string value = 10;
 }
 
 message GetTxReq {
