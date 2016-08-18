@@ -66,7 +66,7 @@ response json:
 
 #### get deposit address
 ```
-mode: GET
+mode: POST
 url: /api/v1/account/deposit_address?id=[:id]&key=[:key]&coin_type=[:type]
 params:
 	id: account id.
@@ -225,6 +225,48 @@ response json:
       "amount": 90000
     }
   ]
+}
+```
+#### get transaction
+```
+mode: GET
+url: /api/v1/tx?id=[:id]&key=[:key]&coin_type=[:coin_type]&txid=[:txid]
+params:
+	id: account id
+	key: account key
+	coin_type: bitcoin or skycoin
+	txid: transaction id
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "coin_type": "bitcoin",
+  "tx": {
+    "value": "{\"txid\":\"5756ff16e2b9f881cd15b8a7e478b4899965f87f553b6210d0f8e5bf5be7df1d\",\"version\":1,\"locktime\":981825022,\"vin\":[{\"coinbase\":\"03a6ab05e4b883e5bda9e7a59ee4bb99e9b1bc76a3a2bb0e9c92f06e4a6349de9ccc8fbe0fad11133ed73c78ee12876334c13c02000000f09f909f2f4249503130302f4d696e65642062792073647a686162636400000000000000000000000000000000\",\"txid\":\"\",\"vout\":0,\"scriptSig\":null,\"sequence\":2765846367}],\"vout\":[{\"value\":\"25.37726812\",\"n\":0,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 c825a1ecf2a6830c4401620c3a16f1995057c2ab OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a914c825a1ecf2a6830c4401620c3a16f1995057c2ab88ac\",\"type\":\"pubkeyhash\",\"addresses\":[\"1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY\"]}}],\"blockhash\":\"0000000000000000027d0985fef71cbc05a5ee5cdbdc4c6baf2307e6c5db8591\",\"confirmations\":54117,\"time\":1440604784,\"blocktime\":1440604784}"
+  }
+}
+```
+#### get raw transaction
+```
+mode: GET
+url: /api/v1/rawtx?id=[:id]&key=[:key]&coin_type=[:coin_type]&txid=[:txid]
+params:
+	id: account id
+	key: account key
+	coin_type: bitcoin or skycoin
+	txid: transaction id
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "coin_type": "bitcoin",
+  "rawtx": "010000000132ea3894c4b2c68bb1255be5d0e8a26bd336fd7a562eca9f7c435c9268199f06020000006b483045022100dd4e1b960726e3d3d205cb5ef4d92b3e04f3839757606800ed662069a841ffdc02203f68723bbbf9800d16555ace1ef2f46e65c2a6341643f3c5bf84158b108e6d5d012103eb8b81f8ebc988c61d3cc4c4ac3d546b02a4994d612725e91d8d69a72045fb18ffffffff019d3b1f020000000017a914bfc03379d17dd1e918a026b76cde472bea7ac7268700000000"
 }
 ```
 Dependencies
