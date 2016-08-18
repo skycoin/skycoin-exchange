@@ -10,15 +10,15 @@ type Gateway struct {
 }
 
 func (gw *Gateway) GetTx(txid string) (coin.Transaction, error) {
-	return &Transaction{}, nil
+	return getTxVerboseExplr(txid)
 }
 
-func (gw *Gateway) GetRawTx(txid string) ([]byte, error) {
-	return []byte("bitcoin hello world"), nil
+func (gw *Gateway) GetRawTx(txid string) (string, error) {
+	return getRawtxExplr(txid)
 }
 
 func (gw *Gateway) DecodeRawTx(r io.Reader) (coin.Transaction, error) {
-	return &Transaction{}, nil
+	return nil, nil
 }
 
 func (gw *Gateway) InjectTx(tx coin.Transaction) (string, error) {
