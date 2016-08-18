@@ -85,10 +85,16 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
+
+			tb, err := tx.Bytes()
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
 			res := pp.GetTxRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
 				CoinType: req.CoinType,
-				Tx:       tx.ToPPTx(),
+				Tx:       pp.NewTx(string(tb)),
 			}
 			reply(c, &res)
 			return
@@ -97,21 +103,41 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-// func injectTx(tp coin.Type, tx []byte) (string, error) {
-// 	switch tp {
-// 	case coin.Bitcoin:
-// 		btctx := bitcoin.Transaction{}
-// 		if err := btctx.Deserialize(bytes.NewBuffer(tx)); err != nil {
-// 			return "", err
-// 		}
-// 		return bitcoin.BroadcastTx(&btctx)
-// 	case coin.Skycoin:
-// 		sktx := skycoin.Transaction{}
-// 		if err := sktx.Deserialize(tx); err != nil {
-// 			return "", err
-// 		}
-// 		return skycoin.BroadcastTx(sktx)
-// 	default:
-// 		return "", errors.New("inject Txn failed, unknow coin type")
-// 	}
-// }
+func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
+		var rlt *pp.EmptyRes
+		for {
+			req := pp.GetRawTxReq{}
+			if err := getRequest(c, &req); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			tp, err := coin.TypeFromStr(req.GetCoinType())
+			if err != nil {
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			gateway, err := coin.GetGateway(tp)
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			rawtx, err := gateway.GetRawTx(req.GetTxid())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			res := pp.GetRawTxRes{
+				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
+				CoinType: req.CoinType,
+				Rawtx:    pp.PtrString(rawtx),
+			}
+			reply(c, &res)
+			return
+		}
+		c.JSON(rlt)
+	}
+}
