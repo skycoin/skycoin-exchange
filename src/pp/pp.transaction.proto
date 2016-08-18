@@ -8,6 +8,46 @@ message InjectTxnReq {
 }
 
 message InjectTxnRes {
-  optional Result result = 1;
+  required Result result = 1;
   optional string txid = 10;
+}
+
+message Tx {
+
+}
+
+message GetTxReq {
+  optional string coin_type = 10;
+  optional string txid = 20;
+}
+
+message GetTxRes {
+  required Result result = 1;
+
+  optional string coin_type = 10;
+  optional Tx tx = 20;
+}
+
+message GetRawTxReq {
+  optional string coin_type = 10;
+  optional string txid = 20;
+}
+
+message GetRawTxRes {
+  required Result result = 1;
+
+  optional string coin_type = 10;
+  optional string rawtx = 20;
+}
+
+message DecodeRawTxReq {
+  optional string coin_type = 10;
+  optional string rawtx = 20;
+}
+
+message DecodeRawTxRes {
+  required Result result = 1;
+
+  optional string coin_type = 10;
+  optional Tx tx = 20;
 }
