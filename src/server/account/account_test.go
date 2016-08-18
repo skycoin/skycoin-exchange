@@ -53,7 +53,7 @@ package account
 // 			go func(wg *sync.WaitGroup) {
 // 				an, err := eam.GetAccount(id)
 // 				assert.Nil(t, err)
-// 				addr := an.GetNewAddress(wallet.Bitcoin)
+// 				addr := an.GetNewAddress(coin.Bitcoin)
 // 				addrC <- addr
 // 				wg.Done()
 // 			}(&wg)
@@ -85,21 +85,21 @@ package account
 
 // func TestSetBalance(t *testing.T) {
 // 	ah := newAccountHelper(t)
-// 	ah.Account.SetBalance(wallet.Bitcoin, Balance(10))
-// 	ah.Account.SetBalance(wallet.Skycoin, Balance(20))
-// 	assert.Equal(t, ah.Account.balance[wallet.Bitcoin], Balance(10))
-// 	assert.Equal(t, ah.Account.balance[wallet.Skycoin], Balance(20))
+// 	ah.Account.SetBalance(coin.Bitcoin, Balance(10))
+// 	ah.Account.SetBalance(coin.Skycoin, Balance(20))
+// 	assert.Equal(t, ah.Account.balance[coin.Bitcoin], Balance(10))
+// 	assert.Equal(t, ah.Account.balance[coin.Skycoin], Balance(20))
 // }
 //
 // func TestGetBalance(t *testing.T) {
 // 	ah := newAccountHelper(t)
-// 	ah.Account.SetBalance(wallet.Bitcoin, Balance(10))
-// 	ah.Account.SetBalance(wallet.Skycoin, Balance(20))
+// 	ah.Account.SetBalance(coin.Bitcoin, Balance(10))
+// 	ah.Account.SetBalance(coin.Skycoin, Balance(20))
 //
-// 	bb, err := ah.Account.GetBalance(wallet.Bitcoin)
+// 	bb, err := ah.Account.GetBalance(coin.Bitcoin)
 // 	assert.Nil(t, err)
 // 	assert.Equal(t, bb, Balance(10))
-// 	sb, err := ah.Account.GetBalance(wallet.Skycoin)
+// 	sb, err := ah.Account.GetBalance(coin.Skycoin)
 // 	assert.Nil(t, err)
 // 	assert.Equal(t, sb, Balance(20))
 // }

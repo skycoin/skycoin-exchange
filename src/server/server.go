@@ -11,9 +11,9 @@ import (
 	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/router"
@@ -107,8 +107,8 @@ func New(cfg Config) engine.Exchange {
 		cfg:          cfg,
 		wallet:       wlt,
 		Manager:      acntMgr,
-		btcum:        bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Bitcoin)),
-		skyum:        skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(wallet.Skycoin)),
+		btcum:        bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(coin.Bitcoin)),
+		skyum:        skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(coin.Skycoin)),
 		orderManager: orderManager,
 		coins:        []string{"BTC", "SKY"},
 		orderHandlers: map[string]chan order.Order{
@@ -123,8 +123,8 @@ func New(cfg Config) engine.Exchange {
 func (self *ExchangeServer) Run() {
 	logger.Info("server started, port:%d", self.cfg.Port)
 	// register coins
-	coin_interface.RegisterCoinHandler(wallet.Bitcoin, &bitcoin.GatewayIns)
-	coin_interface.RegisterCoinHandler(wallet.Skycoin, &skycoin.GatewayIns)
+	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
+	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
@@ -156,7 +156,7 @@ func (self ExchangeServer) GetServPrivKey() cipher.SecKey {
 }
 
 // GetPrivKey get the private key of specific address.
-func (self ExchangeServer) GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error) {
+func (self ExchangeServer) GetAddrPrivKey(ct coin.Type, addr string) (string, error) {
 	entry, err := self.wallet.GetAddressEntry(ct, addr)
 	if err != nil {
 		return "", err
@@ -166,7 +166,7 @@ func (self ExchangeServer) GetAddrPrivKey(ct wallet.CoinType, addr string) (stri
 }
 
 // GetNewAddress create new address of specific coin type.
-func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
+func (self *ExchangeServer) GetNewAddress(coinType coin.Type) string {
 	self.wltMtx.Lock()
 	defer self.wltMtx.Unlock()
 	addrEntry, err := self.wallet.NewAddresses(coinType, 1)
@@ -177,11 +177,11 @@ func (self *ExchangeServer) GetNewAddress(coinType wallet.CoinType) string {
 }
 
 // ChooseUtxos choose appropriate bitcoin utxos,
-func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error) {
+func (self *ExchangeServer) ChooseUtxos(ct coin.Type, amount uint64, tm time.Duration) (interface{}, error) {
 	switch ct {
-	case wallet.Bitcoin:
+	case coin.Bitcoin:
 		return self.btcum.ChooseUtxos(amount, tm)
-	case wallet.Skycoin:
+	case coin.Skycoin:
 		return self.skyum.ChooseUtxos(amount, tm)
 	default:
 		return nil, errors.New("unknow coin type")
@@ -189,14 +189,14 @@ func (self *ExchangeServer) ChooseUtxos(ct wallet.CoinType, amount uint64, tm ti
 }
 
 // PutUtxos set back the utxos of specific coin type.
-func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
+func (self *ExchangeServer) PutUtxos(ct coin.Type, utxos interface{}) {
 	switch ct {
-	case wallet.Bitcoin:
+	case coin.Bitcoin:
 		btcUtxos := utxos.([]bitcoin.Utxo)
 		for _, u := range btcUtxos {
 			self.btcum.PutUtxo(u)
 		}
-	case wallet.Skycoin:
+	case coin.Skycoin:
 		skyUtxos := utxos.([]skycoin.Utxo)
 		for _, u := range skyUtxos {
 			self.skyum.PutUtxo(u)
@@ -205,11 +205,11 @@ func (self *ExchangeServer) PutUtxos(ct wallet.CoinType, utxos interface{}) {
 }
 
 // AddWatchAddress add watch address to utxo manager.
-func (self *ExchangeServer) WatchAddress(ct wallet.CoinType, addr string) {
+func (self *ExchangeServer) WatchAddress(ct coin.Type, addr string) {
 	switch ct {
-	case wallet.Bitcoin:
+	case coin.Bitcoin:
 		self.btcum.WatchAddresses([]string{addr})
-	case wallet.Skycoin:
+	case coin.Skycoin:
 		self.skyum.WatchAddresses([]string{addr})
 	}
 }
@@ -269,11 +269,11 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 	if len(pair) != 2 {
 		panic("error coin pair")
 	}
-	mainCt, err := wallet.CoinTypeFromStr(pair[0])
+	mainCt, err := coin.TypeFromStr(pair[0])
 	if err != nil {
 		panic(err)
 	}
-	subCt, err := wallet.CoinTypeFromStr(pair[1])
+	subCt, err := coin.TypeFromStr(pair[1])
 	if err != nil {
 		panic(err)
 	}

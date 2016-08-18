@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func TestNewWallet(t *testing.T) {
 	}
 
 	// create address
-	_, err = wlt.NewAddresses(Bitcoin, 1)
+	_, err = wlt.NewAddresses(coin.Bitcoin, 1)
 	assert.Nil(t, err)
 }
 
@@ -35,13 +36,13 @@ func TestLoadWallet(t *testing.T) {
 	}
 
 	// create address
-	e, err := wlt.NewAddresses(Bitcoin, 1)
+	e, err := wlt.NewAddresses(coin.Bitcoin, 1)
 	assert.Nil(t, err)
 
 	wlt1, err := Load(path)
 	assert.Nil(t, err)
 
-	addrs := wlt1.GetAddressEntries(Bitcoin)
+	addrs := wlt1.GetAddressEntries(coin.Bitcoin)
 	assert.Nil(t, err)
 	assert.Equal(t, e[0].Address, addrs[0].Address)
 	assert.Equal(t, e[0].Public, addrs[0].Public)

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -40,11 +40,11 @@ func (w WalletType) String() string {
 type Wallet interface {
 	SetID(id string)
 	GetID() string
-	NewAddresses(coinType coin_interface.CoinType, num int) ([]AddressEntry, error)
-	GetAddresses(coinType coin_interface.CoinType) []string
-	GetAddressEntries(coinType coin_interface.CoinType) []AddressEntry
-	GetAddressEntry(coinType coin_interface.CoinType, addr string) (AddressEntry, error)
-	GetCoinTypes() []coin_interface.CoinType
+	NewAddresses(coinType coin.Type, num int) ([]AddressEntry, error)
+	GetAddresses(coinType coin.Type) []string
+	GetAddressEntries(coinType coin.Type) []AddressEntry
+	GetAddressEntry(coinType coin.Type, addr string) (AddressEntry, error)
+	GetCoinTypes() []coin.Type
 }
 
 // WalletBase, used to serialise wallet into json, and unserialise wallet from json.
@@ -69,7 +69,7 @@ func New(name string, wltType WalletType, seed string) (Wallet, error) {
 	case Deterministic:
 		wlt := &DeterministicWallet{
 			ID:             name,
-			Seed:           map[coin_interface.CoinType]string{Bitcoin: seed, Skycoin: seed},
+			Seed:           map[coin.Type]string{coin.Bitcoin: seed, coin.Skycoin: seed},
 			InitSeed:       seed,
 			AddressEntries: make(map[string][]AddressEntry)}
 		if err := wlt.save(); err != nil {
