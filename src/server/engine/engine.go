@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -24,9 +24,9 @@ type Accounter interface {
 }
 
 type Addresser interface {
-	WatchAddress(ct wallet.CoinType, addr string)
-	GetNewAddress(coinType wallet.CoinType) string
-	GetAddrPrivKey(ct wallet.CoinType, addr string) (string, error)
+	WatchAddress(ct coin.Type, addr string)
+	GetNewAddress(coinType coin.Type) string
+	GetAddrPrivKey(ct coin.Type, addr string) (string, error)
 }
 
 type Order interface {
@@ -35,8 +35,8 @@ type Order interface {
 }
 
 type Utxor interface {
-	ChooseUtxos(ct wallet.CoinType, amount uint64, tm time.Duration) (interface{}, error)
-	PutUtxos(ct wallet.CoinType, utxos interface{})
+	ChooseUtxos(ct coin.Type, amount uint64, tm time.Duration) (interface{}, error)
+	PutUtxos(ct coin.Type, utxos interface{})
 }
 
 type Server interface {

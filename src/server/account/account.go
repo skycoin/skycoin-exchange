@@ -9,7 +9,7 @@ import (
 
 	"gopkg.in/op/go-logging.v1"
 
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -22,18 +22,18 @@ var (
 // type AccountID cipher.PubKey
 
 type Accounter interface {
-	GetID() string                                     // return the account id.
-	GetBalance(ct wallet.CoinType) uint64              // return the account's Balance.
-	AddDepositAddress(ct wallet.CoinType, addr string) // add the deposit address to the account.
-	DecreaseBalance(ct wallet.CoinType, amt uint64) error
-	IncreaseBalance(ct wallet.CoinType, amt uint64) error
+	GetID() string                               // return the account id.
+	GetBalance(ct coin.Type) uint64              // return the account's Balance.
+	AddDepositAddress(ct coin.Type, addr string) // add the deposit address to the account.
+	DecreaseBalance(ct coin.Type, amt uint64) error
+	IncreaseBalance(ct coin.Type, amt uint64) error
 }
 
 // ExchangeAccount maintains the account state
 type ExchangeAccount struct {
-	ID          string                       // account id
-	Balance     map[wallet.CoinType]uint64   // the Balance should not be accessed directly.
-	Addresses   map[wallet.CoinType][]string // deposit addresses
+	ID          string                 // account id
+	Balance     map[coin.Type]uint64   // the Balance should not be accessed directly.
+	Addresses   map[coin.Type][]string // deposit addresses
 	addr_mtx    sync.Mutex
 	balance_mtx sync.RWMutex // mutex used to protect the Balance's concurrent read and write.
 }
@@ -62,11 +62,11 @@ func InitDir(path string) {
 func newExchangeAccount(id string) ExchangeAccount {
 	return ExchangeAccount{
 		ID: id,
-		Balance: map[wallet.CoinType]uint64{
-			wallet.Bitcoin: 0,
-			wallet.Skycoin: 0,
+		Balance: map[coin.Type]uint64{
+			coin.Bitcoin: 0,
+			coin.Skycoin: 0,
 		},
-		Addresses: make(map[wallet.CoinType][]string),
+		Addresses: make(map[coin.Type][]string),
 	}
 }
 
@@ -75,20 +75,20 @@ func (self ExchangeAccount) GetID() string {
 }
 
 // Get the current recored Balance.
-func (self *ExchangeAccount) GetBalance(coinType wallet.CoinType) uint64 {
+func (self *ExchangeAccount) GetBalance(coinType coin.Type) uint64 {
 	self.balance_mtx.RLock()
 	defer self.balance_mtx.RUnlock()
 	return self.Balance[coinType]
 }
 
-func (self *ExchangeAccount) AddDepositAddress(coinType wallet.CoinType, addr string) {
+func (self *ExchangeAccount) AddDepositAddress(coinType coin.Type, addr string) {
 	self.addr_mtx.Lock()
 	self.Addresses[coinType] = append(self.Addresses[coinType], addr)
 	self.addr_mtx.Unlock()
 }
 
 // SetBalance update the balanace of specific coin.
-func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64) error {
+func (self *ExchangeAccount) setBalance(coinType coin.Type, balance uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[coinType]; !ok {
@@ -98,7 +98,7 @@ func (self *ExchangeAccount) setBalance(coinType wallet.CoinType, balance uint64
 	return nil
 }
 
-func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) error {
+func (self *ExchangeAccount) DecreaseBalance(ct coin.Type, amt uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
@@ -113,7 +113,7 @@ func (self *ExchangeAccount) DecreaseBalance(ct wallet.CoinType, amt uint64) err
 	return nil
 }
 
-func (self *ExchangeAccount) IncreaseBalance(ct wallet.CoinType, amt uint64) error {
+func (self *ExchangeAccount) IncreaseBalance(ct coin.Type, amt uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
 	if _, ok := self.Balance[ct]; !ok {
@@ -146,13 +146,13 @@ func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
 	// copy(pk[:], self.ID[0:33])
 	at := ExchangeAccount{
 		ID:        self.ID,
-		Balance:   make(map[wallet.CoinType]uint64),
-		Addresses: make(map[wallet.CoinType][]string),
+		Balance:   make(map[coin.Type]uint64),
+		Addresses: make(map[coin.Type][]string),
 	}
 
 	// convert balance.
 	for ct, bal := range self.Balance {
-		t, err := wallet.CoinTypeFromStr(ct)
+		t, err := coin.TypeFromStr(ct)
 		if err != nil {
 			panic(err)
 		}
@@ -161,7 +161,7 @@ func (self exchgAcntJson) ToExchgAcnt() *ExchangeAccount {
 
 	// convert address
 	for ct, addrs := range self.Addresses {
-		t, err := wallet.CoinTypeFromStr(ct)
+		t, err := coin.TypeFromStr(ct)
 		if err != nil {
 			panic(err)
 		}

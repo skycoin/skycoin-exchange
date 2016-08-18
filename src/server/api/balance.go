@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -31,7 +31,7 @@ func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			ct, err := wallet.CoinTypeFromStr(breq.GetCoinType())
+			ct, err := coin.TypeFromStr(breq.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break

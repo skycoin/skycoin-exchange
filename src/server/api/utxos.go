@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
@@ -20,7 +20,7 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := wallet.CoinTypeFromStr(req.GetCoinType())
+			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error("%s", err.Error())
@@ -40,10 +40,10 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-func getUtxos(tp wallet.CoinType, addrs []string) (*pp.GetUtxoRes, error) {
+func getUtxos(tp coin.Type, addrs []string) (*pp.GetUtxoRes, error) {
 	var res pp.GetUtxoRes
 	switch tp {
-	case wallet.Bitcoin:
+	case coin.Bitcoin:
 		utxos, err := bitcoin.GetUnspentOutputs(addrs)
 		if err != nil {
 			return nil, err
@@ -58,7 +58,7 @@ func getUtxos(tp wallet.CoinType, addrs []string) (*pp.GetUtxoRes, error) {
 			}
 		}
 		res.BtcUtxos = btcUxs
-	case wallet.Skycoin:
+	case coin.Skycoin:
 		utxos, err := skycoin.GetUnspentOutputs(addrs)
 		if err != nil {
 			return nil, err

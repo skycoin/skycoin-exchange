@@ -2,14 +2,10 @@ package api
 
 import (
 	"bytes"
-	"errors"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
@@ -23,17 +19,34 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			tp, err := wallet.CoinTypeFromStr(req.GetCoinType())
+			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			txid, err := injectTx(tp, req.GetTx())
+			// get coin gateway
+			gateway, err := coin.GetGateway(tp)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
+
+			// decode tx string into structed tx.
+			tx, err := gateway.DecodeRawTx(bytes.NewBuffer(req.GetTx()))
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			// inject tx.
+			txid, err := gateway.InjectTx(tx)
+			// txid, err := injectTx(tp, req.GetTx())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
 			res := pp.InjectTxnRes{
 				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 				Txid:   pp.PtrString(txid),
@@ -56,13 +69,13 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := wallet.CoinTypeFromStr(req.GetCoinType())
+			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin_interface.GetGateway(tp)
+			gateway, err := coin.GetGateway(tp)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -84,21 +97,21 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-func injectTx(tp wallet.CoinType, tx []byte) (string, error) {
-	switch tp {
-	case wallet.Bitcoin:
-		btctx := bitcoin.Transaction{}
-		if err := btctx.Deserialize(bytes.NewBuffer(tx)); err != nil {
-			return "", err
-		}
-		return bitcoin.BroadcastTx(&btctx)
-	case wallet.Skycoin:
-		sktx := skycoin.Transaction{}
-		if err := sktx.Deserialize(tx); err != nil {
-			return "", err
-		}
-		return skycoin.BroadcastTx(sktx)
-	default:
-		return "", errors.New("inject Txn failed, unknow coin type")
-	}
-}
+// func injectTx(tp coin.Type, tx []byte) (string, error) {
+// 	switch tp {
+// 	case coin.Bitcoin:
+// 		btctx := bitcoin.Transaction{}
+// 		if err := btctx.Deserialize(bytes.NewBuffer(tx)); err != nil {
+// 			return "", err
+// 		}
+// 		return bitcoin.BroadcastTx(&btctx)
+// 	case coin.Skycoin:
+// 		sktx := skycoin.Transaction{}
+// 		if err := sktx.Deserialize(tx); err != nil {
+// 			return "", err
+// 		}
+// 		return skycoin.BroadcastTx(sktx)
+// 	default:
+// 		return "", errors.New("inject Txn failed, unknow coin type")
+// 	}
+// }

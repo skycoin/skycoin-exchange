@@ -6,10 +6,10 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -52,7 +52,7 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			ct, err := wallet.CoinTypeFromStr(wr.GetCoinType())
+			ct, err := coin.TypeFromStr(wr.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
@@ -77,11 +77,11 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 }
 
 func withdrawlWork(c *sknet.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
-	ct := rp.Values["cointype"].(wallet.CoinType)
+	ct := rp.Values["cointype"].(coin.Type)
 	switch ct {
-	case wallet.Bitcoin:
+	case coin.Bitcoin:
 		return btcWithdraw(rp)
-	case wallet.Skycoin:
+	case coin.Skycoin:
 		return skyWithdrawl(rp)
 	default:
 		return nil, pp.MakeErrRes(errors.New("unknow coin type"))
@@ -92,7 +92,7 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ee := rp.Values["engine"].(engine.Exchange)
 	acnt := rp.Values["account"].(account.Accounter)
 	amt := rp.Values["amt"].(uint64)
-	ct := rp.Values["cointype"].(wallet.CoinType)
+	ct := rp.Values["cointype"].(coin.Type)
 	toAddr := rp.Values["toAddr"].(string)
 	// verify the toAddr
 	if _, err := cipher.BitcoinDecodeBase58Address(toAddr); err != nil {
@@ -108,7 +108,7 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		if !success {
 			go func() {
 				if btcTxRlt != nil {
-					ee.PutUtxos(wallet.Bitcoin, btcTxRlt.UsingUtxos)
+					ee.PutUtxos(coin.Bitcoin, btcTxRlt.UsingUtxos)
 				}
 				acnt.IncreaseBalance(ct, amt+ee.GetBtcFee())
 			}()
@@ -148,7 +148,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ee := rp.Values["engine"].(engine.Exchange)
 	acnt := rp.Values["account"].(account.Accounter)
 	amt := rp.Values["amt"].(uint64)
-	ct := rp.Values["cointype"].(wallet.CoinType)
+	ct := rp.Values["cointype"].(coin.Type)
 	toAddr := rp.Values["toAddr"].(string)
 
 	if err := skycoin.VerifyAmount(amt); err != nil {
@@ -170,7 +170,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		if !success {
 			go func() {
 				if skyTxRlt != nil {
-					ee.PutUtxos(wallet.Skycoin, skyTxRlt.UsingUtxos)
+					ee.PutUtxos(coin.Skycoin, skyTxRlt.UsingUtxos)
 				}
 				acnt.IncreaseBalance(ct, amt)
 			}()
@@ -210,7 +210,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
 func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*BtcTxResult, error) {
-	uxs, err := egn.ChooseUtxos(wallet.Bitcoin, amount+egn.GetBtcFee(), 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Bitcoin, amount+egn.GetBtcFee(), 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 	var success bool
 	defer func() {
 		if !success {
-			go func() { egn.PutUtxos(wallet.Bitcoin, utxos) }()
+			go func() { egn.PutUtxos(coin.Bitcoin, utxos) }()
 		}
 	}()
 
@@ -237,7 +237,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 	chgAddr := ""
 	if chgAmt > 0 {
 		// generate a change address
-		chgAddr = egn.GetNewAddress(wallet.Bitcoin)
+		chgAddr = egn.GetNewAddress(coin.Bitcoin)
 		// egn.AddWatchAddress(coinType, chgAddr)
 		outAddrs = append(outAddrs,
 			bitcoin.UtxoOut{Addr: toAddr, Value: amount},
@@ -267,7 +267,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 }
 
 func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*SkyTxResult, error) {
-	uxs, err := egn.ChooseUtxos(wallet.Skycoin, amount, 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Skycoin, amount, 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 	var success bool
 	defer func() {
 		if !success {
-			go func() { egn.PutUtxos(wallet.Skycoin, utxos) }()
+			go func() { egn.PutUtxos(coin.Skycoin, utxos) }()
 		}
 	}()
 
@@ -297,7 +297,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 	chgAddr := ""
 	if chgAmt > 0 {
 		// generate a change address
-		chgAddr = egn.GetNewAddress(wallet.Skycoin)
+		chgAddr = egn.GetNewAddress(coin.Skycoin)
 		outAddrs = append(outAddrs,
 			skycoin.MakeUtxoOutput(toAddr, amount, chgHours/2),
 			skycoin.MakeUtxoOutput(chgAddr, chgAmt, chgHours/2))
@@ -307,7 +307,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 
 	keys := make([]cipher.SecKey, len(utxos))
 	for i, u := range utxos {
-		k, err := egn.GetAddrPrivKey(wallet.Skycoin, u.GetAddress())
+		k, err := egn.GetAddrPrivKey(coin.Skycoin, u.GetAddress())
 		if err != nil {
 			panic(err)
 		}
@@ -332,7 +332,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 func makeBtcUtxoWithkeys(utxos []bitcoin.Utxo, egn engine.Exchange) ([]bitcoin.UtxoWithkey, error) {
 	utxoks := make([]bitcoin.UtxoWithkey, len(utxos))
 	for i, u := range utxos {
-		key, err := egn.GetAddrPrivKey(wallet.Bitcoin, u.GetAddress())
+		key, err := egn.GetAddrPrivKey(coin.Bitcoin, u.GetAddress())
 		if err != nil {
 			return []bitcoin.UtxoWithkey{}, err
 		}

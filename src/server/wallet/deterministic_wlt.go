@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/skycoin/skycoin-exchange/src/server/coin_interface"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -31,10 +31,10 @@ var DeterMetaStr = []string{
 // DeterministicWallet generate and store addresses for various coin types.
 // This wallet is not thread safe.
 type DeterministicWallet struct {
-	ID             string                             // wallet id
-	InitSeed       string                             // Init seed, used to recover the wallet.
-	Seed           map[coin_interface.CoinType]string // key: coin type, value: used to track the latset seed
-	AddressEntries map[string][]AddressEntry          // key: coin type, value: address entries.
+	ID             string                    // wallet id
+	InitSeed       string                    // Init seed, used to recover the wallet.
+	Seed           map[coin.Type]string      // key: coin type, value: used to track the latset seed
+	AddressEntries map[string][]AddressEntry // key: coin type, value: address entries.
 	// addrLock       sync.Mutex // a lock, for protecting the writing, reading of the Addresses in wallet.
 	// fileLock       sync.Mutex // lock for protecting wallet file.
 }
@@ -42,14 +42,14 @@ type DeterministicWallet struct {
 // NewAddresses generate new addresses base on the coin type, and then store the address.
 // NewAddress must be Sequential，cause the seed.
 // this function is not thread safe, should not be used concrrently.
-func (self *DeterministicWallet) NewAddresses(coinType coin_interface.CoinType, num int) ([]AddressEntry, error) {
+func (self *DeterministicWallet) NewAddresses(coinType coin.Type, num int) ([]AddressEntry, error) {
 	addrEntries := make([]AddressEntry, num)
 	seed := self.Seed[coinType]
 	switch coinType {
-	case Bitcoin:
+	case coin.Bitcoin:
 		if seed == self.InitSeed {
 			sd, entries := bitcoin.GenerateAddresses([]byte(seed), num)
-			self.Seed[Bitcoin] = sd
+			self.Seed[coin.Bitcoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		} else {
 			s, err := hex.DecodeString(seed)
@@ -57,13 +57,13 @@ func (self *DeterministicWallet) NewAddresses(coinType coin_interface.CoinType, 
 				return []AddressEntry{}, err
 			}
 			sd, entries := bitcoin.GenerateAddresses(s, num)
-			self.Seed[Bitcoin] = sd
+			self.Seed[coin.Bitcoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		}
-	case Skycoin:
+	case coin.Skycoin:
 		if seed == self.InitSeed {
 			sd, entries := skycoin.GenerateAddresses([]byte(seed), num)
-			self.Seed[Skycoin] = sd
+			self.Seed[coin.Skycoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		} else {
 			s, err := hex.DecodeString(seed)
@@ -71,7 +71,7 @@ func (self *DeterministicWallet) NewAddresses(coinType coin_interface.CoinType, 
 				return []AddressEntry{}, err
 			}
 			sd, entries := skycoin.GenerateAddresses(s, num)
-			self.Seed[Skycoin] = sd
+			self.Seed[coin.Skycoin] = sd
 			addressEntryCopy(&addrEntries, entries)
 		}
 	default:
@@ -83,8 +83,8 @@ func (self *DeterministicWallet) NewAddresses(coinType coin_interface.CoinType, 
 	return addrEntries, nil
 }
 
-func (self DeterministicWallet) GetCoinTypes() []coin_interface.CoinType {
-	cts := []coin_interface.CoinType{}
+func (self DeterministicWallet) GetCoinTypes() []coin.Type {
+	cts := []coin.Type{}
 	for ct, _ := range self.Seed {
 		cts = append(cts, ct)
 	}
@@ -107,11 +107,11 @@ func (self *DeterministicWallet) GetID() string {
 	return self.ID
 }
 
-func (self DeterministicWallet) GetAddressEntries(bt coin_interface.CoinType) []AddressEntry {
+func (self DeterministicWallet) GetAddressEntries(bt coin.Type) []AddressEntry {
 	return self.AddressEntries[bt.String()]
 }
 
-func (self DeterministicWallet) GetAddresses(ct coin_interface.CoinType) []string {
+func (self DeterministicWallet) GetAddresses(ct coin.Type) []string {
 	entries := self.AddressEntries[ct.String()]
 	addrs := make([]string, len(entries))
 	for i, entry := range entries {
@@ -125,8 +125,8 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 		Meta: map[string]string{
 			DeterMetaStr[DETER_META_ID]:          self.ID,
 			DeterMetaStr[DETER_META_INIT_SEED]:   self.InitSeed,
-			DeterMetaStr[DETER_META_BTC_SEED]:    self.Seed[Bitcoin],
-			DeterMetaStr[DETER_META_SKY_SEED]:    self.Seed[Skycoin],
+			DeterMetaStr[DETER_META_BTC_SEED]:    self.Seed[coin.Bitcoin],
+			DeterMetaStr[DETER_META_SKY_SEED]:    self.Seed[coin.Skycoin],
 			DeterMetaStr[DETER_META_WALLET_TYPE]: Deterministic.String()},
 		AddressEntries: make(map[string][]AddressEntry),
 	}
@@ -142,7 +142,7 @@ func (self *DeterministicWallet) toWalletBase() WalletBase {
 }
 
 // GetAddressEntry get address entry by coin type and address.
-func (self DeterministicWallet) GetAddressEntry(ct coin_interface.CoinType, addr string) (AddressEntry, error) {
+func (self DeterministicWallet) GetAddressEntry(ct coin.Type, addr string) (AddressEntry, error) {
 	if aes, ok := self.AddressEntries[ct.String()]; ok {
 		for _, a := range aes {
 			if a.Address == addr {
@@ -181,8 +181,8 @@ func newDeterministicWalletFromBase(w *WalletBase) (*DeterministicWallet, error)
 
 	wlt := &DeterministicWallet{
 		ID: id,
-		Seed: map[coin_interface.CoinType]string{
-			Bitcoin: btc_seed, Skycoin: sky_seed},
+		Seed: map[coin.Type]string{
+			coin.Bitcoin: btc_seed, coin.Skycoin: sky_seed},
 		InitSeed:       init_seed,
 		AddressEntries: make(map[string][]AddressEntry),
 	}
@@ -206,13 +206,13 @@ func validateWallet(wlt *DeterministicWallet) error {
 	return nil
 }
 
-func (self *DeterministicWallet) addAddresses(coinType coin_interface.CoinType, addrs []AddressEntry) {
+func (self *DeterministicWallet) addAddresses(coinType coin.Type, addrs []AddressEntry) {
 	// self.addrLock.Lock()
 	self.AddressEntries[coinType.String()] = append(self.AddressEntries[coinType.String()], addrs...)
 	// self.addrLock.Unlock()
 }
 
-func addressEntryCopy(dst *[]AddressEntry, src []coin_interface.AddressEntry) {
+func addressEntryCopy(dst *[]AddressEntry, src []coin.AddressEntry) {
 	for i, e := range src {
 		(*dst)[i] = AddressEntry{
 			Address: e.Address,
