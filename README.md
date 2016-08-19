@@ -245,7 +245,35 @@ response json:
   },
   "coin_type": "bitcoin",
   "tx": {
-    "value": "{\"txid\":\"5756ff16e2b9f881cd15b8a7e478b4899965f87f553b6210d0f8e5bf5be7df1d\",\"version\":1,\"locktime\":981825022,\"vin\":[{\"coinbase\":\"03a6ab05e4b883e5bda9e7a59ee4bb99e9b1bc76a3a2bb0e9c92f06e4a6349de9ccc8fbe0fad11133ed73c78ee12876334c13c02000000f09f909f2f4249503130302f4d696e65642062792073647a686162636400000000000000000000000000000000\",\"txid\":\"\",\"vout\":0,\"scriptSig\":null,\"sequence\":2765846367}],\"vout\":[{\"value\":\"25.37726812\",\"n\":0,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 c825a1ecf2a6830c4401620c3a16f1995057c2ab OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a914c825a1ecf2a6830c4401620c3a16f1995057c2ab88ac\",\"type\":\"pubkeyhash\",\"addresses\":[\"1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY\"]}}],\"blockhash\":\"0000000000000000027d0985fef71cbc05a5ee5cdbdc4c6baf2307e6c5db8591\",\"confirmations\":54117,\"time\":1440604784,\"blocktime\":1440604784}"
+    "btc": {
+      "txid": "5756ff16e2b9f881cd15b8a7e478b4899965f87f553b6210d0f8e5bf5be7df1d",
+      "version": 1,
+      "locktime": 981825022,
+      "vin": [
+        {
+          "coinbase": "03a6ab05e4b883e5bda9e7a59ee4bb99e9b1bc76a3a2bb0e9c92f06e4a6349de9ccc8fbe0fad11133ed73c78ee12876334c13c02000000f09f909f2f4249503130302f4d696e65642062792073647a686162636400000000000000000000000000000000",
+          "sequence": 2765846367
+        }
+      ],
+      "vout": [
+        {
+          "value": "25.37726812",
+          "n": 0,
+          "scriptPubkey": {
+            "asm": "OP_DUP OP_HASH160 c825a1ecf2a6830c4401620c3a16f1995057c2ab OP_EQUALVERIFY OP_CHECKSIG",
+            "hex": "76a914c825a1ecf2a6830c4401620c3a16f1995057c2ab88ac",
+            "type": "pubkeyhash",
+            "addresses": [
+              "1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY"
+            ]
+          }
+        }
+      ],
+      "blockhash": "0000000000000000027d0985fef71cbc05a5ee5cdbdc4c6baf2307e6c5db8591",
+      "confirmations": 54245,
+      "time": 1440604784,
+      "blocktime": 1440604784
+    }
   }
 }
 ```
