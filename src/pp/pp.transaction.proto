@@ -100,6 +100,9 @@ message SkyTx {
   repeated string sigs = 14;
   repeated string inputs = 15;
   repeated SkyTxOutput outputs = 16;
+  optional bool unknow = 18;
+  optional bool confirmed = 19;
+  optional uint64 height = 20;
 }
 
 message SkyTxOutput {
