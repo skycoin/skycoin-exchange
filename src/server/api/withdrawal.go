@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -123,7 +124,12 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		return nil, pp.MakeErrRes(errors.New("failed to create withdrawal tx"))
 	}
 
-	newTxid, err := bitcoin.BroadcastTx(btcTxRlt.Tx)
+	rawtx, err := btcTxRlt.Tx.Serialize()
+	if err != nil {
+		return nil, pp.MakeErrRes(errors.New("tx serialize failed"))
+	}
+
+	newTxid, err := bitcoin.BroadcastTx(hex.EncodeToString(rawtx))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
