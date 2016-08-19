@@ -4,7 +4,7 @@ import "pp.common.proto";
 
 message InjectTxnReq {
   optional string coin_type = 10;
-  optional bytes tx = 20;
+  optional string tx = 20;
 }
 
 message InjectTxnRes {
@@ -12,20 +12,21 @@ message InjectTxnRes {
   optional string txid = 10;
 }
 
-// message Tx {
-//   optional string value = 10;
-// }
-
 message GetTxReq {
   optional string coin_type = 10;
   optional string txid = 20;
+}
+
+message Tx {
+  optional BtcTx btc = 10;
+  optional SkyTx sky = 20;
 }
 
 message GetTxRes {
   required Result result = 1;
 
   optional string coin_type = 10;
-  optional string tx = 20;
+  optional Tx tx = 20;
 }
 
 message GetRawTxReq {
@@ -40,14 +41,70 @@ message GetRawTxRes {
   optional string rawtx = 20;
 }
 
-message DecodeRawTxReq {
-  optional string coin_type = 10;
-  optional string rawtx = 20;
+// message DecodeRawTxReq {
+//   optional string coin_type = 10;
+//   optional string rawtx = 20;
+// }
+
+// message DecodeRawTxRes {
+//   required Result result = 1;
+//
+//   optional string coin_type = 10;
+//   optional string tx = 20;
+// }
+
+message BtcTx {
+  optional string txid = 10;
+  optional uint32 version = 11;
+  optional uint32 locktime = 12;
+  repeated BtcVin vin = 13;
+  repeated BtcVout vout = 14;
+  optional string blockhash = 15;
+  optional uint64 confirmations = 16;
+  optional int64 time = 17;
+  optional int64 blocktime = 18;
 }
 
-message DecodeRawTxRes {
-  required Result result = 1;
+message BtcVin {
+  optional string coinbase = 10;
+  optional string txid = 11;
+  optional uint32 vout = 12;
+  optional BtcScriptSig scriptSig = 13;
+  optional uint32 sequence = 14;
+}
 
-  optional string coin_type = 10;
-  optional string tx = 20;
+message BtcScriptSig {
+  optional string asm = 10;
+  optional string hex = 11;
+}
+
+message BtcVout {
+  optional string value = 10;
+  optional uint32 n = 11;
+  optional BtcScriptPubKeyResult scriptPubkey = 12;
+}
+
+message BtcScriptPubKeyResult {
+  optional string asm = 10;
+  optional string hex = 11;
+  optional int32 reqSigs = 12;
+  optional string type = 13;
+  repeated string addresses = 14;
+}
+
+message SkyTx {
+  optional uint32 length = 10;
+  optional int32 type = 11;
+  optional string hash = 12;
+  optional string inner_hash = 13;
+  repeated string sigs = 14;
+  repeated string inputs = 15;
+  repeated SkyTxOutput outputs = 16;
+}
+
+message SkyTxOutput {
+  optional string hash = 10;
+  optional string address = 11;
+  optional string coins = 12;
+  optional uint64 hours = 13;
 }

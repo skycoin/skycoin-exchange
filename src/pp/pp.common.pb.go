@@ -46,11 +46,17 @@ It has these top-level messages:
 	InjectTxnReq
 	InjectTxnRes
 	GetTxReq
+	Tx
 	GetTxRes
 	GetRawTxReq
 	GetRawTxRes
-	DecodeRawTxReq
-	DecodeRawTxRes
+	BtcTx
+	BtcVin
+	BtcScriptSig
+	BtcVout
+	BtcScriptPubKeyResult
+	SkyTx
+	SkyTxOutput
 */
 package pp
 
