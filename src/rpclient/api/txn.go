@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"errors"
 	"net/http"
 
@@ -44,16 +43,9 @@ func InjectTx(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			txb, err := hex.DecodeString(tx)
-			if err != nil {
-				logger.Error("error tx")
-				rlt = pp.MakeErrRes(errors.New("error tx"))
-				break
-			}
-
 			req := pp.InjectTxnReq{
 				CoinType: pp.PtrString(tp),
-				Tx:       txb,
+				Tx:       pp.PtrString(tx),
 			}
 
 			enc_req, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
