@@ -1,8 +1,6 @@
 package api
 
 import (
-	"bytes"
-
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
@@ -33,14 +31,14 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			}
 
 			// decode tx string into structed tx.
-			tx, err := gateway.DecodeRawTx(bytes.NewBuffer(req.GetTx()))
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
+			// tx, err := gateway.DecodeRawTx(bytes.NewBuffer(req.GetTx()))
+			// if err != nil {
+			// 	rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+			// 	break
+			// }
 
 			// inject tx.
-			txid, err := gateway.InjectTx(tx)
+			txid, err := gateway.InjectTx(req.GetTx())
 			// txid, err := injectTx(tp, req.GetTx())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -65,36 +63,35 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			req := pp.GetTxReq{}
 			if err := getRequest(c, &req); err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			gateway, err := coin.GetGateway(tp)
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 			tx, err := gateway.GetTx(req.GetTxid())
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			tb, err := tx.Bytes()
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			res := pp.GetTxRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
 				CoinType: req.CoinType,
-				Tx:       pp.PtrString(string(tb)),
+				Tx:       tx,
 			}
 			reply(c, &res)
 			return
