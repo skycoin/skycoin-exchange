@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
 type BlkExplrUtxo struct {
@@ -77,15 +79,16 @@ func getUtxosBlkExplr(addrs []string) ([]Utxo, error) {
 }
 
 // get tx verbose from blockexplorer.com
-func getTxVerboseExplr(txid string) (*TxRawResult, error) {
+func getTxVerboseExplr(txid string) (*pp.Tx, error) {
 	d, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/tx/%s", txid))
 	if err != nil {
 		return nil, err
 	}
-	tx := TxRawResult{}
-	if err := json.Unmarshal(d, &tx); err != nil {
+	tx := pp.Tx{}
+	if err := json.Unmarshal(d, &tx.Btc); err != nil {
 		return nil, err
 	}
+	logger.Debug("%v", tx)
 	return &tx, nil
 }
 
