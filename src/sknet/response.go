@@ -1,9 +1,9 @@
 package sknet
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"io"
 	"net"
 )
 
@@ -16,7 +16,7 @@ type ResponseWriter interface {
 // Response concrete response writer.
 type Response struct {
 	c    net.Conn
-	Body *bytes.Buffer
+	Body io.Reader
 }
 
 // Write write data directly.
