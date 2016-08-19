@@ -94,7 +94,7 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 			res := pp.GetTxRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
 				CoinType: req.CoinType,
-				Tx:       pp.PtrString(string(tb))
+				Tx:       pp.PtrString(string(tb)),
 			}
 			reply(c, &res)
 			return
@@ -126,6 +126,7 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 			}
 			rawtx, err := gateway.GetRawTx(req.GetTxid())
 			if err != nil {
+				logger.Error("%s", err)
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}

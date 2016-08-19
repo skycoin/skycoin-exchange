@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/skycoin/encoder"
-	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 	skycoin "github.com/skycoin/skycoin/src/coin"
 )
@@ -75,21 +74,6 @@ func BroadcastTx(tx Transaction) (string, error) {
 	return "", errors.New(rslt.Reason)
 }
 
-// GetTxByID get skycoin transaction by txid.
-func GetTxByID(txid string) (*TxRawResult, error) {
-	url := fmt.Sprintf("%s/transaction?txid=%s", ServeAddr, txid)
-	rsp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer rsp.Body.Close()
-	txRlt := TxRawResult{}
-	if err := json.NewDecoder(rsp.Body).Decode(&txRlt); err != nil {
-		return nil, err
-	}
-	return &txRlt, nil
-}
-
 func (tx *Transaction) Serialize() ([]byte, error) {
 	return tx.Transaction.Serialize(), nil
 }
@@ -104,8 +88,4 @@ func (tx *Transaction) Deserialize(r io.Reader) error {
 		return err
 	}
 	return nil
-}
-
-func (tx *Transaction) ToPPTx() *pp.Tx {
-	return &pp.Tx{}
 }
