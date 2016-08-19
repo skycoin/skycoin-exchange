@@ -63,23 +63,6 @@ func (m *InjectTxnRes) GetTxid() string {
 	return ""
 }
 
-type Tx struct {
-	Value            *string `protobuf:"bytes,10,opt,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *Tx) Reset()                    { *m = Tx{} }
-func (m *Tx) String() string            { return proto.CompactTextString(m) }
-func (*Tx) ProtoMessage()               {}
-func (*Tx) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{2} }
-
-func (m *Tx) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
-	}
-	return ""
-}
-
 type GetTxReq struct {
 	CoinType         *string `protobuf:"bytes,10,opt,name=coin_type" json:"coin_type,omitempty"`
 	Txid             *string `protobuf:"bytes,20,opt,name=txid" json:"txid,omitempty"`
@@ -89,7 +72,7 @@ type GetTxReq struct {
 func (m *GetTxReq) Reset()                    { *m = GetTxReq{} }
 func (m *GetTxReq) String() string            { return proto.CompactTextString(m) }
 func (*GetTxReq) ProtoMessage()               {}
-func (*GetTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{3} }
+func (*GetTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{2} }
 
 func (m *GetTxReq) GetCoinType() string {
 	if m != nil && m.CoinType != nil {
@@ -108,14 +91,14 @@ func (m *GetTxReq) GetTxid() string {
 type GetTxRes struct {
 	Result           *Result `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
 	CoinType         *string `protobuf:"bytes,10,opt,name=coin_type" json:"coin_type,omitempty"`
-	Tx               *Tx     `protobuf:"bytes,20,opt,name=tx" json:"tx,omitempty"`
+	Tx               *string `protobuf:"bytes,20,opt,name=tx" json:"tx,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *GetTxRes) Reset()                    { *m = GetTxRes{} }
 func (m *GetTxRes) String() string            { return proto.CompactTextString(m) }
 func (*GetTxRes) ProtoMessage()               {}
-func (*GetTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{4} }
+func (*GetTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{3} }
 
 func (m *GetTxRes) GetResult() *Result {
 	if m != nil {
@@ -131,11 +114,11 @@ func (m *GetTxRes) GetCoinType() string {
 	return ""
 }
 
-func (m *GetTxRes) GetTx() *Tx {
-	if m != nil {
-		return m.Tx
+func (m *GetTxRes) GetTx() string {
+	if m != nil && m.Tx != nil {
+		return *m.Tx
 	}
-	return nil
+	return ""
 }
 
 type GetRawTxReq struct {
@@ -147,7 +130,7 @@ type GetRawTxReq struct {
 func (m *GetRawTxReq) Reset()                    { *m = GetRawTxReq{} }
 func (m *GetRawTxReq) String() string            { return proto.CompactTextString(m) }
 func (*GetRawTxReq) ProtoMessage()               {}
-func (*GetRawTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{5} }
+func (*GetRawTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{4} }
 
 func (m *GetRawTxReq) GetCoinType() string {
 	if m != nil && m.CoinType != nil {
@@ -173,7 +156,7 @@ type GetRawTxRes struct {
 func (m *GetRawTxRes) Reset()                    { *m = GetRawTxRes{} }
 func (m *GetRawTxRes) String() string            { return proto.CompactTextString(m) }
 func (*GetRawTxRes) ProtoMessage()               {}
-func (*GetRawTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{6} }
+func (*GetRawTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{5} }
 
 func (m *GetRawTxRes) GetResult() *Result {
 	if m != nil {
@@ -205,7 +188,7 @@ type DecodeRawTxReq struct {
 func (m *DecodeRawTxReq) Reset()                    { *m = DecodeRawTxReq{} }
 func (m *DecodeRawTxReq) String() string            { return proto.CompactTextString(m) }
 func (*DecodeRawTxReq) ProtoMessage()               {}
-func (*DecodeRawTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{7} }
+func (*DecodeRawTxReq) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{6} }
 
 func (m *DecodeRawTxReq) GetCoinType() string {
 	if m != nil && m.CoinType != nil {
@@ -224,14 +207,14 @@ func (m *DecodeRawTxReq) GetRawtx() string {
 type DecodeRawTxRes struct {
 	Result           *Result `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
 	CoinType         *string `protobuf:"bytes,10,opt,name=coin_type" json:"coin_type,omitempty"`
-	Tx               *Tx     `protobuf:"bytes,20,opt,name=tx" json:"tx,omitempty"`
+	Tx               *string `protobuf:"bytes,20,opt,name=tx" json:"tx,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *DecodeRawTxRes) Reset()                    { *m = DecodeRawTxRes{} }
 func (m *DecodeRawTxRes) String() string            { return proto.CompactTextString(m) }
 func (*DecodeRawTxRes) ProtoMessage()               {}
-func (*DecodeRawTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{8} }
+func (*DecodeRawTxRes) Descriptor() ([]byte, []int) { return fileDescriptor10, []int{7} }
 
 func (m *DecodeRawTxRes) GetResult() *Result {
 	if m != nil {
@@ -247,17 +230,16 @@ func (m *DecodeRawTxRes) GetCoinType() string {
 	return ""
 }
 
-func (m *DecodeRawTxRes) GetTx() *Tx {
-	if m != nil {
-		return m.Tx
+func (m *DecodeRawTxRes) GetTx() string {
+	if m != nil && m.Tx != nil {
+		return *m.Tx
 	}
-	return nil
+	return ""
 }
 
 func init() {
 	proto.RegisterType((*InjectTxnReq)(nil), "pp.InjectTxnReq")
 	proto.RegisterType((*InjectTxnRes)(nil), "pp.InjectTxnRes")
-	proto.RegisterType((*Tx)(nil), "pp.Tx")
 	proto.RegisterType((*GetTxReq)(nil), "pp.GetTxReq")
 	proto.RegisterType((*GetTxRes)(nil), "pp.GetTxRes")
 	proto.RegisterType((*GetRawTxReq)(nil), "pp.GetRawTxReq")
@@ -269,7 +251,7 @@ func init() {
 func init() { proto.RegisterFile("pp.transaction.proto", fileDescriptor10) }
 
 var fileDescriptor10 = []byte{
-	// 241 bytes of a gzipped FileDescriptorProto
+	// 214 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0x12, 0x29, 0x28, 0xd0, 0x2b,
 	0x29, 0x4a, 0xcc, 0x2b, 0x4e, 0x4c, 0x2e, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9,
 	0x17, 0x62, 0x2a, 0x28, 0x90, 0xe2, 0x07, 0xca, 0x24, 0xe7, 0xe7, 0xe6, 0xc2, 0x04, 0x95, 0x74,
@@ -278,12 +260,10 @@ var fileDescriptor10 = []byte{
 	0x38, 0x85, 0xb8, 0xb8, 0x98, 0x4a, 0x2a, 0x24, 0x44, 0x80, 0x6c, 0x1e, 0x25, 0x0b, 0x14, 0xe5,
 	0xc5, 0x42, 0x52, 0x5c, 0x6c, 0x45, 0xa9, 0xc5, 0xa5, 0x39, 0x25, 0x12, 0x8c, 0x0a, 0x4c, 0x1a,
 	0xdc, 0x46, 0x5c, 0x7a, 0x40, 0x0b, 0x82, 0xc0, 0x22, 0x42, 0x3c, 0x5c, 0x2c, 0x25, 0x15, 0x99,
-	0x29, 0x10, 0x53, 0x94, 0x84, 0xb9, 0x98, 0x42, 0x2a, 0x84, 0x78, 0xb9, 0x58, 0xcb, 0x12, 0x73,
-	0x4a, 0xa1, 0x46, 0x2b, 0x69, 0x73, 0x71, 0xb8, 0xa7, 0x02, 0xcd, 0xc2, 0x61, 0x33, 0xcc, 0x04,
-	0x11, 0xb0, 0x62, 0x5f, 0xb8, 0x62, 0xfc, 0xf6, 0x62, 0x31, 0x48, 0x08, 0xee, 0x05, 0x6e, 0x23,
-	0x36, 0x90, 0xd2, 0x90, 0x0a, 0x25, 0x3d, 0x2e, 0x6e, 0xa0, 0x71, 0x41, 0x89, 0xe5, 0x44, 0x5a,
-	0xef, 0x8d, 0xac, 0x9e, 0x64, 0x17, 0x00, 0x3d, 0x5e, 0x94, 0x58, 0x0e, 0x75, 0x04, 0xa7, 0x92,
-	0x11, 0x17, 0x9f, 0x4b, 0x6a, 0x72, 0x7e, 0x4a, 0x2a, 0x3e, 0xfb, 0xd1, 0xf4, 0x04, 0xa3, 0xe9,
-	0xa1, 0x46, 0x28, 0x00, 0x02, 0x00, 0x00, 0xff, 0xff, 0xc3, 0xbe, 0xc8, 0xda, 0x2b, 0x02, 0x00,
-	0x00,
+	0x29, 0x10, 0x53, 0x94, 0xb4, 0xb9, 0x38, 0xdc, 0x53, 0x81, 0xda, 0x70, 0x58, 0x02, 0x53, 0x2c,
+	0x02, 0x56, 0xec, 0x0a, 0x57, 0x8c, 0xdf, 0x0a, 0xbc, 0xae, 0xe5, 0x54, 0xd2, 0xe3, 0xe2, 0x06,
+	0x1a, 0x13, 0x94, 0x58, 0x4e, 0xa4, 0xb5, 0xde, 0xc8, 0xea, 0x49, 0xb6, 0x99, 0x97, 0x8b, 0xb5,
+	0x28, 0xb1, 0x1c, 0x6e, 0xb9, 0x11, 0x17, 0x9f, 0x4b, 0x6a, 0x72, 0x7e, 0x4a, 0x2a, 0x3e, 0xfb,
+	0xd1, 0xf4, 0x78, 0xa3, 0xe9, 0xa1, 0xc4, 0xf7, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd5, 0x1d,
+	0xad, 0xf9, 0x06, 0x02, 0x00, 0x00,
 }

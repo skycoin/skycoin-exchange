@@ -45,7 +45,6 @@ It has these top-level messages:
 	GetUtxoRes
 	InjectTxnReq
 	InjectTxnRes
-	Tx
 	GetTxReq
 	GetTxRes
 	GetRawTxReq

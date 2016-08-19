@@ -94,7 +94,7 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 			res := pp.GetTxRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
 				CoinType: req.CoinType,
-				Tx:       pp.NewTx(string(tb)),
+				Tx:       pp.PtrString(string(tb))
 			}
 			reply(c, &res)
 			return
