@@ -13,10 +13,6 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 	return getRawtxExplr(txid)
 }
 
-// func (gw *Gateway) DecodeRawTx(r io.Reader) (coin.Transaction, error) {
-// 	return nil, nil
-// }
-
 func (gw *Gateway) InjectTx(rawtx string) (string, error) {
-	return "new bitcoin transaction", nil
+	return BroadcastTx(rawtx)
 }
