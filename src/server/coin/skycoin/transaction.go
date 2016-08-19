@@ -75,6 +75,21 @@ func BroadcastTx(tx Transaction) (string, error) {
 	return "", errors.New(rslt.Reason)
 }
 
+// GetTxByID get skycoin transaction by txid.
+func GetTxByID(txid string) (*TxRawResult, error) {
+	url := fmt.Sprintf("%s/transaction?txid=%s", ServeAddr, txid)
+	rsp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+	txRlt := TxRawResult{}
+	if err := json.NewDecoder(rsp.Body).Decode(&txRlt); err != nil {
+		return nil, err
+	}
+	return &txRlt, nil
+}
+
 func (tx *Transaction) Serialize() ([]byte, error) {
 	return tx.Transaction.Serialize(), nil
 }

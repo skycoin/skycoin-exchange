@@ -9,7 +9,7 @@ import (
 type Gateway struct{}
 
 func (gw *Gateway) GetTx(txid string) (coin.Transaction, error) {
-	return nil, nil
+	return GetTxByID(txid)
 }
 
 func (gw *Gateway) GetRawTx(txid string) (string, error) {
