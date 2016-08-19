@@ -30,16 +30,8 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			// decode tx string into structed tx.
-			// tx, err := gateway.DecodeRawTx(bytes.NewBuffer(req.GetTx()))
-			// if err != nil {
-			// 	rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-			// 	break
-			// }
-
 			// inject tx.
 			txid, err := gateway.InjectTx(req.GetTx())
-			// txid, err := injectTx(tp, req.GetTx())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
