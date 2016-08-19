@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin/src/visor"
 )
 
 type Gateway struct{}
@@ -17,11 +18,11 @@ func (gw *Gateway) GetTx(txid string) (*pp.Tx, error) {
 		return nil, err
 	}
 	defer rsp.Body.Close()
-	txRlt := pp.Tx{}
-	if err := json.NewDecoder(rsp.Body).Decode(&txRlt.Sky); err != nil {
+	tx := visor.TransactionResult{}
+	if err := json.NewDecoder(rsp.Body).Decode(&tx); err != nil {
 		return nil, err
 	}
-	return &txRlt, nil
+	return newPPTx(&tx), nil
 }
 
 // GetRawTx get raw tx by txid.
@@ -47,4 +48,34 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 
 func (gw *Gateway) InjectTx(rawtx string) (string, error) {
 	return "new skycoin transaction", nil
+}
+
+func newPPTx(tx *visor.TransactionResult) *pp.Tx {
+	return &pp.Tx{
+		Sky: &pp.SkyTx{
+			Length:    pp.PtrUint32(tx.Transaction.Length),
+			Type:      pp.PtrInt32(int32(tx.Transaction.Type)),
+			Hash:      pp.PtrString(tx.Transaction.Hash),
+			InnerHash: pp.PtrString(tx.Transaction.InnerHash),
+			Sigs:      tx.Transaction.Sigs,
+			Inputs:    tx.Transaction.In,
+			Outputs:   newSkyTxOutputArray(tx.Transaction.Out),
+			Unknow:    pp.PtrBool(tx.Status.Unknown),
+			Confirmed: pp.PtrBool(tx.Status.Confirmed),
+			Height:    pp.PtrUint64(tx.Status.Height),
+		},
+	}
+}
+
+func newSkyTxOutputArray(ops []visor.ReadableTransactionOutput) []*pp.SkyTxOutput {
+	outs := make([]*pp.SkyTxOutput, len(ops))
+	for i, op := range ops {
+		outs[i] = &pp.SkyTxOutput{
+			Hash:    pp.PtrString(op.Hash),
+			Address: pp.PtrString(op.Address),
+			Coins:   pp.PtrString(op.Coins),
+			Hours:   pp.PtrUint64(op.Hours),
+		}
+	}
+	return outs
 }
