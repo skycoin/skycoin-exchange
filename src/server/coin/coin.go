@@ -2,7 +2,8 @@ package coin
 
 import (
 	"fmt"
-	"io"
+
+	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
 // gateways records the handlers for different coin.
@@ -57,6 +58,7 @@ func TypeFromStr(ct string) (Type, error) {
 // Transaction tx interface
 type Transaction interface {
 	Bytes() ([]byte, error)
+	ToPPTx() *pp.Tx
 }
 
 // Gateway interface for handlering all coin relevance things.
@@ -66,10 +68,10 @@ type Gateway interface {
 
 // TxHandler transaction handlers interface for gateway.
 type TxHandler interface {
-	GetTx(txid string) (Transaction, error)
+	GetTx(txid string) (*pp.Tx, error)
 	GetRawTx(txid string) (string, error)
-	DecodeRawTx(r io.Reader) (Transaction, error)
-	InjectTx(tx Transaction) (string, error)
+	// DecodeRawTx(r io.Reader) (Transaction, error)
+	InjectTx(rawtx string) (string, error)
 }
 
 // RegisterGateway register gateway for specific coin.
