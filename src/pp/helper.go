@@ -102,59 +102,8 @@ func Decrypt(in []byte, nonce []byte, pubkey string, seckey string) (data []byte
 	return
 }
 
-// func MakeEncryptReq(r interface{}, pubkey string, seckey string) (req EncryptReq, err error) {
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			err = errors.New("encrypt faild")
-// 		}
-// 	}()
-// 	sp := cipher.MustPubKeyFromHex(pubkey)
-// 	cs := cipher.MustSecKeyFromHex(seckey)
-// 	cp := cipher.PubKeyFromSecKey(cs).Hex()
-// 	nonce := cipher.RandByte(chacha20.NonceSize)
-// 	d, err := json.Marshal(r)
-// 	if err != nil {
-// 		return EncryptReq{}, err
-// 	}
-// 	key := cipher.ECDH(sp, cs)
-// 	ed, err := cipher.Chacha20Encrypt([]byte(d), key, nonce)
-// 	if err != nil {
-// 		return EncryptReq{}, err
-// 	}
-// 	return EncryptReq{
-// 		Pubkey:      &cp,
-// 		Nonce:       nonce,
-// 		Encryptdata: ed,
-// 	}, nil
-// }
-//
-// func DecryptRes(res EncryptRes, pubkey string, seckey string, v interface{}) (err error) {
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			err = errors.New("encrypt faild")
-// 		}
-// 	}()
-//
-// 	p := cipher.MustPubKeyFromHex(pubkey)
-// 	s := cipher.MustSecKeyFromHex(seckey)
-// 	key := cipher.ECDH(p, s)
-// 	d, err := cipher.Chacha20Decrypt(res.Encryptdata, key, res.GetNonce())
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	// unmarshal the data
-// 	return json.Unmarshal(d, v)
-// }
-
 func BytesToPubKey(b []byte) cipher.PubKey {
 	pk := cipher.PubKey{}
 	copy(pk[:], b[:])
 	return pk
-}
-
-func NewTx(data string) *Tx {
-	return &Tx{
-		Value: PtrString(data),
-	}
 }
