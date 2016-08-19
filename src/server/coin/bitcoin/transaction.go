@@ -15,7 +15,6 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
 type BlockChainInfoTxOut struct {
@@ -241,10 +240,6 @@ func createTxOut(outCoins uint64, addr btcutil.Address) *wire.TxOut {
 	}
 	txout := wire.NewTxOut(int64(outCoins), script)
 	return txout
-}
-
-func (tx *Transaction) ToPPTx() *pp.Tx {
-	return &pp.Tx{}
 }
 
 func (tx *Transaction) Serialize() ([]byte, error) {
