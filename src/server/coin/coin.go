@@ -56,9 +56,6 @@ func TypeFromStr(ct string) (Type, error) {
 
 // Transaction tx interface
 type Transaction interface {
-	// Serialize() ([]byte, error)
-	// Deserialize(r io.Reader) error
-	// ToPPTx() *pp.Tx // translate to *pp.Tx
 	Bytes() ([]byte, error)
 }
 
