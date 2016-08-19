@@ -12,9 +12,9 @@ message InjectTxnRes {
   optional string txid = 10;
 }
 
-message Tx {
-  optional string value = 10;
-}
+// message Tx {
+//   optional string value = 10;
+// }
 
 message GetTxReq {
   optional string coin_type = 10;
@@ -25,7 +25,7 @@ message GetTxRes {
   required Result result = 1;
 
   optional string coin_type = 10;
-  optional Tx tx = 20;
+  optional string tx = 20;
 }
 
 message GetRawTxReq {
@@ -49,5 +49,5 @@ message DecodeRawTxRes {
   required Result result = 1;
 
   optional string coin_type = 10;
-  optional Tx tx = 20;
+  optional string tx = 20;
 }
