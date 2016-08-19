@@ -105,19 +105,12 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*Transaction, error)
 // The transaction is broadcast to the bitcoin network using this API:
 //    https://github.com/bitpay/insight-api
 //
-func BroadcastTx(tx *Transaction) (string, error) {
-	// buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	d, err := tx.Serialize()
-	if err != nil {
-		return "", err
-	}
-	hexstr := hex.EncodeToString(d)
-
+func BroadcastTx(rawtx string) (string, error) {
 	url := "https://insight.bitpay.com/api/tx/send"
 	contentType := "application/json"
 
 	// fmt.Printf("Sending transaction to: %s\n", url)
-	sendTxJson := &sendTxJson{RawTx: hexstr}
+	sendTxJson := &sendTxJson{RawTx: rawtx}
 	j, err := json.Marshal(sendTxJson)
 	if err != nil {
 		return "", fmt.Errorf("Broadcasting the tx failed: %v", err)
