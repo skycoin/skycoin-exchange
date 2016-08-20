@@ -1,124 +1,136 @@
-package account
+package account_test
 
-// type funcHandler func(ema AccountManager)
+import (
+	"os"
+	"path/filepath"
+	"testing"
 
-// func DataMaintainer(f funcHandler) {
-// 	// create
-// 	ema := NewExchangeAccountManager()
-// 	// do test work
-// 	f(ema)
-// 	// clean wallet data.
-// 	removeContents(wallet.WltDir)
-// 	// clear GWallet
-// 	// wallet.Reload()
-// }
+	"github.com/skycoin/skycoin-exchange/src/server/account"
+	"github.com/skycoin/skycoin-exchange/src/server/coin"
+)
 
-// func TestCreateAccountConcurrent(t *testing.T) {
-// 	DataMaintainer(func(eam AccountManager) {
-// 		wg := sync.WaitGroup{}
-// 		var count int = 10
-// 		ac := make(chan Accounter, count)
-// 		for i := 0; i < count; i++ {
-// 			wg.Add(1)
-// 			go func(wg *sync.WaitGroup) {
-// 				a, _, err := eam.CreateAccount()
-// 				assert.Nil(t, err)
-// 				ac <- a
-// 				wg.Done()
-// 			}(&wg)
-// 		}
-//
-// 		wg.Wait()
-// 		close(ac)
-// 		actMap := make(map[AccountID]bool, count)
-// 		for a := range ac {
-// 			actMap[a.GetAccountID()] = true
-// 		}
-// 		assert.Equal(t, len(actMap), count)
-// 	})
-// }
+func TestInitDir(t *testing.T) {
+	tmpDir := os.TempDir()
+	dir := tmpDir + "/.skycoin-exchange/account"
+	account.InitDir(dir)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Error("InitDir faild")
+		return
+	}
 
-// TestCreateNewBtcAddress create bitcoin address concurrently.
-// func TestCreateNewBtcAddress(t *testing.T) {
-// 	DataMaintainer(func(eam AccountManager) {
-// 		// ema.CreateAccount()
-// 		a, _, err := eam.CreateAccount()
-// 		id := a.GetID()
-// 		assert.Nil(t, err)
-// 		wg := sync.WaitGroup{}
-// 		var count int = 10
-// 		addrC := make(chan string, count)
-// 		for i := 0; i < count; i++ {
-// 			wg.Add(1)
-// 			go func(wg *sync.WaitGroup) {
-// 				an, err := eam.GetAccount(id)
-// 				assert.Nil(t, err)
-// 				addr := an.GetNewAddress(coin.Bitcoin)
-// 				addrC <- addr
-// 				wg.Done()
-// 			}(&wg)
-// 		}
-// 		wg.Wait()
-// 		close(addrC)
-// 		addrMap := make(map[string]bool, count)
-// 		for addr := range addrC {
-// 			addrMap[addr] = true
-// 		}
-// 		assert.Equal(t, count, len(addrMap))
-// 	})
-// }
+	// clear the dir
+	os.RemoveAll(filepath.Dir(dir))
+}
 
-// func TestMsgAuth(t *testing.T) {
-// DataMaintainer(func(am AccountManager) {
-// 	_, s, err := am.CreateAccount()
-// 	assert.Nil(t, err)
-// 	addr := cipher.AddressFromSecKey(s)
-//
-// 	ma := CreateMsgAuth(s, MsgAuth{Msg: []byte{"hello world"}})
-//
-// 	CheckMsgAuth(ma)
-//
-//
-// 	// cipher.a.GetAccountID()
-// })
-// }
+func TestGetID(t *testing.T) {
+	a := account.ExchangeAccount{
+		ID: "1234",
+	}
 
-// func TestSetBalance(t *testing.T) {
-// 	ah := newAccountHelper(t)
-// 	ah.Account.SetBalance(coin.Bitcoin, Balance(10))
-// 	ah.Account.SetBalance(coin.Skycoin, Balance(20))
-// 	assert.Equal(t, ah.Account.balance[coin.Bitcoin], Balance(10))
-// 	assert.Equal(t, ah.Account.balance[coin.Skycoin], Balance(20))
-// }
-//
-// func TestGetBalance(t *testing.T) {
-// 	ah := newAccountHelper(t)
-// 	ah.Account.SetBalance(coin.Bitcoin, Balance(10))
-// 	ah.Account.SetBalance(coin.Skycoin, Balance(20))
-//
-// 	bb, err := ah.Account.GetBalance(coin.Bitcoin)
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, bb, Balance(10))
-// 	sb, err := ah.Account.GetBalance(coin.Skycoin)
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, sb, Balance(20))
-// }
+	if a.GetID() != "1234" {
+		t.Error("get account id failed")
+		return
+	}
+}
 
-// func removeContents(dir string) error {
-// 	d, err := os.Open(dir)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer d.Close()
-// 	names, err := d.Readdirnames(-1)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for _, name := range names {
-// 		err = os.RemoveAll(filepath.Join(dir, name))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
+func TestGetBalance(t *testing.T) {
+	a := account.ExchangeAccount{
+		Balance: map[coin.Type]uint64{
+			coin.Bitcoin: 90000,
+			coin.Skycoin: 450000,
+		},
+	}
+
+	if a.GetBalance(coin.Bitcoin) != 90000 {
+		t.Error("get bitcoin balance failed")
+		return
+	}
+
+	if a.GetBalance(coin.Skycoin) != 450000 {
+		t.Error("get skycoin balance failed")
+		return
+	}
+}
+
+func TestIncreaseBalance(t *testing.T) {
+	var btcInit uint64 = 90000
+	var skyInit uint64 = 450000
+	testData := map[coin.Type][]struct {
+		V      uint64
+		Expect uint64
+	}{
+		coin.Bitcoin: {
+			{10000, 100000},
+			{20000, 110000},
+			{1000, 91000},
+			{100, 90100},
+		},
+		coin.Skycoin: {
+			{10000, 460000},
+			{30000, 480000},
+			{50000, 500000},
+		},
+	}
+
+	for cp, tds := range testData {
+		for _, d := range tds {
+			a := account.ExchangeAccount{
+				Balance: map[coin.Type]uint64{
+					coin.Bitcoin: btcInit,
+					coin.Skycoin: skyInit,
+				},
+			}
+			if err := a.IncreaseBalance(cp, d.V); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if a.GetBalance(cp) != d.Expect {
+				t.Errorf("decrease %s balance failed, v:%d, expect:%d", cp, b, d.Expect)
+				return
+			}
+		}
+	}
+}
+
+func TestDecreaseBalance(t *testing.T) {
+	var btcInit uint64 = 90000
+	var skyInit uint64 = 450000
+	testData := map[coin.Type][]struct {
+		V      uint64
+		Expect uint64
+	}{
+		coin.Bitcoin: {
+			{10000, 80000},
+			{20000, 70000},
+			{1000, 89000},
+			{100, 89900},
+		},
+		coin.Skycoin: {
+			{10000, 440000},
+			{30000, 420000},
+			{50000, 400000},
+		},
+	}
+
+	for cp, tds := range testData {
+		for _, d := range tds {
+			a := account.ExchangeAccount{
+				Balance: map[coin.Type]uint64{
+					coin.Bitcoin: btcInit,
+					coin.Skycoin: skyInit,
+				},
+			}
+			if err := a.DecreaseBalance(cp, d.V); err != nil {
+				t.Error(err)
+				return
+			}
+			b := a.GetBalance(cp)
+			if b != d.Expect {
+				t.Errorf("decrease %s balance failed, v:%d, expect:%d", cp, b, d.Expect)
+				return
+			}
+		}
+	}
+
+}
