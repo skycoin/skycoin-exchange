@@ -42,12 +42,8 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 	return res.Rawtx, nil
 }
 
-// func (gw *Gateway) DecodeRawTx(r io.Reader) (coin.Transaction, error) {
-// 	return nil, nil
-// }
-
 func (gw *Gateway) InjectTx(rawtx string) (string, error) {
-	return "new skycoin transaction", nil
+	BroadcastTx(rawt)
 }
 
 func newPPTx(tx *visor.TransactionResult) *pp.Tx {
