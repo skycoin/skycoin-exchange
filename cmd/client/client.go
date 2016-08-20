@@ -4,11 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
 
 	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/skycoin-exchange/src/rpclient"
 	"github.com/skycoin/skycoin/src/cipher"
+	"github.com/skycoin/skycoin/src/util"
 )
 
 const (
@@ -38,7 +42,19 @@ func main() {
 	}
 
 	svr := rpclient.New(cfg)
-	svr.Run(fmt.Sprintf(":%d", *port))
+
+	quit := make(chan int)
+	go catchInterrupt(quit)
+
+	// Watch for SIGUSR1
+	go catchDebug()
+
+	staticDir := util.ResolveResourceDirectory("./src/web-app/static")
+	svr.Run(fmt.Sprintf("localhost:%d", *port), staticDir)
+
+	<-quit
+
+	logger.Info("Goodbye")
 }
 
 func initLogging(level logging.Level, color bool) {
@@ -52,4 +68,42 @@ func initLogging(level logging.Level, color bool) {
 	}
 
 	logging.SetBackend(bkLvd)
+}
+
+func catchInterrupt(quit chan<- int) {
+	sigchan := make(chan os.Signal, 1)
+	signal.Notify(sigchan, os.Interrupt)
+	<-sigchan
+	signal.Stop(sigchan)
+	quit <- 1
+}
+
+// Catches SIGUSR1 and prints internal program state
+func catchDebug() {
+	sigchan := make(chan os.Signal, 1)
+	//signal.Notify(sigchan, syscall.SIGUSR1)
+	signal.Notify(sigchan, syscall.Signal(0xa)) // SIGUSR1 = Signal(0xa)
+	for {
+		select {
+		case <-sigchan:
+			printProgramStatus()
+		}
+	}
+}
+
+func printProgramStatus() {
+	fn := "goroutine.prof"
+	logger.Debug("Writing goroutine profile to %s", fn)
+	p := pprof.Lookup("goroutine")
+	f, err := os.Create(fn)
+	defer f.Close()
+	if err != nil {
+		logger.Error("%v", err)
+		return
+	}
+	err = p.WriteTo(f, 2)
+	if err != nil {
+		logger.Error("%v", err)
+		return
+	}
 }
