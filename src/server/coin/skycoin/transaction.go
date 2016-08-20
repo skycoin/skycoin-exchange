@@ -37,12 +37,7 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transac
 }
 
 // BroadcastTx
-func BroadcastTx(tx Transaction) (string, error) {
-	rawtx, err := tx.Serialize()
-	if err != nil {
-		return "", err
-	}
-
+func BroadcastTx(rawtx string) (string, error) {
 	v := struct {
 		Rawtx []byte `json:"rawtx"`
 	}{
