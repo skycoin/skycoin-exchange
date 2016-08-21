@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
+// CreateOrder create order through exchange server.
 func CreateOrder(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rlt := &pp.EmptyRes{}
@@ -20,13 +21,13 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 			}
 			rawReq := pp.OrderReq{}
 			if err := bindJSON(r, &rawReq); err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -34,20 +35,20 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 			rawReq.AccountId = &id
 			req, err := makeEncryptReq(&rawReq, se.GetServKey().Hex(), key)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			resp, err := sknet.Get(se.GetServAddr(), fmt.Sprintf("/auth/create/order"), req)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
 			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.OrderRes{})
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
@@ -58,10 +59,12 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 	}
 }
 
+// GetBidOrders get bid orders through exchange server.
 func GetBidOrders(se Servicer) http.HandlerFunc {
 	return getOrders(se, "bid")
 }
 
+// GetAskOrders get ask orders through exchange server.
 func GetAskOrders(se Servicer) http.HandlerFunc {
 	return getOrders(se, "ask")
 }
@@ -77,7 +80,7 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 			}
 			_, key, err := getAccountAndKey(r)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -91,14 +94,14 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 
 			start, err := strconv.ParseInt(st, 10, 64)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			end, err := strconv.ParseInt(ed, 10, 64)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -112,20 +115,20 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 
 			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), key)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/orders", req)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
 			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetOrderRes{})
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}

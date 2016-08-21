@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
+// GetUtxos get utxos through exchange server.
 func GetUtxos(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -20,7 +21,7 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 			}
 			_, key, err := getAccountAndKey(r)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -47,21 +48,21 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 				CoinType:  pp.PtrString(tp),
 				Addresses: addrArray,
 			}
-			enc_req, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
+			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/utxos", enc_req)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/utxos", encReq)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetUtxoRes{})
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
