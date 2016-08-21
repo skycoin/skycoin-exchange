@@ -17,11 +17,11 @@ type Walleter interface {
 	GetID() string                                     // get wallet id.
 	SetID(id string)                                   // set wallet id.
 	InitSeed(seed string)                              // init the wallet seed.
-	GetCoinType() coin.Type                            // get current wallet coin type.
-	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new address
+	GetCoinType() coin.Type                            // get the wallet coin type.
+	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
 	GetKeypair(addr string) (string, string)           // get pub/sec key pair of specific address
-	Save() error                                       // save the wallet into local disk.
+	Save(w io.Writer) error                            // save the wallet into writter
 	Load(r io.Reader) error                            // load wallet from reader.
 	Clear() error                                      // remove the wallet file from local disk.
 }
