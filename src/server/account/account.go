@@ -14,12 +14,10 @@ import (
 )
 
 var (
-	acntDir  string = filepath.Join(util.UserHome(), ".skycoin-exchange/account")
-	acntName string = "account.data"
-	logger          = logging.MustGetLogger("exchange.account")
+	acntDir  = filepath.Join(util.UserHome(), ".skycoin-exchange/account")
+	acntName = "account.data"
+	logger   = logging.MustGetLogger("exchange.account")
 )
-
-// type AccountID cipher.PubKey
 
 type Accounter interface {
 	GetID() string                               // return the account id.
