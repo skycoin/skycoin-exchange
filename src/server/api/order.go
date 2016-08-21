@@ -110,13 +110,13 @@ func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
 			tp, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				break
 			}
 			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				break
 			}
 			res := pp.GetOrderRes{

@@ -22,7 +22,7 @@ func (r *Request) Reset() {
 // 	}
 //
 // 	if err := json.Unmarshal(d, &req.Request); err != nil {
-// 		logger.Error("%s", err)
+// 		logger.Error(err.Error())
 // 		return err
 // 	}
 // 	return nil

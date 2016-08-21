@@ -198,7 +198,7 @@ func Read(r io.Reader, v interface{}) error {
 	switch r := v.(type) {
 	case *Request:
 		if err := json.Unmarshal(d, v); err != nil {
-			logger.Error("%s", err)
+			logger.Error(err.Error())
 			return err
 		}
 		return nil

@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skycoin/skycoin-exchange/src/server"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin_interface/bitcoin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
