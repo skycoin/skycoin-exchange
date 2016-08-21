@@ -3,7 +3,6 @@ package wallet
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -12,8 +11,7 @@ import (
 )
 
 type walletBase struct {
-	ID             string              `json:"id"` // wallet id
-	Type           string              `json:"type"`
+	ID             string              `json:"id"`                // wallet id
 	InitSeed       string              `json:"init_seed"`         // Init seed, used to recover the wallet.
 	Seed           string              `json:"seed"`              // used to track the latset seed
 	AddressEntries []coin.AddressEntry `json:"entries,omitempty"` // address entries.
@@ -47,16 +45,12 @@ func (wlt walletBase) GetKeypair(addr string) (string, string) {
 // Save save the wallet
 func (wlt *walletBase) Save() error {
 	fileName := wlt.ID + "." + wltExt
-	return util.SaveJSON(filepath.Join(wltDir, fileName), wlt, 0600)
+	return util.SaveJSON(filepath.Join(wltDir, fileName), wlt, 0777)
 }
 
 // Load load wallet from reader.
 func (wlt *walletBase) Load(r io.Reader) error {
-	d, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil
-	}
-	return json.Unmarshal(d, wlt)
+	return json.NewDecoder(r).Decode(wlt)
 }
 
 // Clear remove wallet file from local disk.
