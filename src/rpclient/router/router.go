@@ -42,3 +42,9 @@ func registerTxnHandlers(mux *http.ServeMux, se api.Servicer) {
 	mux.Handle("/api/v1/tx", api.GetTx(se))
 	mux.Handle("/api/v1/rawtx", api.GetRawTx(se))
 }
+
+// wallet handlers.
+func registerWalletHandlers(mux *http.ServeMux, se api.Servicer) {
+	mux.Handle("/api/v1/wallet", api.CreateWallet)
+	mux.Handle("/api/v1/wallet/address", api.NewLocalAddresss))
+}
