@@ -8,7 +8,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// TxnHandler transaction ahndler.
+// InjectTx broadcast transaction.
 func InjectTx(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -22,7 +22,7 @@ func InjectTx(se Servicer) http.HandlerFunc {
 			// get account key.
 			_, key, err := getAccountAndKey(r)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -48,23 +48,23 @@ func InjectTx(se Servicer) http.HandlerFunc {
 				Tx:       pp.PtrString(tx),
 			}
 
-			enc_req, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
+			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/inject/tx", enc_req)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/inject/tx", encReq)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
 			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, pp.InjectTxnRes{})
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
@@ -75,6 +75,7 @@ func InjectTx(se Servicer) http.HandlerFunc {
 	}
 }
 
+// GetTx get transaction.
 func GetTx(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -120,11 +121,12 @@ func GetTx(se Servicer) http.HandlerFunc {
 			sendJSON(w, res)
 			return
 		}
-		logger.Error("%s", rlt.GetResult().GetReason())
+		logger.Error(rlt.GetResult().GetReason())
 		sendJSON(w, rlt)
 	}
 }
 
+// GetRawTx get raw tx from exchange server.
 func GetRawTx(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -170,7 +172,14 @@ func GetRawTx(se Servicer) http.HandlerFunc {
 			sendJSON(w, res)
 			return
 		}
-		logger.Error("%s", rlt.GetResult().GetReason())
+		logger.Error(rlt.GetResult().GetReason())
 		sendJSON(w, rlt)
+	}
+}
+
+// CreateWallet api for creating local wallet.
+func CreateWallet(se Servicer) http.HandlerFunc {
+	return func(c http.ResponseWriter, r *http.Request) {
+
 	}
 }
