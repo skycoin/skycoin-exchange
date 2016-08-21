@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"encoding/hex"
 	"github.com/skycoin/encoder"
 	"github.com/skycoin/skycoin/src/cipher"
 	skycoin "github.com/skycoin/skycoin/src/coin"
@@ -38,10 +39,15 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transac
 
 // BroadcastTx
 func BroadcastTx(rawtx string) (string, error) {
+	tx, err := hex.DecodeString(rawtx)
+	if err != nil {
+		return "", err
+	}
+
 	v := struct {
 		Rawtx []byte `json:"rawtx"`
 	}{
-		rawtx,
+		tx,
 	}
 
 	d, err := json.Marshal(v)
