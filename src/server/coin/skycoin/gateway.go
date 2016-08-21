@@ -43,7 +43,7 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 }
 
 func (gw *Gateway) InjectTx(rawtx string) (string, error) {
-	BroadcastTx(rawt)
+	return BroadcastTx(rawtx)
 }
 
 func newPPTx(tx *visor.TransactionResult) *pp.Tx {

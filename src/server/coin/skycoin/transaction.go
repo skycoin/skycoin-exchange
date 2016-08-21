@@ -37,7 +37,7 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transac
 	return &tx
 }
 
-// BroadcastTx
+// BroadcastTx skycoin broadcast tx.
 func BroadcastTx(rawtx string) (string, error) {
 	tx, err := hex.DecodeString(rawtx)
 	if err != nil {
