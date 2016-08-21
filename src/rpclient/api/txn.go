@@ -176,10 +176,3 @@ func GetRawTx(se Servicer) http.HandlerFunc {
 		sendJSON(w, rlt)
 	}
 }
-
-// CreateWallet api for creating local wallet.
-func CreateWallet(se Servicer) http.HandlerFunc {
-	return func(c http.ResponseWriter, r *http.Request) {
-
-	}
-}
