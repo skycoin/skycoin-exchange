@@ -39,9 +39,9 @@ func GetGateway(tp Type) (Gateway, error) {
 }
 
 type AddressEntry struct {
-	Address string
-	Public  string
-	Secret  string
+	Address string `json:"address"`
+	Public  string `json:"pubkey"`
+	Secret  string `json:"seckey"`
 }
 
 // Type represents the coin type.
