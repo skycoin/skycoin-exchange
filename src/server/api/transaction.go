@@ -55,27 +55,27 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			req := pp.GetTxReq{}
 			if err := getRequest(c, &req); err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			gateway, err := coin.GetGateway(tp)
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 			tx, err := gateway.GetTx(req.GetTxid())
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -115,7 +115,7 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 			}
 			rawtx, err := gateway.GetRawTx(req.GetTxid())
 			if err != nil {
-				logger.Error("%s", err)
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}

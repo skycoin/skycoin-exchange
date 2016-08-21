@@ -44,6 +44,7 @@ type exchgAcntJson struct {
 	Addresses map[string][]string `json:"addresses"`
 }
 
+// InitDir init the account storage file path.
 func InitDir(path string) {
 	if path == "" {
 		path = acntDir

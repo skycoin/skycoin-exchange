@@ -22,21 +22,21 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 			if c.BindJSON(&cnt_req) == nil {
 				cliPubkey, err := cipher.PubKeyFromHex(cnt_req.GetPubkey())
 				if err != nil {
-					logger.Error("%s", err)
+					logger.Error(err.Error())
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 					break
 				}
 				key := cipher.ECDH(cliPubkey, ee.GetServPrivKey())
 				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), key, cnt_req.GetNonce())
 				if err != nil {
-					logger.Error("%s", err)
+					logger.Error(err.Error())
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
 
 				ok, err := regexp.MatchString(`^\{.*\}$`, string(data))
 				if err != nil || !ok {
-					logger.Error("%s", err)
+					logger.Error(err.Error())
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
