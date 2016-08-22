@@ -16,7 +16,7 @@ import (
 type Walleter interface {
 	GetID() string                                     // get wallet id.
 	SetID(id string)                                   // set wallet id.
-	InitSeed(seed string)                              // init the wallet seed.
+	SetSeed(seed string)                               // init the wallet seed.
 	GetCoinType() coin.Type                            // get the wallet coin type.
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
@@ -66,7 +66,7 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 	// create wallet base on the wallet creator.
 	wlt := newWlt()
 	wlt.SetID(fmt.Sprintf("%s_%s", tp, seed))
-	wlt.InitSeed(seed)
+	wlt.SetSeed(seed)
 
 	if err := gWallets.add(wlt); err != nil {
 		return nil, err
@@ -75,10 +75,19 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 	return wlt, nil
 }
 
-// wallet creator.
-type walletCreator func() Walleter
+// RegisterCreator register wallet creator.
+func RegisterCreator(tp coin.Type, ctor Creator) error {
+	if _, ok := gWalletCreators[tp]; ok {
+		return fmt.Errorf("%s type wallet already registered", tp)
+	}
+	gWalletCreators[tp] = ctor
+	return nil
+}
 
-var gWalletCreators = make(map[coin.Type]walletCreator)
+// Creator wallet creator.
+type Creator func() Walleter
+
+var gWalletCreators = make(map[coin.Type]Creator)
 
 func init() {
 	// register bitcoin wallet creator
@@ -98,6 +107,7 @@ func (wlts *wallets) add(wlt Walleter) error {
 		return fmt.Errorf("%s does exist", wlt.GetID())
 	}
 	wlts.Value[wlt.GetID()] = wlt
+	//
 	return wlt.Save()
 }
 
@@ -134,7 +144,7 @@ func (wlts *wallets) mustLoad() {
 			panic(fmt.Sprintf("%s type wallet not registered", tp))
 		}
 
-		f, err := os.OpenFile(filepath.Join(wltDir, name))
+		f, err := os.Open(filepath.Join(wltDir, name))
 		if err != nil {
 			panic(err)
 		}
@@ -144,7 +154,7 @@ func (wlts *wallets) mustLoad() {
 		if err := wlt.Load(f); err != nil {
 			panic(err)
 		}
-		if err := wallets.add(wlt); err != nil {
+		if err := wlts.add(wlt); err != nil {
 			panic(err)
 		}
 	}
