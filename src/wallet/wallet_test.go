@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/rpclient/wallet"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/stretchr/testify/assert"
 )
 

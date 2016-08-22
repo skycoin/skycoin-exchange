@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -21,7 +21,7 @@ type Walleter interface {
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
 	GetKeypair(addr string) (string, string)           // get pub/sec key pair of specific address
-	Save(w io.Writer) error                            // save the wallet into writter
+	Save() error                                       // save the wallet.
 	Load(r io.Reader) error                            // load wallet from reader.
 	Clear() error                                      // remove the wallet file from local disk.
 }
@@ -60,7 +60,7 @@ func GetWalletDir() string {
 func New(tp coin.Type, seed string) (Walleter, error) {
 	newWlt, ok := gWalletCreators[tp]
 	if !ok {
-		return nil, fmt.Errorf("%s coin wallet not regesterd", tp)
+		return nil, fmt.Errorf("%s coin wallet not regestered", tp)
 	}
 
 	// create wallet base on the wallet creator.
@@ -76,7 +76,7 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 }
 
 // wallet creator.
-type walletCreator func(seed string) Walleter
+type walletCreator func() Walleter
 
 var gWalletCreators = make(map[coin.Type]walletCreator)
 
@@ -138,6 +138,7 @@ func (wlts *wallets) mustLoad() {
 		if err != nil {
 			panic(err)
 		}
+		defer f.Close()
 
 		wlt := newWlt()
 		if err := wlt.Load(f); err != nil {

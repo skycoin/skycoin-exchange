@@ -1,10 +1,6 @@
 package wallet
 
-import (
-	"fmt"
-
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
-)
+import "github.com/skycoin/skycoin-exchange/src/coin"
 
 // BtcWallet bitcoin wallet.
 type BtcWallet struct {
@@ -28,12 +24,8 @@ func (bt *BtcWallet) InitSeed(seed string) {
 }
 
 // bitcoin wallet generator
-func btcWltCreator(seed string) walletGentor {
+func btcWltCreator() walletGentor {
 	return func() Walleter {
-		wlt := &BtcWallet{}
-		wlt.ID = fmt.Sprintf("%s_%s", coin.Bitcoin, seed)
-		wlt.Seed = seed
-		wlt.InitSeed = seed
-		return wlt
+		return &BtcWallet{}
 	}
 }
