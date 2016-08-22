@@ -3,10 +3,8 @@ package wallet
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/util"
@@ -29,7 +27,23 @@ type Walleter interface {
 // wltDir default wallet dir, wallet file name sturct: $type_$seed.wlt.
 // example: btc_seed.wlt, sky_seed.wlt.
 var wltDir = filepath.Join(util.UserHome(), ".exchange-client/wallet")
-var wltExt = "wlt"
+
+// Ext wallet file extension name
+var Ext = "wlt"
+
+// Creator wallet creator.
+type Creator func() Walleter
+
+var gWalletCreators = make(map[coin.Type]Creator)
+
+// RegisterCreator register wallet creator.
+func RegisterCreator(tp coin.Type, ctor Creator) error {
+	if _, ok := gWalletCreators[tp]; ok {
+		return fmt.Errorf("%s wallet already registered", tp)
+	}
+	gWalletCreators[tp] = ctor
+	return nil
+}
 
 // InitDir initialize the wallet file storage dir,
 // load wallets in the dir if it does exist.
@@ -60,7 +74,7 @@ func GetWalletDir() string {
 func New(tp coin.Type, seed string) (Walleter, error) {
 	newWlt, ok := gWalletCreators[tp]
 	if !ok {
-		return nil, fmt.Errorf("%s coin wallet not regestered", tp)
+		return nil, fmt.Errorf("%s wallet not regestered", tp)
 	}
 
 	// create wallet base on the wallet creator.
@@ -75,87 +89,22 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 	return wlt, nil
 }
 
-// RegisterCreator register wallet creator.
-func RegisterCreator(tp coin.Type, ctor Creator) error {
-	if _, ok := gWalletCreators[tp]; ok {
-		return fmt.Errorf("%s type wallet already registered", tp)
-	}
-	gWalletCreators[tp] = ctor
-	return nil
+// NewAddresses create address
+func NewAddresses(id string, num int) ([]coin.AddressEntry, error) {
+	return gWallets.newAddresses(id, num)
 }
 
-// Creator wallet creator.
-type Creator func() Walleter
-
-var gWalletCreators = make(map[coin.Type]Creator)
-
-func init() {
-	// register bitcoin wallet creator
-	gWalletCreators[coin.Bitcoin] = btcWltCreator()
+// GetAddresses get all addresses in specific wallet.
+func GetAddresses(id string) ([]string, error) {
+	return gWallets.getAddresses(id)
 }
 
-// wallets record all wallet, key is wallet id, value is wallet interface.
-type wallets struct {
-	Value map[string]Walleter
+// GetKeypair get pub/sec key pair of specific addresse in wallet.
+func GetKeypair(id string, addr string) (string, string, error) {
+	return gWallets.getKeypair(id, addr)
 }
 
-// internal global wallets
-var gWallets = wallets{Value: make(map[string]Walleter)}
-
-func (wlts *wallets) add(wlt Walleter) error {
-	if _, ok := wlts.Value[wlt.GetID()]; ok {
-		return fmt.Errorf("%s does exist", wlt.GetID())
-	}
-	wlts.Value[wlt.GetID()] = wlt
-	//
-	return wlt.Save()
-}
-
-func (wlts *wallets) remove(id string) error {
-	if wlt, ok := wlts.Value[id]; ok {
-		return wlt.Clear()
-	}
-	delete(wlts.Value, id)
-	return nil
-}
-
-// load from local disk
-func (wlts *wallets) mustLoad() {
-	fileInfos, _ := ioutil.ReadDir(wltDir)
-	for _, fileInfo := range fileInfos {
-		name := fileInfo.Name()
-		if !strings.HasSuffix(name, ".wlt") {
-			continue
-		}
-		// get the wallet type, the name: $bitcoin_$seed1234.wlt
-		typeSeed := strings.Split(name, "_")
-		if len(typeSeed) != 2 {
-			panic("error wallet file name")
-		}
-
-		// check coin type
-		tp, err := coin.TypeFromStr(typeSeed[0])
-		if err != nil {
-			panic(err)
-		}
-
-		newWlt, ok := gWalletCreators[tp]
-		if !ok {
-			panic(fmt.Sprintf("%s type wallet not registered", tp))
-		}
-
-		f, err := os.Open(filepath.Join(wltDir, name))
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-
-		wlt := newWlt()
-		if err := wlt.Load(f); err != nil {
-			panic(err)
-		}
-		if err := wlts.add(wlt); err != nil {
-			panic(err)
-		}
-	}
+// Remove remove wallet of specific id.
+func Remove(id string) error {
+	return gWallets.remove(id)
 }

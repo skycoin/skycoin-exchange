@@ -23,8 +23,8 @@ func (bt *BtcWallet) SetSeed(seed string) {
 	bt.Seed = seed
 }
 
-// BtcWltCreator wallet generator
-func BtcWltCreator() Creator {
+// NewBtcWltCreator wallet generator
+func NewBtcWltCreator() Creator {
 	return func() Walleter {
 		return &BtcWallet{}
 	}
