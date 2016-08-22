@@ -44,7 +44,7 @@ func (wlt walletBase) GetKeypair(addr string) (string, string) {
 
 // Save save the wallet
 func (wlt *walletBase) Save() error {
-	fileName := wlt.ID + "." + wltExt
+	fileName := wlt.ID + "." + Ext
 	return util.SaveJSON(filepath.Join(wltDir, fileName), wlt, 0777)
 }
 
