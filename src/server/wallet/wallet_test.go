@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/stretchr/testify/assert"
 )
 
