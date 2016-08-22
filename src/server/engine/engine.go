@@ -3,8 +3,8 @@ package engine
 import (
 	"time"
 
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin/src/cipher"
 )

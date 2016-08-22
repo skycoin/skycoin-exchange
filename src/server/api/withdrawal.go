@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -190,8 +190,12 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	if err != nil {
 		return nil, pp.MakeErrRes(errors.New("failed to create withdrawal tx"))
 	}
+	rawtx, err := skyTxRlt.Tx.Serialize()
+	if err != nil {
+		return nil, pp.MakeErrRes(errors.New("skycoin tx serialize failed"))
+	}
 
-	newTxid, err := skycoin.BroadcastTx(*skyTxRlt.Tx)
+	newTxid, err := skycoin.BroadcastTx(string(rawtx))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)

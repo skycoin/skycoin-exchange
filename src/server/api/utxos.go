@@ -1,10 +1,10 @@
 package api
 
 import (
+	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )

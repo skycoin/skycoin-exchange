@@ -11,7 +11,7 @@ import (
 	"gopkg.in/op/go-logging.v1"
 
 	"github.com/skycoin/skycoin-exchange/src/server/account"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/server/coin/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/server/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/sknet"

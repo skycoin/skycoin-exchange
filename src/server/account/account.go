@@ -9,7 +9,7 @@ import (
 
 	"gopkg.in/op/go-logging.v1"
 
-	"github.com/skycoin/skycoin-exchange/src/server/coin"
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
