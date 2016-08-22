@@ -17,14 +17,14 @@ func (bt *BtcWallet) SetID(id string) {
 	bt.ID = id
 }
 
-// InitSeed initialize the wallet seed.
-func (bt *BtcWallet) InitSeed(seed string) {
+// SetSeed initialize the wallet seed.
+func (bt *BtcWallet) SetSeed(seed string) {
 	bt.InitSeed = seed
 	bt.Seed = seed
 }
 
 // bitcoin wallet generator
-func btcWltCreator() walletGentor {
+func btcWltCreator() Creator {
 	return func() Walleter {
 		return &BtcWallet{}
 	}
