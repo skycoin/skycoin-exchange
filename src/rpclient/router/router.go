@@ -6,6 +6,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/rpclient/api"
 )
 
+// New return router
 func New(se api.Servicer) *http.ServeMux {
 	mux := http.NewServeMux()
 	registerBaseHandlers(mux, se)
@@ -45,6 +46,6 @@ func registerTxnHandlers(mux *http.ServeMux, se api.Servicer) {
 
 // wallet handlers.
 func registerWalletHandlers(mux *http.ServeMux, se api.Servicer) {
-	mux.Handle("/api/v1/wallet", api.CreateWallet)
-	mux.Handle("/api/v1/wallet/address", api.NewLocalAddresss))
+	mux.Handle("/api/v1/wallet", api.CreateWallet(se))
+	// mux.Handle("/api/v1/wallet/address", api.NewLocalAddresss(se))
 }

@@ -50,7 +50,7 @@ func main() {
 	go catchDebug()
 
 	staticDir := util.ResolveResourceDirectory("./src/web-app/static")
-	svr.Run(fmt.Sprintf("localhost:%d", *port), staticDir)
+	svr.Run(fmt.Sprintf("127.0.0.1:%d", *port), staticDir)
 
 	<-quit
 
