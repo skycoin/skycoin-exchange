@@ -1,0 +1,57 @@
+<div class="container-fluid content">
+    <div class="content-body">
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn btn-primary btn-block">Margin available</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-6">
+                <h3 class="text-center">Bids</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>ID</th>
+                        <th>Bid Price</th>
+                        <th>Amount</th>
+                        <th>Rest Amount</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="#item of bidList">
+                        <td>{{item.coin_type}}</td>
+                        <td>{{item.id}}</td>
+                        <td>${{item.price|number}}</td>
+                        <td>{{item.amount|number}}</td>
+                        <td>{{item.rest_amt|number}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-6">
+                <h3 class="text-center">Asks</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Amount</th>
+                        <th>Rest Amount</th>
+                        <th>Ask Price</th>
+                        <th>Platform</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="#item of askList">
+                        <td>{{item.id}}</td>
+                        <td>{{item.amount|number}}</td>
+                        <td>{{item.rest_amt|number}}</td>
+                        <td>${{item.price|number}}</td>
+                        <td>{{item.coin_type}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
