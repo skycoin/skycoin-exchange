@@ -13,6 +13,7 @@ func New(se api.Servicer) *http.ServeMux {
 	registerOrderHandlers(mux, se)
 	registerUtxoHandlers(mux, se)
 	registerTxnHandlers(mux, se)
+	registerWalletHandlers(mux, se)
 	return mux
 }
 
@@ -20,7 +21,7 @@ func New(se api.Servicer) *http.ServeMux {
 func registerBaseHandlers(mux *http.ServeMux, se api.Servicer) {
 	mux.Handle("/api/v1/coins", api.GetCoins(se))
 	mux.Handle("/api/v1/accounts", api.CreateAccount(se))
-	mux.Handle("/api/v1/account/deposit_address", api.GetNewAddress(se))
+	mux.Handle("/api/v1/account/deposit_address", api.GetDepositAddress(se))
 	mux.Handle("/api/v1/account/balance", api.GetBalance(se))
 	mux.Handle("/api/v1/account/withdrawal", api.Withdraw(se))
 }
@@ -47,5 +48,6 @@ func registerTxnHandlers(mux *http.ServeMux, se api.Servicer) {
 // wallet handlers.
 func registerWalletHandlers(mux *http.ServeMux, se api.Servicer) {
 	mux.Handle("/api/v1/wallet", api.CreateWallet(se))
-	// mux.Handle("/api/v1/wallet/address", api.NewLocalAddresss(se))
+	mux.Handle("/api/v1/wallet/address", api.NewAddress(se))
+	mux.Handle("/api/v1/wallet/address/key", api.GetKeys(se))
 }
