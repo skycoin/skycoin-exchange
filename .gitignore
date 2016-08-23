@@ -27,5 +27,3 @@ client.sh
 client
 server.sh
 test.json
-
-src/web-app
