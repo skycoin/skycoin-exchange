@@ -10,8 +10,9 @@ import (
 	"net/http"
 
 	"encoding/hex"
-	"github.com/skycoin/encoder"
+
 	"github.com/skycoin/skycoin/src/cipher"
+	"github.com/skycoin/skycoin/src/cipher/encoder"
 	skycoin "github.com/skycoin/skycoin/src/coin"
 )
 
