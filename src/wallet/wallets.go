@@ -24,10 +24,10 @@ func (wlts *wallets) add(wlt Walleter) error {
 	wlts.mtx.Lock()
 	defer wlts.mtx.Unlock()
 	if _, ok := wlts.Value[wlt.GetID()]; ok {
-		return fmt.Errorf("%s does exist", wlt.GetID())
+		return fmt.Errorf("%s already exist", wlt.GetID())
 	}
 	wlts.Value[wlt.GetID()] = wlt
-	return wlt.Save()
+	return wlts.store(wlt)
 }
 
 func (wlts *wallets) remove(id string) error {
@@ -35,7 +35,8 @@ func (wlts *wallets) remove(id string) error {
 	defer wlts.mtx.Unlock()
 
 	if wlt, ok := wlts.Value[id]; ok {
-		if err := wlt.Clear(); err != nil {
+		path := storeAddr(wlt)
+		if err := os.RemoveAll(path); err != nil {
 			return err
 		}
 		delete(wlts.Value, id)
@@ -54,7 +55,6 @@ func (wlts *wallets) mustLoad() {
 	// clear wallets in memory.
 	wlts.reset()
 
-	fmt.Println(wltDir)
 	fileInfos, _ := ioutil.ReadDir(wltDir)
 	for _, fileInfo := range fileInfos {
 		name := fileInfo.Name()
@@ -75,7 +75,7 @@ func (wlts *wallets) mustLoad() {
 
 		newWlt, ok := gWalletCreators[tp]
 		if !ok {
-			panic(fmt.Sprintf("%s type wallet not registered", tp))
+			panic(fmt.Sprintf("%s wallet not supported", tp))
 		}
 
 		f, err := os.Open(filepath.Join(wltDir, name))
@@ -98,7 +98,15 @@ func (wlts *wallets) newAddresses(id string, num int) ([]coin.AddressEntry, erro
 	wlts.mtx.Lock()
 	defer wlts.mtx.Unlock()
 	if wlt, ok := wlts.Value[id]; ok {
-		return wlt.NewAddresses(num)
+		addrs, err := wlt.NewAddresses(num)
+		if err != nil {
+			return []coin.AddressEntry{}, err
+		}
+
+		if err := wlts.store(wlt); err != nil {
+			return []coin.AddressEntry{}, err
+		}
+		return addrs, nil
 	}
 	return []coin.AddressEntry{}, fmt.Errorf("%s wallet does not exist", id)
 }
@@ -112,11 +120,41 @@ func (wlts *wallets) getAddresses(id string) ([]string, error) {
 	return []string{}, fmt.Errorf("%s wallet does not exist", id)
 }
 
-func (wlts *wallets) getKeypair(id string, addr string) (pubkey, seckey, error) {
+func (wlts *wallets) getKeypair(id string, addr string) (string, string, error) {
 	wlts.mtx.Lock()
 	defer wlts.mtx.Unlock()
 	if wlt, ok := wlts.Value[id]; ok {
-		return wlt.GetKeypair(addr), nil
+		p, s := wlt.GetKeypair(addr)
+		return p, s, nil
 	}
 	return "", "", fmt.Errorf("%s wallet does not exist", id)
+}
+
+func (wlts *wallets) store(wlt Walleter) error {
+	path := storeAddr(wlt)
+	tmpPath := path + "." + "tmp"
+
+	// write wallet to temp file.
+	f, err := os.Create(tmpPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := wlt.Save(f); err != nil {
+		return err
+	}
+
+	// create bak file if exist.
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		if err := os.Rename(path, path+".bak"); err != nil {
+			return err
+		}
+	}
+
+	return os.Rename(tmpPath, path)
+}
+
+func storeAddr(wlt Walleter) string {
+	return filepath.Join(wltDir, wlt.GetID()+"."+Ext)
 }

@@ -19,9 +19,9 @@ type Walleter interface {
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
 	GetKeypair(addr string) (string, string)           // get pub/sec key pair of specific address
-	Save() error                                       // save the wallet.
+	Save(w io.Writer) error                            // save the wallet.
 	Load(r io.Reader) error                            // load wallet from reader.
-	Clear() error                                      // remove the wallet file from local disk.
+	Copy() Walleter                                    // copy of self, for thread safe.
 }
 
 // wltDir default wallet dir, wallet file name sturct: $type_$seed.wlt.
@@ -36,7 +36,15 @@ type Creator func() Walleter
 
 var gWalletCreators = make(map[coin.Type]Creator)
 
-// RegisterCreator register wallet creator.
+func init() {
+	// the default wallet creator are registered here, using the following RegisterCreator function
+	// to extend new wallet type.
+	gWalletCreators[coin.Bitcoin] = NewBtcWltCreator()
+	gWalletCreators[coin.Skycoin] = NewSkyWltCreator()
+}
+
+// RegisterCreator when new type wallet need to be supported,
+// the wallet must provide Creator, and use this function to register the creator into system.
 func RegisterCreator(tp coin.Type, ctor Creator) error {
 	if _, ok := gWalletCreators[tp]; ok {
 		return fmt.Errorf("%s wallet already registered", tp)
@@ -46,7 +54,7 @@ func RegisterCreator(tp coin.Type, ctor Creator) error {
 }
 
 // InitDir initialize the wallet file storage dir,
-// load wallets in the dir if it does exist.
+// load wallets if exist.
 func InitDir(path string) {
 	if path == "" {
 		path = wltDir
@@ -65,7 +73,7 @@ func InitDir(path string) {
 	gWallets.mustLoad()
 }
 
-// GetWalletDir return the current client wallet dir.
+// GetWalletDir return the current wallet dir.
 func GetWalletDir() string {
 	return wltDir
 }
@@ -86,7 +94,7 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 		return nil, err
 	}
 
-	return wlt, nil
+	return wlt.Copy(), nil
 }
 
 // NewAddresses create address

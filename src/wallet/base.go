@@ -1,13 +1,11 @@
 package wallet
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
-	"os"
-	"path/filepath"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	"github.com/skycoin/skycoin/src/util"
 )
 
 type walletBase struct {
@@ -22,14 +20,24 @@ func (wlt walletBase) GetID() string {
 	return wlt.ID
 }
 
-// NewAddresses generate bitcoin addresses.
-func (wlt *walletBase) NewAddresses(num int) ([]coin.AddressEntry, error) {
-	return []coin.AddressEntry{}, nil
+// SetID set wallet id
+func (wlt *walletBase) SetID(id string) {
+	wlt.ID = id
 }
 
-// GetAddresses return all wallet addresses.
+// SetSeed initialize the wallet seed.
+func (wlt *walletBase) SetSeed(seed string) {
+	wlt.InitSeed = seed
+	wlt.Seed = seed
+}
+
+// GetAddresses return all addresses in wallet.
 func (wlt *walletBase) GetAddresses() []string {
-	return []string{}
+	addrs := []string{}
+	for _, e := range wlt.AddressEntries {
+		addrs = append(addrs, e.Address)
+	}
+	return addrs
 }
 
 // GetKeypair get pub/sec key pair of specific address
@@ -43,9 +51,13 @@ func (wlt walletBase) GetKeypair(addr string) (string, string) {
 }
 
 // Save save the wallet
-func (wlt *walletBase) Save() error {
-	fileName := wlt.ID + "." + Ext
-	return util.SaveJSON(filepath.Join(wltDir, fileName), wlt, 0777)
+func (wlt *walletBase) Save(w io.Writer) error {
+	d, err := json.MarshalIndent(wlt, "", "    ")
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(w, bytes.NewBuffer(d))
+	return err
 }
 
 // Load load wallet from reader.
@@ -53,8 +65,12 @@ func (wlt *walletBase) Load(r io.Reader) error {
 	return json.NewDecoder(r).Decode(wlt)
 }
 
-// Clear remove wallet file from local disk.
-func (wlt *walletBase) Clear() error {
-	path := filepath.Join(wltDir, wlt.ID)
-	return os.RemoveAll(path)
+// Copy return the copy of self, for thread safe.
+func (wlt walletBase) Copy() walletBase {
+	return walletBase{
+		ID:             wlt.ID,
+		InitSeed:       wlt.InitSeed,
+		Seed:           wlt.Seed,
+		AddressEntries: wlt.AddressEntries,
+	}
 }
