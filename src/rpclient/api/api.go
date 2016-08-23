@@ -80,8 +80,8 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 	}
 }
 
-// GetNewAddress create new address through exchange server.
-func GetNewAddress(se Servicer) http.HandlerFunc {
+// GetDepositAddress get deposit address from exchange server.
+func GetDepositAddress(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		errRlt := &pp.EmptyRes{}
 		for {

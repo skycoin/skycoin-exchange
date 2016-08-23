@@ -37,7 +37,7 @@ func main() {
 
 	pk := cipher.MustPubKeyFromHex(ServPubkey)
 	cfg := rpclient.Config{
-		ApiRoot:    *servAddr,
+		APIRoot:    *servAddr,
 		ServPubkey: pk,
 	}
 

@@ -15,31 +15,37 @@ import (
 
 var logger = logging.MustGetLogger("client.rpclient")
 
+// Config client coinfig
 type Config struct {
-	ApiRoot    string
+	APIRoot    string
 	ServPubkey cipher.PubKey
 }
 
+// New create client service
 func New(cfg Config) *Service {
 	return &Service{
-		ServAddr:   cfg.ApiRoot,
+		ServAddr:   cfg.APIRoot,
 		ServPubkey: cfg.ServPubkey,
 	}
 }
 
+// Service rpc client service.
 type Service struct {
 	ServAddr   string        // exchange server addr.
 	ServPubkey cipher.PubKey // exchagne server pubkey.
 }
 
+// GetServKey get server pubkey.
 func (se Service) GetServKey() cipher.PubKey {
 	return se.ServPubkey
 }
 
+// GetServAddr get exchange server addresse.
 func (se Service) GetServAddr() string {
 	return se.ServAddr
 }
 
+// Run start the client service.
 func (se *Service) Run(addr string, guiDir string) {
 	// init wallet
 	wallet.InitDir(filepath.Join(util.UserHome(), ".exchange-client/wallet"))
