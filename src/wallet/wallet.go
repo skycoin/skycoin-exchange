@@ -87,7 +87,7 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 
 	// create wallet base on the wallet creator.
 	wlt := newWlt()
-	wlt.SetID(fmt.Sprintf("%s_%s", tp, seed))
+	wlt.SetID(MakeWltID(tp, seed))
 	wlt.SetSeed(seed)
 
 	if err := gWallets.add(wlt); err != nil {
@@ -95,6 +95,16 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 	}
 
 	return wlt.Copy(), nil
+}
+
+// IsExist check if the wallet is already exist.
+func IsExist(id string) bool {
+	return gWallets.isExist(id)
+}
+
+// MakeWltID make wallet id base on coin type and seed.
+func MakeWltID(cp coin.Type, seed string) string {
+	return fmt.Sprintf("%s_%s", cp, seed)
 }
 
 // NewAddresses create address

@@ -155,6 +155,15 @@ func (wlts *wallets) store(wlt Walleter) error {
 	return os.Rename(tmpPath, path)
 }
 
+func (wlts *wallets) isExist(id string) bool {
+	wlts.mtx.Lock()
+	defer wlts.mtx.Unlock()
+	if _, ok := wlts.Value[id]; ok {
+		return true
+	}
+	return false
+}
+
 func storeAddr(wlt Walleter) string {
 	return filepath.Join(wltDir, wlt.GetID()+"."+Ext)
 }

@@ -348,3 +348,38 @@ func TestRemove(t *testing.T) {
 		}
 	}
 }
+
+func TestIsExist(t *testing.T) {
+	_, teardown, err := setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer teardown()
+
+	testData := []struct {
+		Type coin.Type
+		Seed string
+	}{
+		{coin.Bitcoin, "sd666"},
+		{coin.Bitcoin, "sd667"},
+		{coin.Skycoin, "sd666"},
+		{coin.Skycoin, "sd667"},
+	}
+
+	for _, d := range testData {
+		id := wallet.MakeWltID(d.Type, d.Seed)
+		if wallet.IsExist(id) {
+			t.Fatalf("wallet:%s should not exist", id)
+		}
+
+		_, err := wallet.New(d.Type, d.Seed)
+		if err != nil {
+			t.Fatalf("creat wallet :%s failed", id)
+		}
+
+		if !wallet.IsExist(id) {
+			t.Fatalf("wallet:%s should exist", id)
+		}
+	}
+}
