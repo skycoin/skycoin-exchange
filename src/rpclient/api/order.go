@@ -5,20 +5,16 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
 // CreateOrder create order through exchange server.
-func CreateOrder(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CreateOrder(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "POST" {
-				logger.Error("require POST method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			rawReq := pp.OrderReq{}
 			if err := bindJSON(r, &rawReq); err != nil {
 				logger.Error(err.Error())
@@ -60,24 +56,19 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 }
 
 // GetBidOrders get bid orders through exchange server.
-func GetBidOrders(se Servicer) http.HandlerFunc {
+func GetBidOrders(se Servicer) httprouter.Handle {
 	return getOrders(se, "bid")
 }
 
 // GetAskOrders get ask orders through exchange server.
-func GetAskOrders(se Servicer) http.HandlerFunc {
+func GetAskOrders(se Servicer) httprouter.Handle {
 	return getOrders(se, "ask")
 }
 
-func getOrders(se Servicer, tp string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func getOrders(se Servicer, tp string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "GET" {
-				logger.Error("require GET method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			_, key, err := getAccountAndKey(r)
 			if err != nil {
 				logger.Error(err.Error())

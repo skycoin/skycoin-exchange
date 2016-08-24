@@ -54,7 +54,6 @@ func (se *Service) Run(addr string, guiDir string) {
 	if err := gui.LaunchWebInterface(addr, guiDir, r); err != nil {
 		panic(err)
 	}
-
 	go func() {
 		// Wait a moment just to make sure the http interface is up
 		time.Sleep(time.Millisecond * 100)

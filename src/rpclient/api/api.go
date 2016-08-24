@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/op/go-logging.v1"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -23,16 +24,11 @@ type Servicer interface {
 }
 
 // CreateAccount handle the request of creating account.
-func CreateAccount(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CreateAccount(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// generate account pubkey/privkey pair, pubkey is the account id.
 		errRlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "POST" {
-				logger.Error("require POST method")
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			p, s := cipher.GenerateKeyPair()
 			r := pp.CreateAccountReq{
 				Pubkey: pp.PtrString(p.Hex()),
@@ -81,15 +77,10 @@ func CreateAccount(se Servicer) http.HandlerFunc {
 }
 
 // GetDepositAddress get deposit address from exchange server.
-func GetDepositAddress(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetDepositAddress(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		errRlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "POST" {
-				logger.Error("require POST method")
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				logger.Error(err.Error())
@@ -138,15 +129,10 @@ func GetDepositAddress(se Servicer) http.HandlerFunc {
 }
 
 // GetBalance get balance of specific account through exchange server.
-func GetBalance(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetBalance(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		errRlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "GET" {
-				logger.Error("require GET method")
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
 			id, key, err := getAccountAndKey(r)
 			if err != nil {
 				logger.Error(err.Error())
@@ -193,8 +179,8 @@ func GetBalance(se Servicer) http.HandlerFunc {
 }
 
 // Withdraw withdraw transaction.
-func Withdraw(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Withdraw(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "POST" {
@@ -268,8 +254,8 @@ func Withdraw(se Servicer) http.HandlerFunc {
 }
 
 // GetCoins get coins through exchange server.
-func GetCoins(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetCoins(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
 			if r.Method != "GET" {

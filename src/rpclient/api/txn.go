@@ -4,21 +4,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
 // InjectTx broadcast transaction.
-func InjectTx(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func InjectTx(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			if r.Method != "POST" {
-				logger.Error("require POST method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
 			// get account key.
 			_, key, err := getAccountAndKey(r)
 			if err != nil {
@@ -76,8 +71,8 @@ func InjectTx(se Servicer) http.HandlerFunc {
 }
 
 // GetTx get transaction.
-func GetTx(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetTx(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			_, key, err := getAccountAndKey(r)
@@ -127,8 +122,8 @@ func GetTx(se Servicer) http.HandlerFunc {
 }
 
 // GetRawTx get raw tx from exchange server.
-func GetRawTx(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetRawTx(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			_, key, err := getAccountAndKey(r)

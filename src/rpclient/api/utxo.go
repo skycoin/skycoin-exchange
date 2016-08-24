@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
 // GetUtxos get utxos through exchange server.
-func GetUtxos(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetUtxos(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			if r.Method != "GET" {

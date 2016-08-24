@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
@@ -15,8 +16,8 @@ import (
 // params:
 // 		type: bitcoin or skycoin
 // 		seed: wallet seed.
-func CreateWallet(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CreateWallet(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
 			// check method
@@ -64,8 +65,8 @@ func CreateWallet(se Servicer) http.HandlerFunc {
 // url: /api/v1/wallet/address?&id=[:id]
 // params:
 // 		id: wallet id.
-func NewAddress(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func NewAddress(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			if r.Method != "POST" {
@@ -102,8 +103,8 @@ func NewAddress(se Servicer) http.HandlerFunc {
 // GetKeys get keys of specific address in wallet.
 // mode: GET
 // url: /api/v1/wallet/address/keys?id=[:id]&address=[:address]
-func GetKeys(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetKeys(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			if r.Method != "GET" {
