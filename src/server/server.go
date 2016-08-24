@@ -17,7 +17,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/router"
-	"github.com/skycoin/skycoin-exchange/src/server/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -26,10 +25,10 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
-	Port         int           // api port
-	BtcFee       int           // btc transaction fee
-	DataDir      string        // data directory
-	WalletName   string        // wallet name
+	Port    int    // api port
+	BtcFee  int    // btc transaction fee
+	DataDir string // data directory
+	// WltSeed      string        // wallet seed name
 	Seed         string        // seed
 	Seckey       cipher.SecKey // private key
 	UtxoPoolSize int           // utxo pool size.
@@ -41,7 +40,7 @@ type ExchangeServer struct {
 	skyum         skycoin.UtxoManager
 	orderManager  *order.Manager
 	cfg           Config
-	wallet        wallet.Wallet
+	wallets       wallets
 	wltMtx        sync.RWMutex                // mutex for protecting the wallet.
 	orderHandlers map[string]chan order.Order // order handlers, for handleing bid and ask.
 	coins         []string                    // supported coins
@@ -51,9 +50,6 @@ type ExchangeServer struct {
 func New(cfg Config) engine.Exchange {
 	// init the data dir
 	path := initDataDir(cfg.DataDir)
-
-	// init the wallet dir.
-	wallet.InitDir(filepath.Join(path, "wallet"))
 
 	// init the account dir
 	account.InitDir(filepath.Join(path, "account"))
@@ -77,19 +73,30 @@ func New(cfg Config) engine.Exchange {
 		}
 	}
 
-	// get wallet
-	var wlt wallet.Wallet
-	wlt, err = wallet.Load(cfg.WalletName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			wlt, err = wallet.New(cfg.WalletName, wallet.Deterministic, cfg.Seed)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			panic(err)
-		}
+	wltItems := []walletItem{
+		{coin.Bitcoin, cfg.Seed},
+		{coin.Skycoin, cfg.Seed},
 	}
+
+	// init wallets in server.
+	wlts, err := makeWallets(filepath.Join(path, "wallet"), wltItems)
+	if err != nil {
+		panic(err)
+	}
+
+	// create bitcoin utxo manager
+	btcWatchAddrs, err := wlts.GetAddresses(coin.Bitcoin)
+	if err != nil {
+		panic(err)
+	}
+	btcum := bitcoin.NewUtxoManager(cfg.UtxoPoolSize, btcWatchAddrs)
+
+	// create skycoin utxo manager
+	skyWatchAddrs, err := wlts.GetAddresses(coin.Skycoin)
+	if err != nil {
+		panic(err)
+	}
+	skyum := skycoin.NewUtxoManager(cfg.UtxoPoolSize, skyWatchAddrs)
 
 	// load or create order books.
 	var orderManager *order.Manager
@@ -105,10 +112,10 @@ func New(cfg Config) engine.Exchange {
 
 	s := &ExchangeServer{
 		cfg:          cfg,
-		wallet:       wlt,
+		wallets:      wlts,
 		Manager:      acntMgr,
-		btcum:        bitcoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(coin.Bitcoin)),
-		skyum:        skycoin.NewUtxoManager(cfg.UtxoPoolSize, wlt.GetAddresses(coin.Skycoin)),
+		btcum:        btcum,
+		skyum:        skyum,
 		orderManager: orderManager,
 		coins:        []string{"BTC", "SKY"},
 		orderHandlers: map[string]chan order.Order{
@@ -156,20 +163,20 @@ func (self ExchangeServer) GetServPrivKey() cipher.SecKey {
 }
 
 // GetPrivKey get the private key of specific address.
-func (self ExchangeServer) GetAddrPrivKey(ct coin.Type, addr string) (string, error) {
-	entry, err := self.wallet.GetAddressEntry(ct, addr)
+func (self ExchangeServer) GetAddrPrivKey(cp coin.Type, addr string) (string, error) {
+	_, key, err := self.wallets.GetKeypair(cp, addr)
 	if err != nil {
 		return "", err
 	}
 
-	return entry.Secret, nil
+	return key, nil
 }
 
 // GetNewAddress create new address of specific coin type.
-func (self *ExchangeServer) GetNewAddress(coinType coin.Type) string {
+func (self *ExchangeServer) GetNewAddress(cp coin.Type) string {
 	self.wltMtx.Lock()
 	defer self.wltMtx.Unlock()
-	addrEntry, err := self.wallet.NewAddresses(coinType, 1)
+	addrEntry, err := self.wallets.NewAddresses(cp, 1)
 	if err != nil {
 		panic("server get new address failed")
 	}
@@ -177,8 +184,8 @@ func (self *ExchangeServer) GetNewAddress(coinType coin.Type) string {
 }
 
 // ChooseUtxos choose appropriate bitcoin utxos,
-func (self *ExchangeServer) ChooseUtxos(ct coin.Type, amount uint64, tm time.Duration) (interface{}, error) {
-	switch ct {
+func (self *ExchangeServer) ChooseUtxos(cp coin.Type, amount uint64, tm time.Duration) (interface{}, error) {
+	switch cp {
 	case coin.Bitcoin:
 		return self.btcum.ChooseUtxos(amount, tm)
 	case coin.Skycoin:
@@ -189,8 +196,8 @@ func (self *ExchangeServer) ChooseUtxos(ct coin.Type, amount uint64, tm time.Dur
 }
 
 // PutUtxos set back the utxos of specific coin type.
-func (self *ExchangeServer) PutUtxos(ct coin.Type, utxos interface{}) {
-	switch ct {
+func (self *ExchangeServer) PutUtxos(cp coin.Type, utxos interface{}) {
+	switch cp {
 	case coin.Bitcoin:
 		btcUtxos := utxos.([]bitcoin.Utxo)
 		for _, u := range btcUtxos {
@@ -205,8 +212,8 @@ func (self *ExchangeServer) PutUtxos(ct coin.Type, utxos interface{}) {
 }
 
 // AddWatchAddress add watch address to utxo manager.
-func (self *ExchangeServer) WatchAddress(ct coin.Type, addr string) {
-	switch ct {
+func (self *ExchangeServer) WatchAddress(cp coin.Type, addr string) {
+	switch cp {
 	case coin.Bitcoin:
 		self.btcum.WatchAddresses([]string{addr})
 	case coin.Skycoin:

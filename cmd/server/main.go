@@ -50,7 +50,6 @@ func initConfig() server.Config {
 		flag.Usage()
 		panic("seed must be set")
 	}
-	cfg.WalletName = cfg.Seed + ".wlt"
 
 	key, err := cipher.SecKeyFromHex(sk)
 	if err != nil {
