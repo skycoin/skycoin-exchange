@@ -25,7 +25,7 @@ type Walleter interface {
 }
 
 // wltDir default wallet dir, wallet file name sturct: $type_$seed.wlt.
-// example: btc_seed.wlt, sky_seed.wlt.
+// example: bitcoin_seed.wlt, skycoin_seed.wlt.
 var wltDir = filepath.Join(util.UserHome(), ".exchange-client/wallet")
 
 // Ext wallet file extension name
