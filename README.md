@@ -23,7 +23,7 @@ go run client.go
 ```
 Default rpclient port is 6060.
 
-### Rpc client APIs
+### Client APIs
 #### create account:
 ```
 mode: POST
@@ -226,6 +226,7 @@ response json:
     }
   ]
 }
+NOTE: the utxos response json struct of bitcoin is different from skycoin.
 ```
 #### get transaction
 ```
@@ -277,6 +278,7 @@ response json:
   }
 }
 ```
+NOTE: the bitcoin transaction response struct is differen from skycoin.
 #### get raw transaction
 ```
 mode: GET
@@ -296,6 +298,62 @@ response json:
   "coin_type": "bitcoin",
   "rawtx": "010000000132ea3894c4b2c68bb1255be5d0e8a26bd336fd7a562eca9f7c435c9268199f06020000006b483045022100dd4e1b960726e3d3d205cb5ef4d92b3e04f3839757606800ed662069a841ffdc02203f68723bbbf9800d16555ace1ef2f46e65c2a6341643f3c5bf84158b108e6d5d012103eb8b81f8ebc988c61d3cc4c4ac3d546b02a4994d612725e91d8d69a72045fb18ffffffff019d3b1f020000000017a914bfc03379d17dd1e918a026b76cde472bea7ac7268700000000"
 }
+```
+
+### Local wallet apis
+#### create wallet
+```
+mode: POST
+url: /api/v1/wallet?type=[:type]&seed=[:seed]
+params:
+	type: wallet type, can be bitcoin or skycoin
+	seed: wallet seed
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "id": "bitcoin_sd1101"
+}
+```
+
+#### generate new address
+```
+mode: POST
+url: /api/v1/wallet/address?id=[:id]
+params:
+	id: wallet id
+response json:
+{
+  "Result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "address": "1FhzNKvpStmS4ZwpiZwRNVhTQvZBa39VNA"
+}
+```
+
+#### get public and secret key pair
+```
+mode: GET
+url: /api/v1/wallet/address/key?id=[:id]&address=[:address]
+params:
+	id: wallet id
+	address: coin address
+response json:
+{
+  "Result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "pubkey": "03712c6bf0601f7a663ad7812f8d031e3e3f07f3f7ed03ad165dd7ee28120e7102",
+  "seckey": "L4Y4E6UdCFqmmcYNGBFAXBZif6pfoox5CQNReBsnX8aimgBcRYeX"
+}
+
 ```
 Dependencies
 ---
