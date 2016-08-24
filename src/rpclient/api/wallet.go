@@ -11,9 +11,9 @@ import (
 
 // CreateWallet api for creating local wallet.
 // mode: POST
-// url: /api/v1/wallet?coin_type=[:coin_type]&seed=[:seed]
+// url: /api/v1/wallet?type=[:type]&seed=[:seed]
 // params:
-// 		coin_type: bitcoin or skycoin
+// 		type: bitcoin or skycoin
 // 		seed: wallet seed.
 func CreateWallet(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func CreateWallet(se Servicer) http.HandlerFunc {
 			}
 
 			// get coin type
-			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
+			cp, err := coin.TypeFromStr(r.FormValue("type"))
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
@@ -61,9 +61,9 @@ func CreateWallet(se Servicer) http.HandlerFunc {
 
 // NewAddress create address in wallet.
 // mode: POST
-// url: /api/v1/wallet/address?&wallet_id=[:wallet_id]
+// url: /api/v1/wallet/address?&id=[:id]
 // params:
-// 		wallet_id: wallet id.
+// 		id: wallet id.
 func NewAddress(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -74,9 +74,9 @@ func NewAddress(se Servicer) http.HandlerFunc {
 			}
 
 			// get wallet id
-			wltID := r.FormValue("wallet_id")
+			wltID := r.FormValue("id")
 			if wltID == "" {
-				rlt = pp.MakeErrRes(errors.New("no wallet_id"))
+				rlt = pp.MakeErrRes(errors.New("no id"))
 				break
 			}
 
@@ -101,7 +101,7 @@ func NewAddress(se Servicer) http.HandlerFunc {
 
 // GetKeys get keys of specific address in wallet.
 // mode: GET
-// url: /api/v1/wallet/address/keys?wallet_id=[:wallet_id]&address=[:address]
+// url: /api/v1/wallet/address/keys?id=[:id]&address=[:address]
 func GetKeys(se Servicer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rlt *pp.EmptyRes
@@ -112,9 +112,9 @@ func GetKeys(se Servicer) http.HandlerFunc {
 			}
 
 			// get wallet id
-			wltID := r.FormValue("wallet_id")
+			wltID := r.FormValue("id")
 			if wltID == "" {
-				rlt = pp.MakeErrRes(errors.New("no wallet id"))
+				rlt = pp.MakeErrRes(errors.New("no id"))
 				break
 			}
 
