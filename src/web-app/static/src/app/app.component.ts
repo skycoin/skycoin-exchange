@@ -18,6 +18,10 @@ export class AppComponent implements OnInit {
     accountId:any;
     key:any;
     balance:any;
+    OrderInputIsVisible:boolean;
+    orderType:number;
+    orderPrice:number;
+    orderAmount:number;
 
     //Constructor method for load HTTP object
     constructor(private http: Http) { }
@@ -27,6 +31,9 @@ export class AppComponent implements OnInit {
         this.askList = [];
         this.accountId = null;
         this.key = null;
+        this.orderPrice = 0;
+        this.orderAmount = 0;
+        this.OrderInputIsVisible = false;
         this.balance = {
           skycoin:0,
           bitcoin:0
@@ -61,6 +68,7 @@ export class AppComponent implements OnInit {
     }
 
     loadBidList() {
+        var self = this;
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         var url = '/api/v1/orders/bid?coin_pair=bitcoin/skycoin&id=' + this.accountId + "&key=" + this.key + '&start=1&end=10';
@@ -69,72 +77,16 @@ export class AppComponent implements OnInit {
             .subscribe(data => {
               console.log("get bid list", url, data);
               if (data.result.success) {
-                this.bidList = data.orders;
+                self.bidList = data.orders;
               } else {
                 return;
               }
 
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
-
-        //input data format
-        /*
-         {
-         "id": 8,
-         "type": "bid",
-         "price": 25,
-         "amount": 90000,
-         "rest_amt": 90000,
-         "created_at": 1470193222
-         },
-         */
-        this.bidList.push({
-            "id": 8,
-            "type": "bid",
-            "price": 25,
-            "amount": 90000,
-            "rest_amt": 90000,
-            "created_at": 1470193222,
-            "coin_type":"SKY"
-        });
-        this.bidList.push({
-            "id": 8,
-            "type": "bid",
-            "price": 25,
-            "amount": 90000,
-            "rest_amt": 90000,
-            "created_at": 1470293222,
-            "coin_type":"BTC"
-        });
-        this.bidList.push({
-            "id": 8,
-            "type": "bid",
-            "price": 25,
-            "amount": 90000,
-            "rest_amt": 90000,
-            "created_at": 1470393222,
-            "coin_type":"SKY"
-        });
-        this.bidList.push({
-            "id": 8,
-            "type": "bid",
-            "price": 25,
-            "amount": 90000,
-            "rest_amt": 90000,
-            "created_at": 1470493222,
-            "coin_type":"SKY"
-        });
-        this.bidList.push({
-            "id": 8,
-            "type": "bid",
-            "price": 25,
-            "amount": 90000,
-            "rest_amt": 90000,
-            "created_at": 1470593222,
-            "coin_type":"BTC"
-        });
     }
 
     loadAskList() {
+        var self = this;
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         var url = '/api/v1/orders/ask?coin_pair=bitcoin/skycoin&id=' + this.accountId + '&key=' + this.key + '&start=1&end=10';
@@ -143,7 +95,7 @@ export class AppComponent implements OnInit {
             .subscribe(data => {
               console.log("get ask list", url, data);
               if (data.result.success) {
-                this.askList = data.orders;
+                self.askList = data.orders;
               } else {
                 return;
               }
@@ -154,18 +106,58 @@ export class AppComponent implements OnInit {
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         var url = '/api/v1/account/balance?id=' + this.accountId + '&key=' + this.key + '&coin_type=skycoin';
+        var self = this;
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
               console.log("get skycoin balance", url, data);
-              this.balance.skycoin = data.balance;
+              self.balance.skycoin = data.balance;
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
         url = '/api/v1/account/balance?id=' + this.accountId + '&key=' + this.key + '&coin_type=bitcoin';
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
               console.log("get bitcoin balance", url, data);
-              this.balance.bitcoin = data.balance;
+              self.balance.bitcoin = data.balance;
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
+    }
+
+    createOrder(type) {
+      this.orderType = type;
+      this.orderAmount = 0;
+      this.orderPrice = 0;
+      this.OrderInputIsVisible = true;
+    }
+
+    createOrderDo(type, amount, price) {
+      var data = {
+                     "type": (type === 1 ? 'bid' : 'ask'),
+                     "coin_pair":'bitcoin/skycoin',
+                     "amount":Number(amount),
+                     "price":Number(price)
+                  };
+      var self = this;
+      this.http.post('/api/v1/account/order?id=' + this.accountId + '&key=' + this.key, JSON.stringify(data))
+          .map((res) => res.json())
+          .subscribe(data => {
+          console.log("create order", data);
+            if (data.result.success) {
+              if (type === 1) {
+                self.loadBidList();
+              } else {
+                self.loadAskList();
+              }
+            } else {
+              alert(data.result.reason);
+            }
+          }, err => console.log("Error on load outputs: " + err), () => {
+            console.log('Connection load done');
+            self.hideOrderInputDialog();
+          }
+          );
+    }
+
+    hideOrderInputDialog() {
+      this.OrderInputIsVisible = false;
     }
 }

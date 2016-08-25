@@ -14,6 +14,10 @@
             </div>
           </div>
         </div>
+        <div class="col-xs-6">
+          <button class="btn btn-success btn-block" (click)="createOrder(1)">Create Order(BID)</button>
+          <button class="btn btn-info btn-block" (click)="createOrder(2)">Create Order(ASK)</button>
+        </div>
       </div>
       <div class="row">
           <div class="col-xs-12">
@@ -66,6 +70,36 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="OrderInputIsVisible" class="modal fade show in" id="myModal" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" (click)="hideOrderInputDialog()" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Create Order({{orderType==1?'BID':'ASK'}})</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-3 control-label">Amount:</label>
+                      <div class="col-sm-9">
+                          <input #orderAmount class="form-control" required/>
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-3 control-label">Price:</label>
+                      <div class="col-sm-9">
+                          <input #orderPrice class="form-control" required/>
+                      </div>
+                  </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" (click)="createOrderDo(orderType, orderAmount.value, orderPrice.value)">Ok</button>
+                <button type="button" class="btn" (click)="hideOrderInputDialog()">Cancel</button>
             </div>
         </div>
     </div>
