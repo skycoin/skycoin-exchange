@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/op/go-logging.v1"
 
-	"github.com/skycoin/skycoin-exchange/src/rpclient"
+	"github.com/skycoin/skycoin-exchange/src/client"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -36,12 +36,12 @@ func main() {
 	initLogging(logging.DEBUG, true)
 
 	pk := cipher.MustPubKeyFromHex(ServPubkey)
-	cfg := rpclient.Config{
+	cfg := client.Config{
 		APIRoot:    *servAddr,
 		ServPubkey: pk,
 	}
 
-	svr := rpclient.New(cfg)
+	svr := client.New(cfg)
 
 	quit := make(chan int)
 	go catchInterrupt(quit)
