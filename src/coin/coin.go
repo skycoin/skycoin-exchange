@@ -15,7 +15,7 @@ type Gateway interface {
 	TxHandler
 }
 
-// TxHandler transaction handlers interface for gateway.
+// TxHandler transaction handler interface for gateway.
 type TxHandler interface {
 	GetTx(txid string) (*pp.Tx, error)
 	GetRawTx(txid string) (string, error)
@@ -25,7 +25,7 @@ type TxHandler interface {
 // RegisterGateway register gateway for specific coin.
 func RegisterGateway(tp Type, gw Gateway) {
 	if _, ok := gateways[tp]; ok {
-		panic(fmt.Errorf("%s gateway already registered"))
+		panic(fmt.Errorf("%s gateway already registered", tp))
 	}
 	gateways[tp] = gw
 }
@@ -35,7 +35,7 @@ func GetGateway(tp Type) (Gateway, error) {
 	if c, ok := gateways[tp]; ok {
 		return c, nil
 	}
-	return nil, fmt.Errorf("%s handler not registerd")
+	return nil, fmt.Errorf("%s gateway not registerd", tp)
 }
 
 type AddressEntry struct {
