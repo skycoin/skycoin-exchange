@@ -23,7 +23,6 @@ _testmain.go
 *.test
 *.prof
 
-client
 test.json
 
 *.zip
