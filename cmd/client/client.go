@@ -30,6 +30,7 @@ var (
 func main() {
 	servAddr := flag.String("s", "localhost:8080", "server address")
 	port := flag.Int("port", 6060, "rpc port")
+	guiDir := flag.String("gui-dir", "./src/web-app/static", "webapp static dir")
 	flag.Parse()
 
 	// init logger.
@@ -49,7 +50,7 @@ func main() {
 	// Watch for SIGUSR1
 	go catchDebug()
 
-	staticDir := util.ResolveResourceDirectory("./src/web-app/static")
+	staticDir := util.ResolveResourceDirectory(*guiDir)
 	svr.Run(fmt.Sprintf("127.0.0.1:%d", *port), staticDir)
 
 	<-quit
