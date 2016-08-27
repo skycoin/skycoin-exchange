@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
@@ -21,15 +22,23 @@ func CreateOrder(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			id, key, err := getAccountAndKey(r)
+
+			pubkey, err := getPubkey(r)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			rawReq.AccountId = &id
-			req, err := makeEncryptReq(&rawReq, se.GetServKey().Hex(), key)
+			a, err := account.Get(pubkey)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			rawReq.AccountId = &pubkey
+			req, err := makeEncryptReq(&rawReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -42,7 +51,7 @@ func CreateOrder(se Servicer) httprouter.Handle {
 				break
 			}
 
-			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.OrderRes{})
+			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.OrderRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -69,12 +78,20 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			_, key, err := getAccountAndKey(r)
+			pubkey, err := getPubkey(r)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
+
+			a, err := account.Get(pubkey)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
 			cp := r.FormValue("coin_pair")
 			st := r.FormValue("start")
 			ed := r.FormValue("end")
@@ -104,7 +121,7 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 				End:      &end,
 			}
 
-			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -117,7 +134,7 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetOrderRes{})
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetOrderRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)

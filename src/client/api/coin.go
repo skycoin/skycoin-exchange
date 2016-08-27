@@ -1,9 +1,7 @@
 package api
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
@@ -11,10 +9,10 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// GetUtxos get utxos through exchange server.
-func GetUtxos(se Servicer) httprouter.Handle {
+// GetCoins get supported coins from exchange server.
+func GetCoins(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var rlt *pp.EmptyRes
+		rlt := &pp.EmptyRes{}
 		for {
 			pubkey, err := getPubkey(r)
 			if err != nil {
@@ -30,41 +28,24 @@ func GetUtxos(se Servicer) httprouter.Handle {
 				break
 			}
 
-			cp := r.FormValue("coin_type")
-			if cp == "" {
-				logger.Error("coin type empty")
-				rlt = pp.MakeErrRes(errors.New("coin type empty"))
-				break
+			rq := pp.GetCoinsReq{
+				AccountId: pp.PtrString(pubkey),
 			}
 
-			addrs := r.FormValue("addrs")
-			if addrs == "" {
-				logger.Error("addrs empty")
-				rlt = pp.MakeErrRes(errors.New("addrs empty"))
-				break
-			}
-			addrArray := strings.Split(addrs, ",")
-			for i, addr := range addrArray {
-				addrArray[i] = strings.Trim(addr, " ")
-			}
-
-			req := pp.GetUtxoReq{
-				CoinType:  pp.PtrString(cp),
-				Addresses: addrArray,
-			}
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
+			req, err := makeEncryptReq(&rq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/utxos", encReq)
+
+			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/coins", req)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetUtxoRes{})
+			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.CoinsRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)

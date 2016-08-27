@@ -16,20 +16,20 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			if err := getRequest(c, &req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 
 			tp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 			res, err := getUtxos(tp, req.GetAddresses())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
@@ -40,9 +40,9 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-func getUtxos(tp coin.Type, addrs []string) (*pp.GetUtxoRes, error) {
+func getUtxos(cp coin.Type, addrs []string) (*pp.GetUtxoRes, error) {
 	var res pp.GetUtxoRes
-	switch tp {
+	switch cp {
 	case coin.Bitcoin:
 		utxos, err := bitcoin.GetUnspentOutputs(addrs)
 		if err != nil {

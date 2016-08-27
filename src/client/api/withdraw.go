@@ -3,7 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strings"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
@@ -11,10 +11,10 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// GetUtxos get utxos through exchange server.
-func GetUtxos(se Servicer) httprouter.Handle {
+// Withdraw transaction.
+func Withdraw(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var rlt *pp.EmptyRes
+		rlt := &pp.EmptyRes{}
 		for {
 			pubkey, err := getPubkey(r)
 			if err != nil {
@@ -32,39 +32,50 @@ func GetUtxos(se Servicer) httprouter.Handle {
 
 			cp := r.FormValue("coin_type")
 			if cp == "" {
-				logger.Error("coin type empty")
-				rlt = pp.MakeErrRes(errors.New("coin type empty"))
+				err := errors.New("coin_type empty")
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			addrs := r.FormValue("addrs")
-			if addrs == "" {
-				logger.Error("addrs empty")
-				rlt = pp.MakeErrRes(errors.New("addrs empty"))
+			amount := r.FormValue("amount")
+			if amount == "" {
+				rlt = pp.MakeErrRes(errors.New("amount empty"))
 				break
 			}
-			addrArray := strings.Split(addrs, ",")
-			for i, addr := range addrArray {
-				addrArray[i] = strings.Trim(addr, " ")
+
+			toAddr := r.FormValue("toaddr")
+			if toAddr == "" {
+				rlt = pp.MakeErrRes(errors.New("toaddr empty"))
+				break
 			}
 
-			req := pp.GetUtxoReq{
-				CoinType:  pp.PtrString(cp),
-				Addresses: addrArray,
+			amt, err := strconv.ParseUint(amount, 10, 64)
+			if err != nil {
+				rlt = pp.MakeErrRes(err)
+				break
 			}
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
+			wr := pp.WithdrawalReq{
+				AccountId:     &pubkey,
+				CoinType:      &cp,
+				Coins:         &amt,
+				OutputAddress: &toAddr,
+			}
+
+			req, err := makeEncryptReq(&wr, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/utxos", encReq)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/withdrawl", req)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetUtxoRes{})
+
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.WithdrawalRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
