@@ -3,7 +3,7 @@ package pp;
 import "pp.common.proto";
 
 message OrderReq {
-  optional string account_id = 10;
+  optional string pubkey = 10;
   optional string coin_pair = 11;
   optional string type = 12;
   optional uint64 amount = 13;
@@ -13,7 +13,7 @@ message OrderReq {
 message OrderRes {
   required Result result = 1;
 
-  optional string account_id = 10;
+  optional string pubkey = 10;
   optional uint64 order_id = 11;
 }
 

@@ -9,6 +9,6 @@ message CreateAccountReq {
 message CreateAccountRes {
   required Result result = 1;
 
-  optional string account_id = 10;
+  optional string pubkey = 10;
   optional int64 created_at = 20;
 }
