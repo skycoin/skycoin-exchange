@@ -76,9 +76,9 @@ func Set(a Account) {
 }
 
 // Get return account of specific id.
-func Get(id string) (Account, error) {
+func Get(pubkey string) (Account, error) {
 	for _, a := range gAccounts {
-		if a.Pubkey == id {
+		if a.Pubkey == pubkey {
 			return a, nil
 		}
 	}
