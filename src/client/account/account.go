@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -221,7 +220,6 @@ func mustLoadAccounts(filename string) manager {
 		Acounts       []accountJSON `json:"accounts"`
 	}{}
 
-	fmt.Println(string(d))
 	if err := json.Unmarshal(d, &v); err != nil {
 		panic(err)
 	}
