@@ -1,1 +1,2 @@
-go run cmd/server/main.go $1
+#!/usr/bin/env bash
+go run cmd/server/main.go $@
