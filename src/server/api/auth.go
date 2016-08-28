@@ -14,30 +14,38 @@ import (
 func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var (
-			encReq pp.EncryptReq
-			errRlt = &pp.EmptyRes{}
+			req pp.EncryptReq
+			rlt *pp.EmptyRes
 		)
 
 		for {
-			if c.BindJSON(&encReq) == nil {
-				cliPubkey, err := cipher.PubKeyFromHex(encReq.GetPubkey())
-				if err != nil {
+			if c.BindJSON(&req) == nil {
+				// validate pubkey.
+				if err := validatePubkey(req.GetPubkey()); err != nil {
 					logger.Error(err.Error())
-					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
+					rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 					break
 				}
-				key := cipher.ECDH(cliPubkey, ee.GetServPrivKey())
-				data, err := cipher.Chacha20Decrypt(encReq.GetEncryptdata(), key, encReq.GetNonce())
+
+				pubkey, err := cipher.PubKeyFromHex(req.GetPubkey())
 				if err != nil {
 					logger.Error(err.Error())
-					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
+					rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
+					break
+				}
+
+				key := cipher.ECDH(pubkey, ee.GetServPrivKey())
+				data, err := cipher.Chacha20Decrypt(req.GetEncryptdata(), key, req.GetNonce())
+				if err != nil {
+					logger.Error(err.Error())
+					rlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
 
 				ok, err := regexp.MatchString(`^\{.*\}$`, string(data))
 				if err != nil || !ok {
 					logger.Error(err.Error())
-					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
+					rlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 					break
 				}
 
@@ -48,7 +56,7 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 				rsp, exist := c.Get("response")
 				if exist {
 					// encrypt the response.
-					encData, nonce, err := pp.Encrypt(rsp, cliPubkey.Hex(), ee.GetServPrivKey().Hex())
+					encData, nonce, err := pp.Encrypt(rsp, pubkey.Hex(), ee.GetServPrivKey().Hex())
 					if err != nil {
 						panic(err)
 					}
@@ -63,10 +71,10 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 				}
 				return
 			}
-			errRlt = pp.MakeErrRes(errors.New("bad request"))
+			rlt = pp.MakeErrRes(errors.New("bad request"))
 			break
 		}
-		c.JSON(errRlt)
+		c.JSON(rlt)
 	}
 }
 

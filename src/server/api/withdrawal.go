@@ -39,24 +39,32 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 		for {
 			rp := NewReqParams()
 
-			wr := pp.WithdrawalReq{}
-			if err := getRequest(c, &wr); err != nil {
+			req := pp.WithdrawalReq{}
+			if err := getRequest(c, &req); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			if _, err := cipher.PubKeyFromHex(wr.GetPubkey()); err != nil {
+			// validate pubkey
+			pubkey := req.GetPubkey()
+			if err := validatePubkey(pubkey); err != nil {
+				logger.Error(err.Error())
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
-			a, err := ee.GetAccount(wr.GetPubkey())
+			if _, err := cipher.PubKeyFromHex(req.GetPubkey()); err != nil {
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
+				break
+			}
+
+			a, err := ee.GetAccount(req.GetPubkey())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
 			}
 
-			ct, err := coin.TypeFromStr(wr.GetCoinType())
+			ct, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
@@ -64,8 +72,8 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 			rp.Values["engine"] = ee
 			rp.Values["account"] = a
 			rp.Values["cointype"] = ct
-			rp.Values["amt"] = wr.GetCoins()
-			rp.Values["toAddr"] = wr.GetOutputAddress()
+			rp.Values["amt"] = req.GetCoins()
+			rp.Values["toAddr"] = req.GetOutputAddress()
 
 			resp, rlt := withdrawlWork(c, rp)
 			if rlt != nil {

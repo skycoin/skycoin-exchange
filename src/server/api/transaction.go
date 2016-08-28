@@ -17,14 +17,15 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			// get coin gateway
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
@@ -60,14 +61,14 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -103,13 +104,13 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break

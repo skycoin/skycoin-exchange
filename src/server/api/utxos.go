@@ -21,13 +21,13 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
 				break
 			}
-			res, err := getUtxos(tp, req.GetAddresses())
+			res, err := getUtxos(cp, req.GetAddresses())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())

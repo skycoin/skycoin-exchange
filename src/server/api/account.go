@@ -20,6 +20,7 @@ func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
+			// validate pubkey.
 			if err := validatePubkey(req.GetPubkey()); err != nil {
 				logger.Error(err.Error())
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)

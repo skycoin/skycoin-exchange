@@ -5,7 +5,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // GetNewAddress account create new address for depositing.
@@ -13,26 +12,28 @@ func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		rlt := &pp.EmptyRes{}
 		for {
-			dar := pp.GetDepositAddrReq{}
-			err := getRequest(c, &dar)
-			if err != nil {
+			req := pp.GetDepositAddrReq{}
+			if err := getRequest(c, &req); err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			// convert to cipher.PubKey
-			if _, err := cipher.PubKeyFromHex(dar.GetPubkey()); err != nil {
+			// validate pubkey
+			pubkey := req.GetPubkey()
+			if err := validatePubkey(pubkey); err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
-			at, err := ee.GetAccount(dar.GetPubkey())
+			at, err := ee.GetAccount(pubkey)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
 			}
 
-			cp, err := coin.TypeFromStr(dar.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
@@ -47,7 +48,7 @@ func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
 
 			ds := pp.GetDepositAddrRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
-				CoinType: dar.CoinType,
+				CoinType: req.CoinType,
 				Address:  &addr,
 			}
 

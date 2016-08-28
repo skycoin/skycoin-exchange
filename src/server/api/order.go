@@ -10,7 +10,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateOrder create specifc order.
@@ -24,9 +23,17 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 				logger.Error(err.Error())
 				break
 			}
-			aid := req.GetPubkey()
 
-			tp, err := order.TypeFromStr(req.GetType())
+			// validate pubkey
+			pubkey := req.GetPubkey()
+			if err := validatePubkey(pubkey); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
+				break
+			}
+
+			// get order type
+			op, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
@@ -34,52 +41,46 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 			}
 
 			// find the account
-			if _, err := cipher.PubKeyFromHex(aid); err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
-				logger.Error(err.Error())
-				break
-			}
-
-			acnt, err := egn.GetAccount(aid)
+			acnt, err := egn.GetAccount(pubkey)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				logger.Error(err.Error())
 				break
 			}
 
-			ct, bal, err := needBalance(tp, req)
+			cp, bal, err := needBalance(op, req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
 				break
 			}
 
-			if acnt.GetBalance(ct) < bal {
-				err := fmt.Errorf("%s balance is not sufficient", ct)
+			if acnt.GetBalance(cp) < bal {
+				err := fmt.Errorf("%s balance is not sufficient", cp)
 				rlt = pp.MakeErrRes(err)
 				logger.Debug(err.Error())
 				break
 			}
 
 			var success bool
-			if tp == order.Bid {
+			if op == order.Bid {
 				defer func() {
 					if success {
 						egn.SaveAccount()
 					} else {
-						acnt.IncreaseBalance(ct, bal)
+						acnt.IncreaseBalance(cp, bal)
 					}
 				}()
 				// decrease the balance, in case of double use the coins.
-				logger.Info("account:%s decrease %s:%d", acnt.GetID(), ct, bal)
-				if err := acnt.DecreaseBalance(ct, bal); err != nil {
+				logger.Info("account:%s decrease %s:%d", acnt.GetID(), cp, bal)
+				if err := acnt.DecreaseBalance(cp, bal); err != nil {
 					rlt = pp.MakeErrRes(err)
 					logger.Error(err.Error())
 					break
 				}
 			}
 
-			odr := order.New(aid, tp, req.GetPrice(), req.GetAmount())
+			odr := order.New(pubkey, op, req.GetPrice(), req.GetAmount())
 			oid, err := egn.AddOrder(req.GetCoinPair(), *odr)
 			if err != nil {
 				logger.Error(err.Error())
@@ -87,7 +88,7 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 			success = true
-			logger.Info(fmt.Sprintf("new %s order:%d", tp, oid))
+			logger.Info(fmt.Sprintf("new %s order:%d", op, oid))
 			res := pp.OrderRes{
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
 				OrderId: &oid,
@@ -109,13 +110,13 @@ func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			tp, err := order.TypeFromStr(req.GetType())
+			op, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
 				break
 			}
-			ords, err := egn.GetOrders(req.GetCoinPair(), tp, req.GetStart(), req.GetEnd())
+			ords, err := egn.GetOrders(req.GetCoinPair(), op, req.GetStart(), req.GetEnd())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
