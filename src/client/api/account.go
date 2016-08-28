@@ -1,12 +1,14 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateAccount handle the request of creating account.
@@ -58,5 +60,45 @@ func CreateAccount(se Servicer) httprouter.Handle {
 			return
 		}
 		sendJSON(w, errRlt)
+	}
+}
+
+// ActiveAccount active the specific account.
+// mode: PUT
+// url: /api/v1/account/session?pubkey=[:pubkey]
+func ActiveAccount(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		var rlt *pp.EmptyRes
+		for {
+			// get pubkey
+			pk := r.FormValue("pubkey")
+			if pk == "" {
+				logger.Error("pubkey is empty")
+				rlt = pp.MakeErrRes(errors.New("pubkey is empty"))
+				break
+			}
+
+			// validate the pubkey
+			if _, err := cipher.PubKeyFromHex(pk); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(errors.New("invalid pubkey"))
+				break
+			}
+
+			// active the account
+			if err := account.SetActive(pk); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			res := struct {
+				Result *pp.Result
+			}{
+				pp.MakeResultWithCode(pp.ErrCode_Success),
+			}
+			sendJSON(w, &res)
+			return
+		}
+		sendJSON(w, rlt)
 	}
 }

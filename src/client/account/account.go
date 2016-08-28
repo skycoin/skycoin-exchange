@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -28,7 +29,7 @@ type accountJSON struct {
 }
 
 // internal global accounts.
-var gAccounts accounts
+var gAccounts manager
 
 // account storage dir.
 var acntDir = filepath.Join(util.UserHome(), ".exchange-client/account")
@@ -77,7 +78,7 @@ func Set(a Account) {
 
 // Get return account of specific id.
 func Get(pubkey string) (Account, error) {
-	for _, a := range gAccounts {
+	for _, a := range gAccounts.Accounts {
 		if a.Pubkey == pubkey {
 			return a, nil
 		}
@@ -85,27 +86,47 @@ func Get(pubkey string) (Account, error) {
 	return Account{}, errors.New("account does not exist")
 }
 
-type accounts []Account
+// GetActive get the current working account.
+func GetActive() Account {
+	return gAccounts.ActiveAcount
+}
 
-func (acts *accounts) set(a Account) {
+// SetActive set the account as active account.
+func SetActive(pubkey string) error {
+	a, err := Get(pubkey)
+	if err != nil {
+		return err
+	}
+
+	gAccounts.ActiveAcount = a
+	return nil
+}
+
+type manager struct {
+	ActiveAcount Account   // current working account.
+	Accounts     []Account // all accounts
+}
+
+func (mgr *manager) set(a Account) {
+	mgr.ActiveAcount = a
 	var exist bool
-	for i, act := range *acts {
+	for i, act := range mgr.Accounts {
 		if act.Pubkey == a.Pubkey {
 			exist = true
-			(*acts)[i] = a
+			mgr.Accounts[i] = a
 			break
 		}
 	}
 
 	if !exist {
-		*acts = append(*acts, a)
+		mgr.Accounts = append(mgr.Accounts, a)
 	}
 
 	// persist the accounts
-	acts.store()
+	mgr.store()
 }
 
-func (acts *accounts) store() error {
+func (mgr *manager) store() error {
 	filename := filepath.Join(acntDir, acntName)
 	tmpName := filename + ".tmp"
 	f, err := os.Create(tmpName)
@@ -113,7 +134,7 @@ func (acts *accounts) store() error {
 		return err
 	}
 	defer f.Close()
-	if err := acts.save(f); err != nil {
+	if err := mgr.save(f); err != nil {
 		return err
 	}
 
@@ -127,11 +148,13 @@ func (acts *accounts) store() error {
 	return os.Rename(tmpName, filename)
 }
 
-func (acts accounts) save(w io.Writer) error {
+func (mgr manager) save(w io.Writer) error {
 	v := struct {
 		Account []accountJSON `json:"accounts"`
+		Active  string        `json:"active_account"`
 	}{
-		acts.toJSON(),
+		accounts(mgr.Accounts).toJSON(),
+		mgr.ActiveAcount.Pubkey,
 	}
 
 	d, err := json.MarshalIndent(&v, "", "    ")
@@ -142,6 +165,8 @@ func (acts accounts) save(w io.Writer) error {
 	io.Copy(w, bytes.NewBuffer(d))
 	return nil
 }
+
+type accounts []Account
 
 func (acts accounts) toJSON() []accountJSON {
 	actsJSON := make([]accountJSON, len(acts))
@@ -160,7 +185,7 @@ func (acts accounts) toJSON() []accountJSON {
 	return actsJSON
 }
 
-func makeAccountsFromJSON(actsJSON []accountJSON) (accounts, error) {
+func makeAccountsFromJSON(actsJSON []accountJSON) ([]Account, error) {
 	acts := make([]Account, len(actsJSON))
 	for i, aj := range actsJSON {
 		act := Account{
@@ -180,11 +205,11 @@ func makeAccountsFromJSON(actsJSON []accountJSON) (accounts, error) {
 	return acts, nil
 }
 
-func mustLoadAccounts(filename string) accounts {
-	acts := accounts{}
+func mustLoadAccounts(filename string) manager {
+	mgr := manager{}
 	// check the existence of the file.
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return acts
+		return mgr
 	}
 
 	d, err := ioutil.ReadFile(filename)
@@ -192,15 +217,29 @@ func mustLoadAccounts(filename string) accounts {
 		panic(err)
 	}
 	v := struct {
-		Acounts []accountJSON `json:"accounts"`
+		ActiveAccount string        `json:"active_account"`
+		Acounts       []accountJSON `json:"accounts"`
 	}{}
+
+	fmt.Println(string(d))
 	if err := json.Unmarshal(d, &v); err != nil {
 		panic(err)
 	}
 
-	acts, err = makeAccountsFromJSON(v.Acounts)
+	acts, err := makeAccountsFromJSON(v.Acounts)
 	if err != nil {
 		panic(err)
 	}
-	return acts
+
+	mgr.Accounts = acts
+	mgr.ActiveAcount = func() Account {
+		for _, a := range acts {
+			if a.Pubkey == v.ActiveAccount {
+				return a
+			}
+		}
+		return Account{}
+	}()
+
+	return mgr
 }

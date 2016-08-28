@@ -41,13 +41,14 @@ func setup(t *testing.T) (string, func(), error) {
 }
 
 func TestInitDir(t *testing.T) {
-	dir, teardown, err := setup(t)
-	// dir, _, err := setup(t)
+	// dir, teardown, err := setup(t)
+	dir, _, err := setup(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer teardown()
+	fmt.Println(dir)
+	// defer teardown()
 	// check the exitence of dir.
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		t.Fatal("account init dir failed")
@@ -60,7 +61,7 @@ func TestInitDir(t *testing.T) {
 		Seckey: s.Hex(),
 	}
 
-	v := fmt.Sprintf(`{"accounts":[{"pubkey":"%s", "seckey":"%s"}]}`, p.Hex(), s.Hex())
+	v := fmt.Sprintf(`{"active_account":"%s","accounts":[{"pubkey":"%s", "seckey":"%s"}]}`, p.Hex(), p.Hex(), s.Hex())
 
 	if err := ioutil.WriteFile(filepath.Join(dir, "data.act"), []byte(v), 0777); err != nil {
 		t.Fatal(err)
@@ -76,6 +77,9 @@ func TestInitDir(t *testing.T) {
 	}
 	assert.Equal(t, acnt.Pubkey, a.Pubkey)
 	assert.Equal(t, acnt.Seckey, a.Seckey)
+
+	activeAccount := account.GetActive()
+	assert.Equal(t, activeAccount.Pubkey, p.Hex())
 }
 
 func TestNewAndSet(t *testing.T) {
