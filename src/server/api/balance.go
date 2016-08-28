@@ -8,6 +8,7 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// GetBalance return balance of specific account.
 func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		errRlt := &pp.EmptyRes{}
@@ -20,12 +21,12 @@ func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
 			}
 
 			// convert to cipher.PubKey
-			if _, err := cipher.PubKeyFromHex(breq.GetAccountId()); err != nil {
+			if _, err := cipher.PubKeyFromHex(breq.GetPubkey()); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}
 
-			a, err := ee.GetAccount(breq.GetAccountId())
+			a, err := ee.GetAccount(breq.GetPubkey())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
@@ -39,10 +40,9 @@ func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
 
 			bal := a.GetBalance(ct)
 			bres := pp.GetBalanceRes{
-				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-				AccountId: breq.AccountId,
-				CoinType:  breq.CoinType,
-				Balance:   &bal,
+				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
+				CoinType: breq.CoinType,
+				Balance:  &bal,
 			}
 			reply(c, bres)
 			return

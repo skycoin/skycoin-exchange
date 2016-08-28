@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// CreateOrder create specifc order.
 func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		rlt := &pp.EmptyRes{}
@@ -20,42 +21,43 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			if err := getRequest(c, req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
-			aid := req.GetAccountId()
+			aid := req.GetPubkey()
+
 			tp, err := order.TypeFromStr(req.GetType())
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 
 			// find the account
 			if _, err := cipher.PubKeyFromHex(aid); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 
 			acnt, err := egn.GetAccount(aid)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 
 			ct, bal, err := needBalance(tp, req)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error("%s", err.Error())
+				logger.Error(err.Error())
 				break
 			}
 
 			if acnt.GetBalance(ct) < bal {
 				err := fmt.Errorf("%s balance is not sufficient", ct)
 				rlt = pp.MakeErrRes(err)
-				logger.Debug("%s", err.Error())
+				logger.Debug(err.Error())
 				break
 			}
 
@@ -72,7 +74,7 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 				logger.Info("account:%s decrease %s:%d", acnt.GetID(), ct, bal)
 				if err := acnt.DecreaseBalance(ct, bal); err != nil {
 					rlt = pp.MakeErrRes(err)
-					logger.Error("%s", err.Error())
+					logger.Error(err.Error())
 					break
 				}
 			}
@@ -87,9 +89,8 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 			success = true
 			logger.Info(fmt.Sprintf("new %s order:%d", tp, oid))
 			res := pp.OrderRes{
-				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-				AccountId: req.AccountId,
-				OrderId:   &oid,
+				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+				OrderId: &oid,
 			}
 			reply(c, res)
 			return
@@ -98,6 +99,7 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
+// GetOrders get order list.
 func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		rlt := &pp.EmptyRes{}

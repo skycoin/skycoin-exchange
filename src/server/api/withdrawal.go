@@ -15,14 +15,17 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// ChooseUtxoTmout max time that will be allowed in choosing sufficient utxos.
 var ChooseUtxoTmout = 5 * time.Second
 
+// BtcTxResult be used in creating bitcoin withdraw transaction.
 type BtcTxResult struct {
 	Tx         *bitcoin.Transaction
 	UsingUtxos []bitcoin.Utxo
 	ChangeAddr string
 }
 
+// SkyTxResult be used in creating skycoin withdraw transaction.
 type SkyTxResult struct {
 	Tx         *skycoin.Transaction
 	UsingUtxos []skycoin.Utxo
@@ -42,12 +45,12 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			if _, err := cipher.PubKeyFromHex(wr.GetAccountId()); err != nil {
+			if _, err := cipher.PubKeyFromHex(wr.GetPubkey()); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 				break
 			}
 
-			a, err := ee.GetAccount(wr.GetAccountId())
+			a, err := ee.GetAccount(wr.GetPubkey())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
@@ -141,11 +144,9 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		ee.WatchAddress(ct, btcTxRlt.ChangeAddr)
 	}
 
-	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-		AccountId: &id,
-		NewTxid:   &newTxid,
+		Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+		NewTxid: &newTxid,
 	}
 	return &resp, nil
 }
@@ -207,11 +208,9 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		ee.WatchAddress(ct, skyTxRlt.ChangeAddr)
 	}
 
-	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-		AccountId: &id,
-		NewTxid:   &newTxid,
+		Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+		NewTxid: &newTxid,
 	}
 	return &resp, nil
 }
@@ -220,7 +219,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
 func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*BtcTxResult, error) {
-	uxs, err := egn.ChooseUtxos(coin.Bitcoin, amount+egn.GetBtcFee(), 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Bitcoin, amount+egn.GetBtcFee(), ChooseUtxoTmout)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +276,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 }
 
 func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*SkyTxResult, error) {
-	uxs, err := egn.ChooseUtxos(coin.Skycoin, amount, 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Skycoin, amount, ChooseUtxoTmout)
 	if err != nil {
 		return nil, err
 	}
