@@ -1,0 +1,15 @@
+package pp;
+
+import "pp.common.proto";
+
+message UpdateCreditReq {
+    optional string pubkey = 10;
+    optional string coin_type = 20;
+    optional uint64 credit = 30;
+    optional string dst_pubkey = 40;
+}
+
+message UpdateCreditRes {
+    required Result result = 1;
+}
+
