@@ -25,6 +25,7 @@ func GetDepositAddress(se Servicer) httprouter.Handle {
 			}
 
 			r := pp.GetDepositAddrReq{
+				Pubkey:   pp.PtrString(a.Pubkey),
 				CoinType: pp.PtrString(cp),
 			}
 
