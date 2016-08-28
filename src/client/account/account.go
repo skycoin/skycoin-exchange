@@ -9,10 +9,14 @@ import (
 	"os"
 	"path/filepath"
 
+	logging "gopkg.in/op/go-logging.v1"
+
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
+
+var logger = logging.MustGetLogger("client.account")
 
 // Account client side account.
 type Account struct {
@@ -72,6 +76,7 @@ func New() Account {
 
 // Set save and persist the account.
 func Set(a Account) {
+	logger.Debug("active account:%s", a.Pubkey)
 	gAccounts.set(a)
 }
 
