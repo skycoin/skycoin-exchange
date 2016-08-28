@@ -11,51 +11,50 @@ import (
 // GetNewAddress account create new address for depositing.
 func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
-		errRlt := &pp.EmptyRes{}
+		rlt := &pp.EmptyRes{}
 		for {
 			dar := pp.GetDepositAddrReq{}
 			err := getRequest(c, &dar)
 			if err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			// convert to cipher.PubKey
-			if _, err := cipher.PubKeyFromHex(dar.GetAccountId()); err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+			if _, err := cipher.PubKeyFromHex(dar.GetPubkey()); err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
-			at, err := ee.GetAccount(dar.GetAccountId())
+			at, err := ee.GetAccount(dar.GetPubkey())
 			if err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
 			}
 
-			ct, err := coin.TypeFromStr(dar.GetCoinType())
+			cp, err := coin.TypeFromStr(dar.GetCoinType())
 			if err != nil {
-				errRlt = pp.MakeErrRes(err)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			// get the new address for depositing
-			addr := ee.GetNewAddress(ct)
+			addr := ee.GetNewAddress(cp)
 
 			// add the new address to engin for watching it's utxos.
-			at.AddDepositAddress(ct, addr)
-			ee.WatchAddress(ct, addr)
+			at.AddDepositAddress(cp, addr)
+			ee.WatchAddress(cp, addr)
 
 			ds := pp.GetDepositAddrRes{
-				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-				AccountId: dar.AccountId,
-				CoinType:  dar.CoinType,
-				Address:   &addr,
+				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
+				CoinType: dar.CoinType,
+				Address:  &addr,
 			}
 
 			reply(c, ds)
 			return
 		}
 
-		c.JSON(errRlt)
+		c.JSON(rlt)
 	}
 }

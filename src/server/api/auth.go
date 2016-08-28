@@ -23,7 +23,7 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 				cliPubkey, err := cipher.PubKeyFromHex(encReq.GetPubkey())
 				if err != nil {
 					logger.Error(err.Error())
-					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 					break
 				}
 				key := cipher.ECDH(cliPubkey, ee.GetServPrivKey())

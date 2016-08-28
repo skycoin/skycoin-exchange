@@ -35,14 +35,14 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 
 			// find the account
 			if _, err := cipher.PubKeyFromHex(aid); err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				logger.Error(err.Error())
 				break
 			}
 
 			acnt, err := egn.GetAccount(aid)
 			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				logger.Error(err.Error())
 				break
 			}

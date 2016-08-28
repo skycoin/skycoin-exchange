@@ -46,7 +46,7 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 			}
 
 			if _, err := cipher.PubKeyFromHex(wr.GetPubkey()); err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 

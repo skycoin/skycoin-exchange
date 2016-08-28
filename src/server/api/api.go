@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/skycoin/skycoin-exchange/src/sknet"
+	"github.com/skycoin/skycoin/src/cipher"
 
 	"gopkg.in/op/go-logging.v1"
 )
@@ -25,4 +27,17 @@ func NewReqParams() *ReqParams {
 	return &ReqParams{
 		Values: make(map[string]interface{}),
 	}
+}
+
+func validatePubkey(key string) (err error) {
+	defer func() {
+		// the PubKeyFromHex may panic if the key is invalidate.
+		// use recover to catch the panic, and return false.
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+
+	_, err = cipher.PubKeyFromHex(key)
+	return
 }

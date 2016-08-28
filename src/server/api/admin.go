@@ -48,7 +48,7 @@ func UpdateCredit(ee engine.Exchange) sknet.HandlerFunc {
 			a, err := ee.GetAccount(req.GetDstPubkey())
 			if err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 

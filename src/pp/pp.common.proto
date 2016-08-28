@@ -14,7 +14,7 @@ message EmptyRes {
 enum ErrCode {
     Success = 0;
     WrongFormat = 10;
-    WrongAccountId = 20;
+    WrongPubkey = 20;
     WrongRequest = 21;
 
     UnAuthorized = 31;

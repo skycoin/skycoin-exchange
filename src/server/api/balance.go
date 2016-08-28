@@ -22,7 +22,7 @@ func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
 
 			// convert to cipher.PubKey
 			if _, err := cipher.PubKeyFromHex(breq.GetPubkey()); err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 

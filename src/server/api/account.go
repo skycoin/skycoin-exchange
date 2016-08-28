@@ -6,7 +6,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // CreateAccount create account with specific pubkey,
@@ -21,9 +20,9 @@ func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			if _, err := cipher.PubKeyFromHex(req.GetPubkey()); err != nil {
+			if err := validatePubkey(req.GetPubkey()); err != nil {
 				logger.Error(err.Error())
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
