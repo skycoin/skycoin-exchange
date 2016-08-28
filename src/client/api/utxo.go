@@ -16,20 +16,6 @@ func GetUtxos(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
 			cp := r.FormValue("coin_type")
 			if cp == "" {
 				logger.Error("coin type empty")
@@ -52,6 +38,8 @@ func GetUtxos(se Servicer) httprouter.Handle {
 				CoinType:  pp.PtrString(cp),
 				Addresses: addrArray,
 			}
+
+			a := account.GetActive()
 			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())

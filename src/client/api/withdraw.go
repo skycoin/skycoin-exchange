@@ -16,20 +16,7 @@ func Withdraw(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			cp := r.FormValue("coin_type")
 			if cp == "" {
 				err := errors.New("coin_type empty")
@@ -56,7 +43,7 @@ func Withdraw(se Servicer) httprouter.Handle {
 				break
 			}
 			wr := pp.WithdrawalReq{
-				AccountId:     &pubkey,
+				Pubkey:        &a.Pubkey,
 				CoinType:      &cp,
 				Coins:         &amt,
 				OutputAddress: &toAddr,

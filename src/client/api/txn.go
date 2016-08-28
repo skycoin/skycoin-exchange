@@ -15,21 +15,7 @@ func InjectTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			// get account key.
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			// get tx
 			tx := r.FormValue("tx")
 			if tx == "" {
@@ -83,20 +69,7 @@ func GetTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			// get coin type
 			cp := r.FormValue("coin_type")
 			if cp == "" {
@@ -143,20 +116,7 @@ func GetRawTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			// get coin type
 			cp := r.FormValue("coin_type")
 			if cp == "" {

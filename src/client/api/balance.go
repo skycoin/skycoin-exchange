@@ -15,20 +15,7 @@ func GetBalance(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			cp := r.FormValue("coin_type")
 			if cp == "" {
 				err := errors.New("coin type empty")
@@ -38,8 +25,8 @@ func GetBalance(se Servicer) httprouter.Handle {
 			}
 
 			gbr := pp.GetBalanceReq{
-				AccountId: pp.PtrString(pubkey),
-				CoinType:  pp.PtrString(cp),
+				Pubkey:   pp.PtrString(a.Pubkey),
+				CoinType: pp.PtrString(cp),
 			}
 
 			req, err := makeEncryptReq(&gbr, se.GetServKey().Hex(), a.Seckey)

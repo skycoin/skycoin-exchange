@@ -15,21 +15,7 @@ func GetDepositAddress(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			// id, key, err := getAccountAndKey(r)
-			pubkey, err := getPubkey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			a, err := account.Get(pubkey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			a := account.GetActive()
 			cp := r.FormValue("coin_type")
 			if cp == "" {
 				err := errors.New("coin type empty")
@@ -39,8 +25,7 @@ func GetDepositAddress(se Servicer) httprouter.Handle {
 			}
 
 			r := pp.GetDepositAddrReq{
-				AccountId: pp.PtrString(pubkey),
-				CoinType:  pp.PtrString(cp),
+				CoinType: pp.PtrString(cp),
 			}
 
 			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), a.Seckey)
