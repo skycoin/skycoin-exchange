@@ -14,20 +14,20 @@ import (
 func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var (
-			cnt_req pp.EncryptReq
-			errRlt  = &pp.EmptyRes{}
+			encReq pp.EncryptReq
+			errRlt = &pp.EmptyRes{}
 		)
 
 		for {
-			if c.BindJSON(&cnt_req) == nil {
-				cliPubkey, err := cipher.PubKeyFromHex(cnt_req.GetPubkey())
+			if c.BindJSON(&encReq) == nil {
+				cliPubkey, err := cipher.PubKeyFromHex(encReq.GetPubkey())
 				if err != nil {
 					logger.Error(err.Error())
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
 					break
 				}
 				key := cipher.ECDH(cliPubkey, ee.GetServPrivKey())
-				data, err := cipher.Chacha20Decrypt(cnt_req.GetEncryptdata(), key, cnt_req.GetNonce())
+				data, err := cipher.Chacha20Decrypt(encReq.GetEncryptdata(), key, encReq.GetNonce())
 				if err != nil {
 					logger.Error(err.Error())
 					errRlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
@@ -69,27 +69,6 @@ func Authorize(ee engine.Exchange) sknet.HandlerFunc {
 		c.JSON(errRlt)
 	}
 }
-
-// mustEncryptRes marshal and encrypt the response object,
-// return the encrypted data and the random nonce.
-// func mustEncryptRes(pubkey cipher.PubKey, seckey cipher.SecKey, rsp interface{}) (encryptData []byte, nonce []byte) {
-// 	var (
-// 		d   []byte
-// 		err error
-// 	)
-// 	d, err = json.Marshal(rsp)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-//
-// 	nonce = cipher.RandByte(chacha20.NonceSize)
-// 	key := cipher.ECDH(pubkey, seckey)
-// 	encryptData, err = cipher.Chacha20Encrypt(d, key, nonce)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return
-// }
 
 // reply set the code and response in gin, the gin Security middleware
 // will encrypt the response, and send the encryped response to client.
