@@ -31,6 +31,7 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&cfg.DataDir, "dataDir", ".skycoin-exchange", "data directory")
 	flag.StringVar(&cfg.Seed, "seed", "", "wallet's seed")
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
+	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()

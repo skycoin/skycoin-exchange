@@ -25,13 +25,13 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
-	Port    int    // api port
-	BtcFee  int    // btc transaction fee
-	DataDir string // data directory
-	// WltSeed      string        // wallet seed name
+	Port         int           // api port
+	BtcFee       int           // btc transaction fee
+	DataDir      string        // data directory
 	Seed         string        // seed
 	Seckey       cipher.SecKey // private key
 	UtxoPoolSize int           // utxo pool size.
+	Admins       string        // admins joined with `,`
 }
 
 type ExchangeServer struct {
@@ -230,7 +230,8 @@ func (self *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error)
 }
 
 func (self ExchangeServer) IsAdmin(pubkey string) bool {
-	return true
+	logger.Debug("admins:%s, pubkey:%s", self.cfg.Admins, pubkey)
+	return strings.Contains(self.cfg.Admins, pubkey)
 }
 
 // initDataDir init the data dir of skycoin exchange.

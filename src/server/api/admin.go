@@ -24,7 +24,6 @@ func IsAdmin(ee engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 				break
 			}
-
 			c.Next()
 			return
 		}
