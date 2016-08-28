@@ -6,7 +6,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// NewNet create sknet engine and register handlers.
+// New create sknet engine and register handlers.
 func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 	nt := sknet.New(quit)
 	nt.Use(sknet.Recovery())
@@ -14,6 +14,7 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 
 	auth := nt.Group("/auth", api.Authorize(ee))
 	{
+		// baseic handlers.
 		auth.Register("/create/account", api.CreateAccount(ee))
 		auth.Register("/create/deposit_address", api.GetNewAddress(ee))
 		auth.Register("/get/balance", api.GetBalance(ee))
@@ -29,6 +30,11 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 		auth.Register("/inject/tx", api.InjectTx(ee))
 		auth.Register("/get/tx", api.GetTx(ee))
 		auth.Register("/get/rawtx", api.GetRawTx(ee))
+	}
+
+	admin := nt.Group("/admin", api.Authorize(ee), api.IsAdmin(ee))
+	{
+		admin.Register("/update/credit", api.UpdateCredit(ee))
 	}
 
 	return nt
