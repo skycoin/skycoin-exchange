@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,20 +13,27 @@ import (
 )
 
 // CreateOrder create order through exchange server.
+// mode: POST
+// url: /api/v1/account/order?coin_pair=[:coin_pair]&type=[:type]&price=[:price]&amt=[:amt]
+// params:
+// 		coin_pair: order coin pair.
+// 		type: order type, can be bid or ask.
+// 		price: price.
+// 		amt: amount.
 func CreateOrder(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			rawReq := pp.OrderReq{}
-			if err := bindJSON(r, &rawReq); err != nil {
+			rawReq, err := makeOrderReq(r)
+			if err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			a := account.GetActive()
 			rawReq.Pubkey = pp.PtrString(a.Pubkey)
-			req, err := makeEncryptReq(&rawReq, se.GetServKey().Hex(), a.Seckey)
+			req, err := makeEncryptReq(rawReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -49,6 +57,47 @@ func CreateOrder(se Servicer) httprouter.Handle {
 		}
 		sendJSON(w, rlt)
 	}
+}
+
+func makeOrderReq(r *http.Request) (*pp.OrderReq, error) {
+	// get coin_pair
+	cp := r.FormValue("coin_pair")
+	if cp == "" {
+		return nil, errors.New("coin_pair is empty")
+	}
+
+	// get order type
+	tp := r.FormValue("type")
+	if tp == "" {
+		return nil, errors.New("type is empty")
+	}
+
+	// get price
+	pc := r.FormValue("price")
+	if pc == "" {
+		return nil, errors.New("price is empty")
+	}
+	price, err := strconv.ParseUint(pc, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// get amount
+	amt := r.FormValue("amt")
+	if amt == "" {
+		return nil, errors.New("amt is empty")
+	}
+	amount, err := strconv.ParseUint(amt, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pp.OrderReq{
+		CoinPair: pp.PtrString(cp),
+		Type:     pp.PtrString(tp),
+		Price:    pp.PtrUint64(price),
+		Amount:   pp.PtrUint64(amount),
+	}, nil
 }
 
 // GetBidOrders get bid orders through exchange server.
