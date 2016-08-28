@@ -229,6 +229,10 @@ func (self *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error)
 	return self.orderManager.AddOrder(cp, odr)
 }
 
+func (self ExchangeServer) IsAdmin(pubkey string) bool {
+	return true
+}
+
 // initDataDir init the data dir of skycoin exchange.
 func initDataDir(dir string) string {
 	if dir == "" {
