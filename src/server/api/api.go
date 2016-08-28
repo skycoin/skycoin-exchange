@@ -15,10 +15,12 @@ func getRequest(c *sknet.Context, out interface{}) error {
 	return json.Unmarshal(d, out)
 }
 
+// ReqParams records the request params
 type ReqParams struct {
 	Values map[string]interface{}
 }
 
+// NewReqParams make and init the ReqParams.
 func NewReqParams() *ReqParams {
 	return &ReqParams{
 		Values: make(map[string]interface{}),
