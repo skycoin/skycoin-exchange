@@ -56,5 +56,5 @@ func registerWalletHandlers(rt *httprouter.Router, se api.Servicer) {
 
 // admin handlers.
 func registerAdminHandlers(rt *httprouter.Router, se api.Servicer) {
-	rt.PUT("/api/v1/admin/credit", api.UpdateCredit(se))
+	rt.PUT("/api/v1/admin/account/balance", api.AdminUpdateBalance(se))
 }

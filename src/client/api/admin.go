@@ -12,19 +12,19 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-// UpdateCredit admin update credit of specific account
+// AdminUpdateBalance update balance of specific account
 // mode: PUT
-// url: /api/v1/admin/credit?dst_pubkey=[:dst_pubkey]&coin_type=[:coin_type]&credit=[:credit]
+// url: /api/v1/admin/account/balance?dst=[:dst]&coin_type=[:coin_type]&amt=[:amt]
 // params:
-//      dst_pubkey: the account pubkey, whose credit will be updated.
+//      dst: the dst account pubkey, whose balance will be updated.
 //      coin_type: skycoin or bitcoin, the coin you want to credit.
-//      credit: credit that will be updated.
-func UpdateCredit(se Servicer) httprouter.Handle {
+//      amt: balance that will be updated.
+func AdminUpdateBalance(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
 			// get dst_pubkey
-			dstPk := r.FormValue("dst_pubkey")
+			dstPk := r.FormValue("dst")
 			if dstPk == "" {
 				err := errors.New("dst pubkey is empty")
 				logger.Error(err.Error())
@@ -48,15 +48,15 @@ func UpdateCredit(se Servicer) httprouter.Handle {
 				break
 			}
 
-			// get credit
-			cd := r.FormValue("credit")
-			if cd == "" {
-				err := errors.New("credit is empty")
+			// get amt
+			amt := r.FormValue("amt")
+			if amt == "" {
+				err := errors.New("amt is empty")
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-			credit, err := strconv.ParseUint(cd, 10, 64)
+			amount, err := strconv.ParseUint(amt, 10, 64)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
@@ -65,10 +65,10 @@ func UpdateCredit(se Servicer) httprouter.Handle {
 
 			a := account.GetActive()
 			r := pp.UpdateCreditReq{
-				Pubkey:    pp.PtrString(a.Pubkey),
-				CoinType:  pp.PtrString(cp),
-				Credit:    pp.PtrUint64(credit),
-				DstPubkey: pp.PtrString(dstPk),
+				Pubkey:   pp.PtrString(a.Pubkey),
+				CoinType: pp.PtrString(cp),
+				Amount:   pp.PtrUint64(amount),
+				Dst:      pp.PtrString(dstPk),
 			}
 
 			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), a.Seckey)
