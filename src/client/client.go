@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
+	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/client/router"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
@@ -17,45 +17,52 @@ var logger = logging.MustGetLogger("client.rpclient")
 
 // Config client coinfig
 type Config struct {
-	APIRoot    string
+	ServAddr   string
 	ServPubkey cipher.PubKey
+	Port       int
+	GuiDir     string
+	AccountDir string
+	WalletDir  string
 }
 
 // New create client service
 func New(cfg Config) *Service {
 	return &Service{
-		ServAddr:   cfg.APIRoot,
-		ServPubkey: cfg.ServPubkey,
+		cfg,
 	}
 }
 
 // Service rpc client service.
 type Service struct {
-	ServAddr   string        // exchange server addr.
-	ServPubkey cipher.PubKey // exchagne server pubkey.
+	cfg Config
 }
 
 // GetServKey get server pubkey.
 func (se Service) GetServKey() cipher.PubKey {
-	return se.ServPubkey
+	return se.cfg.ServPubkey
 }
 
 // GetServAddr get exchange server addresse.
 func (se Service) GetServAddr() string {
-	return se.ServAddr
+	return se.cfg.ServAddr
 }
 
 // Run start the client service.
-func (se *Service) Run(addr string, guiDir string) {
-	// init wallet
-	wallet.InitDir(filepath.Join(util.UserHome(), ".exchange-client/wallet"))
+func (se *Service) Run() {
+	// init wallet dir
+	wallet.InitDir(se.cfg.WalletDir)
+
+	// init account dir
+	account.InitDir(se.cfg.AccountDir)
 
 	r := router.New(se)
-	if err := gui.LaunchWebInterface(addr, guiDir, r); err != nil {
+	addr := fmt.Sprintf("localhost:%d", se.cfg.Port)
+	if err := gui.LaunchWebInterface(addr, se.cfg.GuiDir, r); err != nil {
 		panic(err)
 	}
+
 	go func() {
-		// Wait a moment just to make sure the http interface is up
+		// Wait a moment just to make sure the http service is up
 		time.Sleep(time.Millisecond * 100)
 		fulladdress := fmt.Sprintf("http://%s", addr)
 		logger.Info("Launching System Browser with %s", fulladdress)
