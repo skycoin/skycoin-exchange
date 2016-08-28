@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
+// GetUtxos get utxos of specific address.
 func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var req pp.GetUtxoReq
