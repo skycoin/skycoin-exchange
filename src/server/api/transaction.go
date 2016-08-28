@@ -92,6 +92,7 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
+// GetRawTx return rawtx of specifc tx.
 func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var rlt *pp.EmptyRes
