@@ -73,6 +73,7 @@ func UpdateCredit(ee engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
+			ee.SaveAccount()
 			res := pp.UpdateCreditRes{
 				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 			}
