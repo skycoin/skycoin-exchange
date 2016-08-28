@@ -17,6 +17,7 @@ It is generated from these files:
 	pp.request.proto
 	pp.utxo.proto
 	pp.transaction.proto
+	pp.admin.proto
 
 It has these top-level messages:
 	Result
@@ -57,6 +58,8 @@ It has these top-level messages:
 	BtcScriptPubKeyResult
 	SkyTx
 	SkyTxOutput
+	UpdateCreditReq
+	UpdateCreditRes
 */
 package pp
 

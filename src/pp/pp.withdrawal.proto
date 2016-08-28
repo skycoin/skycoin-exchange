@@ -12,6 +12,5 @@ message WithdrawalReq {
 message WithdrawalRes {
   required Result result = 1;
 
-  optional string account_id = 10;
   optional string new_txid = 20;
 }

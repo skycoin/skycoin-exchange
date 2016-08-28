@@ -13,7 +13,6 @@ message OrderReq {
 message OrderRes {
   required Result result = 1;
 
-  optional string pubkey = 10;
   optional uint64 order_id = 11;
 }
 
