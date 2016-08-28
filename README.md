@@ -35,8 +35,7 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "account_id": "03c9852d11d2d84d23356df6390f10a53dbd8026ed4bc58f9ccddd7a7c69e00715",
-  "key": "36797b7fe0f8bcc96ac4f4110eaab0d1cb32fbe8961a77bf132c0efa02e760a7",
+  "pubkey": the"03c9852d11d2d84d23356df6390f10a53dbd8026ed4bc58f9ccddd7a7c69e00715",
   "created_at": 1470188576
 }
 ```
@@ -46,10 +45,7 @@ The rpc client will use the account id and key to communicate with exchange serv
 #### get supported coins
 ```
 mode:GET
-url: /api/v1/coins?id=[:id]&key=[:key]
-params:
-	id: account id.
-	key: account key.
+url: /api/v1/coins
 response json:
 {
   "result": {
@@ -67,10 +63,8 @@ response json:
 #### get deposit address
 ```
 mode: POST
-url: /api/v1/account/deposit_address?id=[:id]&key=[:key]&coin_type=[:type]
+url: /api/v1/account/deposit_address?coin_type=[:type]
 params:
-	id: account id.
-	key: account key.
 	coin_type: can be bitcoin, skycoin, etc.
 response json:
 {
@@ -79,7 +73,6 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "coin_type": "bitcoin",
   "address": "1HBuSp1G151xTqLpMT3mBDXskC5iVNTAwx"
 }
@@ -88,10 +81,8 @@ response json:
 #### get account balance
 ```
 mode: GET
-url: /api/v1/account/balance?id=[:id]&key=[:key]coin_type=[:type]
+url: /api/v1/account/balance?coin_type=[: coin_type]
 params:
-	id: account id.
-	key: account key.
 	coin_type: can be bitcoin, skycoin, etc.
 response json:
 {
@@ -100,7 +91,6 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "coin_type": "bitcoin",
   "balance": 480000
 }
@@ -109,10 +99,8 @@ response json:
 #### withdraw coins
 ```
 mdoe: POST
-url: /api/v1/account/withdrawal?id=[:id]&key=[:key]&coin_type=[:type]&amount=[:amt]&toaddr=[:toaddr]
+url: /api/v1/account/withdrawal?coin_type=[:type]&amount=[:amt]&toaddr=[:toaddr]
 params:
-	id: account id.
-	key: account key.
 	coin_type: can be bitcoin, skycoin, etc.
 	amount: the coin number you want to withdrawal, btc in satoshis, sky in drops.
 	toaddr: address you want to receive the coins.
@@ -123,7 +111,6 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "new_txid": "21b1a9c59a3a631f14b7f91c9b886f6e379c36dd357f7628964107c4d953ea5a"
 }
 
@@ -132,10 +119,7 @@ response json:
 #### create order
 ```
 mode: POST
-url: /api/v1/account/order?id=[:id]&key=[:key]
-params:
-	id: account id.
-	key: account key.
+url: /api/v1/account/order
 request json:
 {
    "type": "bid", // bid or ask
@@ -150,7 +134,6 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "account_id": "02169842b50a2f452039d18d7b885e1b99801475489368ddcd58365f135784585c",
   "order_id": 8
 }
 ```
@@ -158,10 +141,8 @@ response json:
 #### get orders
 ```
 mode: GET
-url: /api/v1/orders/[:type]?coin_pair=[:coin_pair]&start=[:start]&end=[:end]&id=[:id]&key=[:key]
+url: /api/v1/orders/[:type]?coin_pair=[:coin_pair]&start=[:start]&end=[:end]
 params:
-	id: account id.
-	key: account key.
 	type: order type, can be bid or ask.
 	coin_pair: coin pair, joined by '/', like: bitcoin/skycoin.
 	start: start index of the orders.
@@ -198,12 +179,10 @@ response json:
 #### get utxos
 ```
 mode: GET
-url: /api/v1/utxos?coin_type=[:coin_type]&addrs=[:addrs]&id=[:id]&key=[:key]
+url: /api/v1/utxos?coin_type=[:coin_type]&addrs=[:addrs]
 params:
 coin_type: coin type, can be bitcoin or skycoin.
 addrs: addresses, joined with `,`.
-id: account id.
-key: account key.
 response json:
 {
   "result": {
@@ -231,10 +210,8 @@ NOTE: the utxos response json struct of bitcoin is different from skycoin.
 #### get transaction
 ```
 mode: GET
-url: /api/v1/tx?id=[:id]&key=[:key]&coin_type=[:coin_type]&txid=[:txid]
+url: /api/v1/tx?coin_type=[:coin_type]&txid=[:txid]
 params:
-	id: account id
-	key: account key
 	coin_type: bitcoin or skycoin
 	txid: transaction id
 response json:
@@ -282,10 +259,8 @@ NOTE: the bitcoin transaction response struct is differen from skycoin.
 #### get raw transaction
 ```
 mode: GET
-url: /api/v1/rawtx?id=[:id]&key=[:key]&coin_type=[:coin_type]&txid=[:txid]
+url: /api/v1/rawtx?coin_type=[:coin_type]&txid=[:txid]
 params:
-	id: account id
-	key: account key
 	coin_type: bitcoin or skycoin
 	txid: transaction id
 response json:
