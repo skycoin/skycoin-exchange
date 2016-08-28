@@ -5,23 +5,33 @@
 go get github.com/skycoin/skycoin-exchange
 ```
 
-## Running server
+## Running server 
 ```
 cd skycoin-exchange/cmd/server
-go run main.go -seed="wlt seed name"
+go run main.go -seed="wallet seed name"
 ```
-Default server port is 8080, must specify the seed name.
-For more usage, run the help command as below:
+The `seed` flag must be specificed, server will generate wallet base on it. The default server port is 8080, and you can use the `port` flag to change it.
+
+## Setup admin in server <a id="setup-admin"></a>
+As some apis need admin privilege, the server do not have admin account by default，use the following command to set up admin accounts.
+```
+go run main.go -admins="0311ff3ed447e3ebe176e929017556e2d2be7c52b1f241dd80df98635ea9f53b22, 0311ff3ed447e3ebe176e929017556e2d2be7c52b1f241dd80df98635ea9f53b45"
+```
+Multiple admin accounts are connected by commas.
+
+## Help
+For more usage, run the help command:
 
 ```
 go run main.go --help
 ```
-## Running rpclient
+
+
+## Running client
 ```
-cd skycoin-exchange/cmd/client
-go run client.go
+./client.sh
 ```
-Default rpclient port is 6060.
+Default client port is 6060.
 
 ### Client APIs
 #### create account:
@@ -40,7 +50,21 @@ response json:
 }
 ```
 
-The rpc client will use the account id and key to communicate with exchange server, most of the following APIs will use the id and key.
+Once the new account is created, this account will become the `active account`, that means the following apis calls are all base on this account.
+
+#### switch account
+```
+mode: PUT
+url: /api/v1/account/session?pubkey=[:pubkey]
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  }
+}
+```
 
 #### get supported coins
 ```
@@ -119,14 +143,12 @@ response json:
 #### create order
 ```
 mode: POST
-url: /api/v1/account/order
-request json:
-{
-   "type": "bid", // bid or ask
-   "coin_pair":"bitcoin/skycoin",
-   "amount":90000,
-   "price":25
-}
+url: /api/v1/account/order?coin_pair=[:coin_pair]&type=[:type]&price=[:price]&amt=[:amt]
+params:
+	coin_pair: order coin pair.
+	type: order type, can be bid or ask.
+	price: price.
+	amt: amount.
 response json:
 {
   "result": {
@@ -272,6 +294,25 @@ response json:
   },
   "coin_type": "bitcoin",
   "rawtx": "010000000132ea3894c4b2c68bb1255be5d0e8a26bd336fd7a562eca9f7c435c9268199f06020000006b483045022100dd4e1b960726e3d3d205cb5ef4d92b3e04f3839757606800ed662069a841ffdc02203f68723bbbf9800d16555ace1ef2f46e65c2a6341643f3c5bf84158b108e6d5d012103eb8b81f8ebc988c61d3cc4c4ac3d546b02a4994d612725e91d8d69a72045fb18ffffffff019d3b1f020000000017a914bfc03379d17dd1e918a026b76cde472bea7ac7268700000000"
+}
+```
+#### admin update balance for specific account
+This api is used to update balance of specific account, need admin privilege, to acquire admin privilege, see [setup admin in server](#setup-admin).
+
+```
+mode: PUT
+url: /api/v1/admin/account/balance?coin_type=[:coin_type]&dst=[:dst]&amt=[:amt]
+params:
+	coin_type: bitcoin or skycoin.
+	dst: account pubkey, the account whose balance is going to be updated.
+	amt: balance amount.
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  }
 }
 ```
 
