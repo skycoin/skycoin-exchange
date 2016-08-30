@@ -13,6 +13,33 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// Balance the both skycoin and bitcoin have amount field,
+// while the hours will be omited when used as bitcoin balance.
+type Balance struct {
+	Amount           *uint64 `protobuf:"varint,10,opt,name=amount" json:"amount,omitempty"`
+	Hours            *uint64 `protobuf:"varint,11,opt,name=hours" json:"hours,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Balance) Reset()                    { *m = Balance{} }
+func (m *Balance) String() string            { return proto.CompactTextString(m) }
+func (*Balance) ProtoMessage()               {}
+func (*Balance) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
+
+func (m *Balance) GetAmount() uint64 {
+	if m != nil && m.Amount != nil {
+		return *m.Amount
+	}
+	return 0
+}
+
+func (m *Balance) GetHours() uint64 {
+	if m != nil && m.Hours != nil {
+		return *m.Hours
+	}
+	return 0
+}
+
 type GetAccountBalanceReq struct {
 	Pubkey           *string `protobuf:"bytes,10,opt,name=pubkey" json:"pubkey,omitempty"`
 	CoinType         *string `protobuf:"bytes,11,opt,name=coin_type" json:"coin_type,omitempty"`
@@ -22,7 +49,7 @@ type GetAccountBalanceReq struct {
 func (m *GetAccountBalanceReq) Reset()                    { *m = GetAccountBalanceReq{} }
 func (m *GetAccountBalanceReq) String() string            { return proto.CompactTextString(m) }
 func (*GetAccountBalanceReq) ProtoMessage()               {}
-func (*GetAccountBalanceReq) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
+func (*GetAccountBalanceReq) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{1} }
 
 func (m *GetAccountBalanceReq) GetPubkey() string {
 	if m != nil && m.Pubkey != nil {
@@ -39,15 +66,15 @@ func (m *GetAccountBalanceReq) GetCoinType() string {
 }
 
 type GetAccountBalanceRes struct {
-	Result           *Result `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
-	Balance          *uint64 `protobuf:"varint,12,opt,name=balance" json:"balance,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Result           *Result  `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
+	Balance          *Balance `protobuf:"bytes,12,opt,name=balance" json:"balance,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
 }
 
 func (m *GetAccountBalanceRes) Reset()                    { *m = GetAccountBalanceRes{} }
 func (m *GetAccountBalanceRes) String() string            { return proto.CompactTextString(m) }
 func (*GetAccountBalanceRes) ProtoMessage()               {}
-func (*GetAccountBalanceRes) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{1} }
+func (*GetAccountBalanceRes) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{2} }
 
 func (m *GetAccountBalanceRes) GetResult() *Result {
 	if m != nil {
@@ -56,11 +83,11 @@ func (m *GetAccountBalanceRes) GetResult() *Result {
 	return nil
 }
 
-func (m *GetAccountBalanceRes) GetBalance() uint64 {
-	if m != nil && m.Balance != nil {
-		return *m.Balance
+func (m *GetAccountBalanceRes) GetBalance() *Balance {
+	if m != nil {
+		return m.Balance
 	}
-	return 0
+	return nil
 }
 
 type GetAddrBalanceReq struct {
@@ -72,7 +99,7 @@ type GetAddrBalanceReq struct {
 func (m *GetAddrBalanceReq) Reset()                    { *m = GetAddrBalanceReq{} }
 func (m *GetAddrBalanceReq) String() string            { return proto.CompactTextString(m) }
 func (*GetAddrBalanceReq) ProtoMessage()               {}
-func (*GetAddrBalanceReq) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{2} }
+func (*GetAddrBalanceReq) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{3} }
 
 func (m *GetAddrBalanceReq) GetCoinType() string {
 	if m != nil && m.CoinType != nil {
@@ -89,15 +116,15 @@ func (m *GetAddrBalanceReq) GetAddrs() string {
 }
 
 type GetAddrBalanceRes struct {
-	Result           *Result `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
-	Balance          *uint64 `protobuf:"varint,10,opt,name=balance" json:"balance,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Result           *Result  `protobuf:"bytes,1,req,name=result" json:"result,omitempty"`
+	Balance          *Balance `protobuf:"bytes,10,opt,name=balance" json:"balance,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
 }
 
 func (m *GetAddrBalanceRes) Reset()                    { *m = GetAddrBalanceRes{} }
 func (m *GetAddrBalanceRes) String() string            { return proto.CompactTextString(m) }
 func (*GetAddrBalanceRes) ProtoMessage()               {}
-func (*GetAddrBalanceRes) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{3} }
+func (*GetAddrBalanceRes) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{4} }
 
 func (m *GetAddrBalanceRes) GetResult() *Result {
 	if m != nil {
@@ -106,14 +133,15 @@ func (m *GetAddrBalanceRes) GetResult() *Result {
 	return nil
 }
 
-func (m *GetAddrBalanceRes) GetBalance() uint64 {
-	if m != nil && m.Balance != nil {
-		return *m.Balance
+func (m *GetAddrBalanceRes) GetBalance() *Balance {
+	if m != nil {
+		return m.Balance
 	}
-	return 0
+	return nil
 }
 
 func init() {
+	proto.RegisterType((*Balance)(nil), "pp.Balance")
 	proto.RegisterType((*GetAccountBalanceReq)(nil), "pp.GetAccountBalanceReq")
 	proto.RegisterType((*GetAccountBalanceRes)(nil), "pp.GetAccountBalanceRes")
 	proto.RegisterType((*GetAddrBalanceReq)(nil), "pp.GetAddrBalanceReq")
@@ -123,17 +151,19 @@ func init() {
 func init() { proto.RegisterFile("pp.balance.proto", fileDescriptor5) }
 
 var fileDescriptor5 = []byte{
-	// 187 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0x12, 0x28, 0x28, 0xd0, 0x4b,
-	0x4a, 0xcc, 0x49, 0xcc, 0x4b, 0x4e, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x28,
-	0x90, 0xe2, 0x07, 0x8a, 0x26, 0xe7, 0xe7, 0xe6, 0xe6, 0xe7, 0x41, 0x04, 0x95, 0x2c, 0xb9, 0x44,
-	0xdc, 0x53, 0x4b, 0x1c, 0x93, 0x93, 0xf3, 0x4b, 0xf3, 0x4a, 0x9c, 0x20, 0xea, 0x83, 0x52, 0x0b,
-	0x85, 0xf8, 0xb8, 0xd8, 0x0a, 0x4a, 0x93, 0xb2, 0x53, 0x2b, 0x25, 0xb8, 0x14, 0x18, 0x35, 0x38,
-	0x85, 0x04, 0xb9, 0x38, 0x93, 0xf3, 0x33, 0xf3, 0xe2, 0x4b, 0x2a, 0x0b, 0x52, 0x25, 0xb8, 0x41,
-	0x42, 0x4a, 0xce, 0x58, 0xb5, 0x16, 0x0b, 0x49, 0x71, 0xb1, 0x15, 0xa5, 0x16, 0x97, 0xe6, 0x94,
-	0x48, 0x30, 0x2a, 0x30, 0x69, 0x70, 0x1b, 0x71, 0xe9, 0x01, 0x2d, 0x0d, 0x02, 0x8b, 0x08, 0xf1,
-	0x73, 0xb1, 0x43, 0x1d, 0x25, 0xc1, 0x03, 0x34, 0x84, 0x45, 0xc9, 0x94, 0x4b, 0x10, 0x64, 0x48,
-	0x4a, 0x4a, 0x11, 0x92, 0xe5, 0x28, 0x96, 0x41, 0xec, 0xe7, 0xe5, 0x62, 0x4d, 0x04, 0x2a, 0x2a,
-	0x96, 0x10, 0x01, 0xdb, 0xed, 0x80, 0xa9, 0x8d, 0x68, 0x8b, 0x41, 0x06, 0xb2, 0x00, 0x02, 0x00,
-	0x00, 0xff, 0xff, 0x58, 0x6a, 0x95, 0x37, 0x20, 0x01, 0x00, 0x00,
+	// 219 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x8c, 0x8f, 0x3d, 0x4f, 0x85, 0x30,
+	0x18, 0x85, 0x73, 0x6f, 0xf4, 0x12, 0xde, 0xfa, 0x45, 0xc3, 0xd0, 0x10, 0x07, 0xd2, 0x89, 0x89,
+	0x81, 0xc4, 0xc1, 0x51, 0x17, 0x27, 0x13, 0xc3, 0x1f, 0x30, 0xa5, 0x34, 0xd1, 0x08, 0x6d, 0xed,
+	0xc7, 0xc0, 0xbf, 0xb7, 0x2d, 0x0c, 0x1a, 0x1c, 0xee, 0xd8, 0xd3, 0xf3, 0x9c, 0x3e, 0x85, 0x3b,
+	0xad, 0xdb, 0x81, 0x4d, 0x4c, 0x72, 0xd1, 0x6a, 0xa3, 0x9c, 0xc2, 0x47, 0xad, 0xab, 0xdb, 0x90,
+	0x72, 0x35, 0xcf, 0x4a, 0xae, 0x21, 0x6d, 0x20, 0x7b, 0x5e, 0x5b, 0xf8, 0x06, 0x4e, 0x6c, 0x56,
+	0x5e, 0x3a, 0x02, 0xf5, 0xa1, 0xb9, 0xc0, 0xd7, 0x70, 0xf9, 0xa1, 0xbc, 0xb1, 0x04, 0xc5, 0x23,
+	0x7d, 0x84, 0xf2, 0x45, 0xb8, 0x27, 0xce, 0x63, 0x65, 0x63, 0x7a, 0xf1, 0x1d, 0x31, 0xed, 0x87,
+	0x2f, 0xb1, 0x24, 0x2c, 0xc7, 0x05, 0xe4, 0x5c, 0x7d, 0xca, 0x77, 0xb7, 0x68, 0x91, 0xd0, 0x9c,
+	0xbe, 0xfd, 0x8b, 0x5a, 0x5c, 0xc1, 0xc9, 0x08, 0xeb, 0x27, 0x47, 0x0e, 0xf5, 0xb1, 0x41, 0x1d,
+	0xb4, 0x41, 0xaf, 0x4f, 0x09, 0xbe, 0x87, 0x6c, 0xd3, 0x27, 0x57, 0x61, 0x04, 0x75, 0x28, 0x5e,
+	0x6e, 0x30, 0x7d, 0x80, 0x22, 0x2e, 0x8e, 0xa3, 0xf9, 0x65, 0xf2, 0xe7, 0xe5, 0x55, 0x26, 0xfc,
+	0x81, 0x85, 0x92, 0x25, 0x65, 0x12, 0x79, 0xdd, 0x63, 0x67, 0x5b, 0xc0, 0xce, 0xe2, 0x27, 0x00,
+	0x00, 0xff, 0xff, 0x45, 0xa9, 0x54, 0x71, 0x64, 0x01, 0x00, 0x00,
 }

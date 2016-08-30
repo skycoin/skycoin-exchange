@@ -30,6 +30,7 @@ It has these top-level messages:
 	GetDepositAddrRes
 	WithdrawalReq
 	WithdrawalRes
+	Balance
 	GetAccountBalanceReq
 	GetAccountBalanceRes
 	GetAddrBalanceReq
