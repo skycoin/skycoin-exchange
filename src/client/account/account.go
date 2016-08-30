@@ -90,6 +90,11 @@ func Get(pubkey string) (Account, error) {
 	return Account{}, errors.New("account does not exist")
 }
 
+// GetAll get all accounts
+func GetAll() []Account {
+	return gAccounts.Accounts
+}
+
 // GetActive get the current working account.
 func GetActive() Account {
 	return gAccounts.ActiveAcount
