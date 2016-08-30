@@ -24,7 +24,7 @@ func GetBalance(se Servicer) httprouter.Handle {
 				break
 			}
 
-			gbr := pp.GetBalanceReq{
+			gbr := pp.GetAccountBalanceReq{
 				Pubkey:   pp.PtrString(a.Pubkey),
 				CoinType: pp.PtrString(cp),
 			}
@@ -35,14 +35,14 @@ func GetBalance(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/balance", req)
+			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/account/balance", req)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetBalanceRes{})
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetAccountBalanceRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
