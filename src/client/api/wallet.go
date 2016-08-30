@@ -194,6 +194,15 @@ func GetWalletBalance(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
+
+			if len(addrs) == 0 {
+				res := pp.GetAddrBalanceRes{
+					Result: pp.MakeResult(pp.ErrCode_NotExits, "wallet have no address"),
+				}
+				sendJSON(w, &res)
+				return
+			}
+
 			cp := strings.Split(id, "_")[0]
 			// get address balance.
 			req := pp.GetAddrBalanceReq{
