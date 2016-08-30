@@ -3,10 +3,13 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 )
 
@@ -162,6 +165,64 @@ func GetKeys(se Servicer) httprouter.Handle {
 				Seckey: s,
 			}
 			sendJSON(w, &res)
+			return
+		}
+		sendJSON(w, rlt)
+	}
+}
+
+// GetWalletBalance get local wallet balance.
+// mode: GET
+// url: /api/v1/wallet/balance?id=[:id]
+// params:
+// 		id: wallet id.
+func GetWalletBalance(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		var rlt *pp.EmptyRes
+		for {
+			id := r.FormValue("id")
+			if id == "" {
+				err := errors.New("id is empty")
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			// get addresses in wallet.
+			addrs, err := wallet.GetAddresses(id)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			cp := strings.Split(id, "_")[0]
+			// get address balance.
+			req := pp.GetAddrBalanceReq{
+				CoinType: pp.PtrString(cp),
+				Addrs:    pp.PtrString(strings.Join(addrs, ",")),
+			}
+
+			a := account.GetActive()
+			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/address/balance", &encReq)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
+			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetAddrBalanceRes{})
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			sendJSON(w, res)
 			return
 		}
 		sendJSON(w, rlt)
