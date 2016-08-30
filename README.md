@@ -69,7 +69,7 @@ response:
   "account": "0320400ff12d10cfe45eb72b78487e3a07e82c357217134ed8f5b624159493811d"
 }
 ```
-The previous response is the result of an active account, if the active is not specificed, the `accounts` field in the response will be an array.
+The above response is the result of an active account, if the active is not specificed, the `accounts` field in the response will be an array.
 
 #### switch account
 ```
@@ -410,7 +410,7 @@ response json:
   }
 }
 ```
-The previous response json is a skycoin wallet's balance result, you can see the balance contains `hours` field, while if bitcoin, the `hours` field will be omited.
+The above response json is a skycoin wallet's balance result, you can see the balance contains `hours` field, while if bitcoin, the `hours` field will be omited.
 
 ```
 Dependencies
