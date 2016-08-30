@@ -28,6 +28,7 @@ func CreateAccount(se Servicer) httprouter.Handle {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
+
 			rsp, err := sknet.Get(se.GetServAddr(), "/auth/create/account", req)
 			if err != nil {
 				logger.Error(err.Error())
