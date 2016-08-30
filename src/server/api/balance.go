@@ -44,7 +44,7 @@ func GetAccountBalance(ee engine.Exchange) sknet.HandlerFunc {
 			bal := a.GetBalance(ct)
 			bres := pp.GetAccountBalanceRes{
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
-				Balance: &bal,
+				Balance: &pp.Balance{Amount: pp.PtrUint64(bal)},
 			}
 			reply(c, bres)
 			return
@@ -83,12 +83,12 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 			b, err := gw.GetBalance(addrs)
 			if err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 			res := pp.GetAddrBalanceRes{
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
-				Balance: pp.PtrUint64(b),
+				Balance: &b,
 			}
 
 			reply(c, &res)
