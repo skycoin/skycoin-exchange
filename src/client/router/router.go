@@ -21,7 +21,8 @@ func New(se api.Servicer) *httprouter.Router {
 func registerBaseHandlers(rt *httprouter.Router, se api.Servicer) {
 	rt.GET("/api/v1/coins", api.GetCoins(se))
 	rt.POST("/api/v1/accounts", api.CreateAccount(se))
-	rt.PUT("/api/v1/account/session", api.ActiveAccount(se))
+	rt.GET("/api/v1/account", api.GetAccount(se))
+	rt.PUT("/api/v1/account/state", api.ActiveAccount(se))
 	rt.POST("/api/v1/account/deposit_address", api.GetDepositAddress(se))
 	rt.GET("/api/v1/account/balance", api.GetBalance(se))
 	rt.POST("/api/v1/account/withdrawal", api.Withdraw(se))
@@ -52,6 +53,7 @@ func registerWalletHandlers(rt *httprouter.Router, se api.Servicer) {
 	rt.POST("/api/v1/wallet/addresses", api.NewAddress(se))
 	rt.GET("/api/v1/wallet/addresses", api.GetAddresses(se))
 	rt.GET("/api/v1/wallet/address/key", api.GetKeys(se))
+	// rt.GET("/api/v1/wallet/balance", api.GetWalletBalance(se))
 }
 
 // admin handlers.
