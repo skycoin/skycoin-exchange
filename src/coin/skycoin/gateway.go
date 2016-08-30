@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/visor"
+	"github.com/skycoin/skycoin/src/wallet"
 )
 
+// Gateway skycoin gateway.
 type Gateway struct{}
 
+// GetTx get skycoin verbose transaction.
 func (gw *Gateway) GetTx(txid string) (*pp.Tx, error) {
 	url := fmt.Sprintf("%s/transaction?txid=%s", ServeAddr, txid)
 	rsp, err := http.Get(url)
@@ -42,8 +46,29 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 	return res.Rawtx, nil
 }
 
+// InjectTx inject skycoin transaction.
 func (gw *Gateway) InjectTx(rawtx string) (string, error) {
 	return BroadcastTx(rawtx)
+}
+
+// GetBalance get skycoin balance of specific addresses.
+func (gw *Gateway) GetBalance(addrs []string) (pp.Balance, error) {
+	url := fmt.Sprintf("%s/balance?addrs=%s", ServeAddr, strings.Join(addrs, ","))
+	rsp, err := http.Get(url)
+	if err != nil {
+		return pp.Balance{}, err
+	}
+	defer rsp.Body.Close()
+	bal := struct {
+		Confirmed wallet.Balance `json:"confirmed"`
+		Predicted wallet.Balance `json:"predicted"`
+	}{}
+	if err := json.NewDecoder(rsp.Body).Decode(&bal); err != nil {
+		return pp.Balance{}, err
+	}
+	return pp.Balance{
+		Amount: pp.PtrUint64(bal.Confirmed.Coins),
+		Hours:  pp.PtrUint64(bal.Confirmed.Hours)}, nil
 }
 
 func newPPTx(tx *visor.TransactionResult) *pp.Tx {
