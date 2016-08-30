@@ -63,9 +63,53 @@ func CreateAccount(se Servicer) httprouter.Handle {
 	}
 }
 
+// GetAccount get account that matchs the condition in url param.
+// mode: GET
+// url: /api/v1/account?active=[:active]
+// params:
+// 		active: optional condition, must be 1, if not exist, then retun all accounts.
+func GetAccount(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		// get active
+		active := r.FormValue("active")
+		switch active {
+		case "1":
+			res := struct {
+				Result   *pp.Result `json:"result"`
+				Accounts string     `json:"account,omitempty"`
+			}{}
+			a := account.GetActive()
+			if a.Pubkey == "" && a.Seckey == "" {
+				res.Result = pp.MakeResultWithCode(pp.ErrCode_NotExits)
+			} else {
+				res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+				res.Accounts = a.Pubkey
+			}
+			sendJSON(w, &res)
+		case "":
+			res := struct {
+				Result   *pp.Result `json:"result"`
+				Accounts []string   `json:"accounts,omitempty"`
+			}{}
+			accounts := account.GetAll()
+			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+			res.Accounts = func(accounts []account.Account) []string {
+				as := make([]string, len(accounts))
+				for i, a := range accounts {
+					as[i] = a.Pubkey
+				}
+				return as
+			}(accounts)
+			sendJSON(w, &res)
+		default:
+			sendJSON(w, pp.MakeErrResWithCode(pp.ErrCode_WrongRequest))
+		}
+	}
+}
+
 // ActiveAccount active the specific account.
 // mode: PUT
-// url: /api/v1/account/session?pubkey=[:pubkey]
+// url: /api/v1/account/state?pubkey=[:pubkey]
 func ActiveAccount(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
