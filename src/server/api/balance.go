@@ -60,7 +60,7 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.GetAddrBalanceReq{}
-			if err := c.BindJSON(&req); err != nil {
+			if err := getRequest(c, &req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -91,7 +91,7 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 				Balance: pp.PtrUint64(b),
 			}
 
-			c.JSON(&res)
+			reply(c, &res)
 			return
 		}
 		c.JSON(rlt)
