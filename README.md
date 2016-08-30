@@ -52,10 +52,29 @@ response json:
 
 Once the new account is created, this account will become the `active account`, that means the following apis calls are all base on this account.
 
+#### get account
+This api is used to get account in client, you can use it to list all the acccounts, or to get the active account.
+```
+mode: GET
+url: /api/v1/account?active=[:active]
+params:
+  active: optional condition, if not set, return all accounts, otherwise the active must be 1, and return the active account.
+response:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "account": "0320400ff12d10cfe45eb72b78487e3a07e82c357217134ed8f5b624159493811d"
+}
+```
+The previous response is the result of an active account, if the active is not specificed, the `accounts` field in the response will be an array.
+
 #### switch account
 ```
 mode: PUT
-url: /api/v1/account/session?pubkey=[:pubkey]
+url: /api/v1/account/state?pubkey=[:pubkey]
 response json:
 {
   "result": {
@@ -369,6 +388,29 @@ response json:
   "pubkey": "03712c6bf0601f7a663ad7812f8d031e3e3f07f3f7ed03ad165dd7ee28120e7102",
   "seckey": "L4Y4E6UdCFqmmcYNGBFAXBZif6pfoox5CQNReBsnX8aimgBcRYeX"
 }
+
+```
+
+#### get wallet balance
+```
+mode: GET
+url: /api/v1/wallet/balance?id=[:id]
+params:
+  id: wallet id.
+response json:
+{
+  "result": {
+    "success": true,
+    "errcode": 0,
+    "reason": "Success"
+  },
+  "balance": {
+    "amount": 11000000,
+    "hours": 1518046
+  }
+}
+```
+The previous response json is a skycoin wallet's balance result, you can see the balance contains `hours` field, while if bitcoin, the `hours` field will be omited.
 
 ```
 Dependencies
