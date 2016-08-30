@@ -13,6 +13,7 @@ var gateways = map[Type]Gateway{}
 // then this coin can be registered in this exchange system.
 type Gateway interface {
 	TxHandler
+	GetBalance(addrs []string) (uint64, error)
 }
 
 // TxHandler transaction handler interface for gateway.
