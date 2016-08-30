@@ -30,8 +30,10 @@ It has these top-level messages:
 	GetDepositAddrRes
 	WithdrawalReq
 	WithdrawalRes
-	GetBalanceReq
-	GetBalanceRes
+	GetAccountBalanceReq
+	GetAccountBalanceRes
+	GetAddrBalanceReq
+	GetAddrBalanceRes
 	OrderReq
 	OrderRes
 	Order
