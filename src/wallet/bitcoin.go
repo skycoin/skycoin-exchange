@@ -19,8 +19,8 @@ func NewBtcWltCreator() Creator {
 	}
 }
 
-// GetCoinType return the wallet coin type.
-func (bt BtcWallet) GetCoinType() coin.Type {
+// GetType return the wallet coin type.
+func (bt BtcWallet) GetType() coin.Type {
 	return coin.Bitcoin
 }
 
