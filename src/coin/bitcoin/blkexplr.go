@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 type BlkExplrUtxo struct {
@@ -104,4 +107,48 @@ func getRawtxExplr(txid string) (string, error) {
 		return "", err
 	}
 	return v.Rawtx, nil
+}
+
+type balanceResult struct {
+	balance uint64
+	err     error
+}
+
+func getBalanceExplr(addrs []string) (uint64, error) {
+	var wg sync.WaitGroup
+
+	valueChan := make(chan balanceResult, len(addrs))
+
+	for _, addr := range addrs {
+		// verify the address.
+		_, err := cipher.BitcoinDecodeBase58Address(addr)
+		if err != nil {
+			return 0, err
+		}
+
+		wg.Add(1)
+		go func(addr string, wg *sync.WaitGroup, vc chan balanceResult) {
+			defer wg.Done()
+			d, err := getDataOfUrl(fmt.Sprintf("https://blockexplorer.com/api/addr/%s/balance", addr))
+			if err != nil {
+				vc <- balanceResult{0, err}
+				return
+			}
+			v, err := strconv.ParseUint(string(d), 10, 64)
+			if err != nil {
+				vc <- balanceResult{0, err}
+			}
+			vc <- balanceResult{v, nil}
+		}(addr, &wg, valueChan)
+	}
+	wg.Wait()
+	close(valueChan)
+	var totalBal uint64
+	for v := range valueChan {
+		if v.err != nil {
+			return 0, v.err
+		}
+		totalBal += v.balance
+	}
+	return totalBal, nil
 }
