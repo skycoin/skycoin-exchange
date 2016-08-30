@@ -17,7 +17,8 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 		// baseic handlers.
 		auth.Register("/create/account", api.CreateAccount(ee))
 		auth.Register("/create/deposit_address", api.GetNewAddress(ee))
-		auth.Register("/get/balance", api.GetBalance(ee))
+		auth.Register("/get/account/balance", api.GetAccountBalance(ee))
+		auth.Register("/get/address/balance", api.GetAddrBalance(ee))
 		auth.Register("/withdrawl", api.Withdraw(ee))
 		auth.Register("/create/order", api.CreateOrder(ee))
 		auth.Register("/get/coins", api.GetCoins(ee))
