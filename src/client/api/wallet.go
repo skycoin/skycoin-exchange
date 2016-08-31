@@ -53,6 +53,8 @@ func CreateWallet(se Servicer) httprouter.Handle {
 			}
 
 			a.WltIDs[cp] = wlt.GetID()
+			// update the account.
+			account.Set(a)
 
 			res := struct {
 				Result *pp.Result `json:"result"`
