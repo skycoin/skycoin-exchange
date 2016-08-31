@@ -39,7 +39,12 @@ func GetUtxos(se Servicer) httprouter.Handle {
 				Addresses: addrArray,
 			}
 
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
 			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())

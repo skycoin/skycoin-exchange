@@ -14,7 +14,12 @@ func GetCoins(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
 			rq := pp.GetCoinsReq{
 				Pubkey: pp.PtrString(a.Pubkey),
 			}

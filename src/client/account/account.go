@@ -96,8 +96,11 @@ func GetAll() []Account {
 }
 
 // GetActive get the current working account.
-func GetActive() Account {
-	return gAccounts.ActiveAcount
+func GetActive() (Account, error) {
+	if gAccounts.ActiveAcount.Pubkey == "" || gAccounts.ActiveAcount.Seckey == "" {
+		return Account{}, errors.New("no active account")
+	}
+	return gAccounts.ActiveAcount, nil
 }
 
 // SetActive set the account as active account.

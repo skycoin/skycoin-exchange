@@ -63,7 +63,12 @@ func AdminUpdateBalance(se Servicer) httprouter.Handle {
 				break
 			}
 
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
 			r := pp.UpdateCreditReq{
 				Pubkey:   pp.PtrString(a.Pubkey),
 				CoinType: pp.PtrString(cp),

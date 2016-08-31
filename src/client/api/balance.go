@@ -15,7 +15,13 @@ func GetBalance(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
 			cp := r.FormValue("coin_type")
 			if cp == "" {
 				err := errors.New("coin type empty")

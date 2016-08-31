@@ -35,6 +35,7 @@ func CreateAccount(se Servicer) httprouter.Handle {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
+
 			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.CreateAccountRes{})
 			if err != nil {
 				logger.Error(err.Error())
@@ -64,6 +65,11 @@ func CreateAccount(se Servicer) httprouter.Handle {
 	}
 }
 
+type accountResult struct {
+	Pubkey   string            `json:"pubkey"`
+	WalletID map[string]string `json:"wallet_ids,omitempty"`
+}
+
 // GetAccount get account that matchs the condition in url param.
 // mode: GET
 // url: /api/v1/account?active=[:active]
@@ -76,28 +82,40 @@ func GetAccount(se Servicer) httprouter.Handle {
 		switch active {
 		case "1":
 			res := struct {
-				Result   *pp.Result `json:"result"`
-				Accounts string     `json:"account,omitempty"`
+				Result  *pp.Result    `json:"result"`
+				Account accountResult `json:"account,omitempty"`
 			}{}
-			a := account.GetActive()
-			if a.Pubkey == "" && a.Seckey == "" {
-				res.Result = pp.MakeResultWithCode(pp.ErrCode_NotExits)
-			} else {
-				res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-				res.Accounts = a.Pubkey
+
+			a, err := account.GetActive()
+			if err != nil {
+				// no active account.
+				res.Result = pp.MakeResult(pp.ErrCode_NotExits, err.Error())
+				sendJSON(w, &res)
+				return
+			}
+
+			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+			res.Account.Pubkey = a.Pubkey
+			res.Account.WalletID = make(map[string]string)
+			for cp, id := range a.WltIDs {
+				res.Account.WalletID[cp.String()] = id
 			}
 			sendJSON(w, &res)
 		case "":
 			res := struct {
-				Result   *pp.Result `json:"result"`
-				Accounts []string   `json:"accounts,omitempty"`
+				Result   *pp.Result      `json:"result"`
+				Accounts []accountResult `json:"accounts,omitempty"`
 			}{}
 			accounts := account.GetAll()
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			res.Accounts = func(accounts []account.Account) []string {
-				as := make([]string, len(accounts))
+			res.Accounts = func(accounts []account.Account) []accountResult {
+				as := make([]accountResult, len(accounts))
 				for i, a := range accounts {
-					as[i] = a.Pubkey
+					as[i].Pubkey = a.Pubkey
+					as[i].WalletID = make(map[string]string)
+					for cp, id := range a.WltIDs {
+						as[i].WalletID[cp.String()] = id
+					}
 				}
 				return as
 			}(accounts)

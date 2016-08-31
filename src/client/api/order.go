@@ -31,7 +31,13 @@ func CreateOrder(se Servicer) httprouter.Handle {
 				break
 			}
 
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
 			rawReq.Pubkey = pp.PtrString(a.Pubkey)
 			req, err := makeEncryptReq(rawReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
@@ -114,7 +120,12 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
 			cp := r.FormValue("coin_pair")
 			st := r.FormValue("start")
 			ed := r.FormValue("end")

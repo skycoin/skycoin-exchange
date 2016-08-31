@@ -78,7 +78,10 @@ func TestInitDir(t *testing.T) {
 	assert.Equal(t, acnt.Pubkey, a.Pubkey)
 	assert.Equal(t, acnt.Seckey, a.Seckey)
 
-	activeAccount := account.GetActive()
+	activeAccount, err := account.GetActive()
+	if err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, activeAccount.Pubkey, p.Hex())
 }
 
