@@ -78,14 +78,14 @@ type accountResult struct {
 func GetAccount(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// get active
+		res := struct {
+			Result   *pp.Result      `json:"result"`
+			Accounts []accountResult `json:"accounts,omitempty"`
+		}{}
+
 		active := r.FormValue("active")
 		switch active {
 		case "1":
-			res := struct {
-				Result  *pp.Result    `json:"result"`
-				Account accountResult `json:"account,omitempty"`
-			}{}
-
 			a, err := account.GetActive()
 			if err != nil {
 				// no active account.
@@ -95,17 +95,14 @@ func GetAccount(se Servicer) httprouter.Handle {
 			}
 
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			res.Account.Pubkey = a.Pubkey
-			res.Account.WalletID = make(map[string]string)
+			res.Accounts = make([]accountResult, 1)
+			res.Accounts[0].Pubkey = a.Pubkey
+			res.Accounts[0].WalletID = make(map[string]string)
 			for cp, id := range a.WltIDs {
-				res.Account.WalletID[cp.String()] = id
+				res.Accounts[0].WalletID[cp.String()] = id
 			}
 			sendJSON(w, &res)
 		case "":
-			res := struct {
-				Result   *pp.Result      `json:"result"`
-				Accounts []accountResult `json:"accounts,omitempty"`
-			}{}
 			accounts := account.GetAll()
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
 			res.Accounts = func(accounts []account.Account) []accountResult {

@@ -58,7 +58,7 @@ This api is used to get account in client, you can use it to list all the acccou
 mode: GET
 url: /api/v1/account?active=[:active]
 params:
-  active: optional condition, if not set, return all accounts, otherwise the active must be 1, and return the active account.
+  active: optional condition, if not set, return all accounts, otherwise the active must be 1 and return the active account.
 response:
 {
   "result": {
@@ -66,10 +66,16 @@ response:
     "errcode": 0,
     "reason": "Success"
   },
-  "account": "0320400ff12d10cfe45eb72b78487e3a07e82c357217134ed8f5b624159493811d"
+  "accounts": [
+    {
+      "pubkey": "02c9656e65f70753f021832a7a1874c966917974b242b11b2d73d04bcaaea21a4d",
+      "wallet_ids": {
+        "bitcoin": "bitcoin_myf"
+      }
+    }
+  ]
 }
 ```
-The above response is the result of an active account, if the active is not specificed, the `accounts` field in the response will be an array.
 
 #### switch account
 ```
