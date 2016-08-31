@@ -43,6 +43,17 @@ func CreateWallet(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
+
+			// bind the wallet to current account.
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			a.WltIDs[cp] = wlt.GetID()
+
 			res := struct {
 				Result *pp.Result `json:"result"`
 				ID     string     `json:"id"`
@@ -210,7 +221,13 @@ func GetWalletBalance(se Servicer) httprouter.Handle {
 				Addrs:    pp.PtrString(strings.Join(addrs, ",")),
 			}
 
-			a := account.GetActive()
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
 			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
