@@ -18,7 +18,7 @@ type Walleter interface {
 	GetType() coin.Type                                // get the wallet coin type.
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
-	GetKeypair(addr string) (string, string)           // get pub/sec key pair of specific address
+	GetKeypair(addr string) (string, string, error)    // get pub/sec key pair of specific address
 	Save(w io.Writer) error                            // save the wallet.
 	Load(r io.Reader) error                            // load wallet from reader.
 	Copy() Walleter                                    // copy of self, for thread safe.

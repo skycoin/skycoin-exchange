@@ -124,8 +124,7 @@ func (wlts *wallets) getKeypair(id string, addr string) (string, string, error) 
 	wlts.mtx.Lock()
 	defer wlts.mtx.Unlock()
 	if wlt, ok := wlts.Value[id]; ok {
-		p, s := wlt.GetKeypair(addr)
-		return p, s, nil
+		return wlt.GetKeypair(addr)
 	}
 	return "", "", fmt.Errorf("%s wallet does not exist", id)
 }
