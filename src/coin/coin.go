@@ -23,7 +23,11 @@ type TxHandler interface {
 	GetTx(txid string) (*pp.Tx, error)
 	GetRawTx(txid string) (string, error)
 	InjectTx(rawtx string) (string, error)
+	SignRawTx(rawtx string, getKey GetPrivKey) (string, error)
 }
+
+// GetPrivKey is a callback func used for SignTx func to get relevant private key of specific address.
+type GetPrivKey func(addr string) (string, error)
 
 // RegisterGateway register gateway for specific coin.
 func RegisterGateway(tp Type, gw Gateway) {
