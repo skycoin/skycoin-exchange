@@ -6,6 +6,9 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/client/router"
+	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -54,6 +57,10 @@ func (se *Service) Run() {
 
 	// init account dir
 	account.InitDir(se.cfg.AccountDir)
+
+	// register coins
+	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
+	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
 
 	r := router.New(se)
 	addr := fmt.Sprintf("localhost:%d", se.cfg.Port)

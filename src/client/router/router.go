@@ -54,6 +54,7 @@ func registerWalletHandlers(rt *httprouter.Router, se api.Servicer) {
 	rt.GET("/api/v1/wallet/addresses", api.GetAddresses(se))
 	rt.GET("/api/v1/wallet/address/key", api.GetKeys(se))
 	rt.GET("/api/v1/wallet/balance", api.GetWalletBalance(se))
+	rt.GET("/api/v1/wallet/tx/sign", api.WalletSignTx(se))
 }
 
 // admin handlers.
