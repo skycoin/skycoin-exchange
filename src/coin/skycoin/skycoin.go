@@ -118,9 +118,3 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	}
 	return ux, nil
 }
-
-// SignRawTx sign skycoin transaction.
-func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error) {
-	// decode the rawtx
-	return "", nil
-}

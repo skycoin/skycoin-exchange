@@ -9,8 +9,10 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // InjectTx broadcast transaction.
@@ -184,6 +186,7 @@ type rawTxParams struct {
 	TxOuts []struct {
 		Addr  string `json:"address"`
 		Value uint64 `json:"value"`
+		Hours uint64 `json:"hours"`
 	} `json:"tx_outs"`
 }
 
@@ -194,6 +197,7 @@ type rawTxParams struct {
 func CreateRawTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
+	loop:
 		for {
 			// get coin type
 			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
@@ -228,10 +232,19 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 				}
 				rawtx, err = gw.CreateRawTx(params.TxIns, outs)
 			case coin.Skycoin:
-				// outs := make([]skycoin.TxOut, len(params.TxOuts))
-				// for i, := range params.TxOuts {
-
-				// }
+				outs := make([]skycoin.TxOut, len(params.TxOuts))
+				for i, o := range params.TxOuts {
+					addr, err := cipher.DecodeBase58Address(o.Addr)
+					if err != nil {
+						logger.Error(err.Error())
+						rlt = pp.MakeErrRes(err)
+						break loop
+					}
+					outs[i].Address = addr
+					outs[i].Coins = o.Value
+					outs[i].Hours = o.Hours
+				}
+				rawtx, err = gw.CreateRawTx(params.TxIns, outs)
 			}
 			if err != nil {
 				logger.Error(err.Error())

@@ -140,3 +140,19 @@ func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, er
 	}
 	return hex.EncodeToString(d), nil
 }
+
+// SignRawTx sign skycoin transaction.
+func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error) {
+	// decode the rawtx
+	// tx := Transaction{}
+	// if err := tx.Deserialize(strings.NewReader(rawtx)); err != nil {
+	// 	return "", err
+	// }
+
+	// TODO: need to get the address of the in hash, then get key of those address, and sign.
+	// tx.In
+
+	// tx.SignInputs(keys)
+	// tx.UpdateHeader()
+	return "", nil
+}
