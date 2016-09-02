@@ -117,6 +117,11 @@ func GetAddresses(id string) ([]string, error) {
 	return gWallets.getAddresses(id)
 }
 
+// IsContain check if the addresses are int the wallet.
+func IsContain(id string, addrs []string) (bool, error) {
+	return gWallets.isContain(id, addrs)
+}
+
 // GetKeypair get pub/sec key pair of specific addresse in wallet.
 func GetKeypair(id string, addr string) (string, string, error) {
 	return gWallets.getKeypair(id, addr)
