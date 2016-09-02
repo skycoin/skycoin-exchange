@@ -41,7 +41,7 @@ type Transaction struct {
 // of the slice is an UtxoWithPrivkey interface.
 // outAddrs is the output address array.
 // using the api of blockchain.info to get the raw trasaction info of txid.
-func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*Transaction, error) {
+func NewTransaction(utxos interface{}, outAddrs []TxOut) (*Transaction, error) {
 	s := reflect.ValueOf(utxos)
 	if s.Kind() != reflect.Slice {
 		return nil, errors.New("error utxo type")

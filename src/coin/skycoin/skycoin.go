@@ -35,7 +35,7 @@ type SkyUtxo struct {
 	visor.ReadableOutput
 }
 
-type UtxoOut struct {
+type TxOut struct {
 	skycoin.TransactionOutput
 }
 
@@ -63,8 +63,8 @@ func (su SkyUtxo) GetHours() uint64 {
 	return su.Hours
 }
 
-func MakeUtxoOutput(addr string, amount uint64, hours uint64) UtxoOut {
-	uo := UtxoOut{}
+func MakeUtxoOutput(addr string, amount uint64, hours uint64) TxOut {
+	uo := TxOut{}
 	uo.Address = cipher.MustDecodeBase58Address(addr)
 	uo.Coins = amount
 	uo.Hours = hours

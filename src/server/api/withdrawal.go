@@ -249,7 +249,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		totalAmounts += u.GetAmount()
 	}
 	fee := egn.GetBtcFee()
-	outAddrs := []bitcoin.UtxoOut{}
+	outAddrs := []bitcoin.TxOut{}
 	chgAmt := totalAmounts - fee - amount
 	chgAddr := ""
 	if chgAmt > 0 {
@@ -257,10 +257,10 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		chgAddr = egn.GetNewAddress(coin.Bitcoin)
 		// egn.AddWatchAddress(coinType, chgAddr)
 		outAddrs = append(outAddrs,
-			bitcoin.UtxoOut{Addr: toAddr, Value: amount},
-			bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt})
+			bitcoin.TxOut{Addr: toAddr, Value: amount},
+			bitcoin.TxOut{Addr: chgAddr, Value: chgAmt})
 	} else {
-		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount})
+		outAddrs = append(outAddrs, bitcoin.TxOut{Addr: toAddr, Value: amount})
 	}
 	// change utxo to UtxoWithkey
 	utxoKeys, err := makeBtcUtxoWithkeys(utxos, egn)
@@ -308,7 +308,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 		totalHours += u.GetHours()
 	}
 
-	outAddrs := []skycoin.UtxoOut{}
+	outAddrs := []skycoin.TxOut{}
 	chgAmt := totalAmounts - amount
 	chgHours := totalHours / 4
 	chgAddr := ""
