@@ -91,7 +91,6 @@ func getTxVerboseExplr(txid string) (*pp.Tx, error) {
 	if err := json.Unmarshal(d, &tx.Btc); err != nil {
 		return nil, err
 	}
-	logger.Debug("%v", tx)
 	return &tx, nil
 }
 
