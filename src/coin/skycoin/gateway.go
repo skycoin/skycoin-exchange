@@ -1,12 +1,17 @@
 package skycoin_interface
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
+	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
+	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/visor"
 	"github.com/skycoin/skycoin/src/wallet"
 )
@@ -99,4 +104,39 @@ func newSkyTxOutputArray(ops []visor.ReadableTransactionOutput) []*pp.SkyTxOutpu
 		}
 	}
 	return outs
+}
+
+// CreateRawTx create skycoin raw transaction.
+func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, error) {
+	tx := Transaction{}
+	// keys := make([]cipher.SecKey, len(utxos))
+	for _, in := range txIns {
+		tx.PushInput(cipher.MustSHA256FromHex(in.Txid))
+	}
+
+	s := reflect.ValueOf(txOuts)
+	if s.Kind() != reflect.Slice {
+		return "", errors.New("error tx out type")
+	}
+	outs := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		outs[i] = s.Index(i).Interface()
+	}
+
+	if len(outs) > 2 {
+		return "", errors.New("out address more than 2")
+	}
+
+	for _, o := range outs {
+		out := o.(TxOut)
+		tx.PushOutput(out.Address, out.Coins, out.Hours)
+	}
+	// tx.Verify()
+
+	tx.UpdateHeader()
+	d, err := tx.Serialize()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(d), nil
 }

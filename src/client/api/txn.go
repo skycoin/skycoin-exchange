@@ -1,11 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
+	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
@@ -56,7 +59,7 @@ func InjectTx(se Servicer) httprouter.Handle {
 				break
 			}
 
-			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, pp.InjectTxnRes{})
+			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.InjectTxnRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -170,6 +173,80 @@ func GetRawTx(se Servicer) httprouter.Handle {
 				break
 			}
 			sendJSON(w, res)
+			return
+		}
+		sendJSON(w, rlt)
+	}
+}
+
+type rawTxParams struct {
+	TxIns  []coin.TxIn `json:"tx_ins"`
+	TxOuts []struct {
+		Addr  string `json:"address"`
+		Value uint64 `json:"value"`
+	} `json:"tx_outs"`
+}
+
+// CreateRawTx create raw tx base on some utxos.
+// mode: POST
+// url: /api/v1/rawtx?coin_type=[:coin_type]
+// request body:
+func CreateRawTx(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		var rlt *pp.EmptyRes
+		for {
+			// get coin type
+			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			// get request body
+			params := rawTxParams{}
+			if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			gw, err := coin.GetGateway(cp)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+
+			var rawtx string
+			switch cp {
+			case coin.Bitcoin:
+				outs := make([]bitcoin.TxOut, len(params.TxOuts))
+				for i, o := range params.TxOuts {
+					outs[i].Addr = o.Addr
+					outs[i].Value = o.Value
+				}
+				rawtx, err = gw.CreateRawTx(params.TxIns, outs)
+			case coin.Skycoin:
+				// outs := make([]skycoin.TxOut, len(params.TxOuts))
+				// for i, := range params.TxOuts {
+
+				// }
+			}
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			res := struct {
+				Result *pp.Result `json:"result"`
+				Rawtx  string     `json:"rawtx"`
+			}{
+				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
+				Rawtx:  rawtx,
+			}
+			sendJSON(w, &res)
 			return
 		}
 		sendJSON(w, rlt)

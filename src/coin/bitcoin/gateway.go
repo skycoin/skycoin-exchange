@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"reflect"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcutil"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 )
@@ -34,6 +38,61 @@ func (gw Gateway) GetBalance(addrs []string) (pp.Balance, error) {
 		return pp.Balance{}, err
 	}
 	return pp.Balance{Amount: pp.PtrUint64(v)}, nil
+}
+
+// CreateRawTx create bitcoin raw transaction.
+func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, error) {
+	tx := wire.NewMsgTx()
+	oldTxOuts := make([]*wire.TxOut, len(txIns))
+	for i, in := range txIns {
+		txid, err := wire.NewShaHashFromStr(in.Txid)
+		if err != nil {
+			return "", err
+		}
+		rawFundingTx, err := lookupTxid(txid)
+		if err != nil {
+			return "", err
+		}
+		oldTxOut, outpoint, err := getFundingParams(rawFundingTx, in.Vout)
+		if err != nil {
+			return "", err
+		}
+		oldTxOuts[i] = oldTxOut
+
+		txin := createTxIn(outpoint)
+		tx.AddTxIn(txin)
+	}
+
+	s := reflect.ValueOf(txOuts)
+	if s.Kind() != reflect.Slice {
+		return "", errors.New("error tx out type")
+	}
+
+	outs := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		outs[i] = s.Index(i).Interface()
+	}
+
+	if len(outs) > 2 {
+		return "", errors.New("out address more than 2")
+	}
+
+	for _, o := range outs {
+		out := o.(TxOut)
+		addr, err := btcutil.DecodeAddress(out.Addr, &chaincfg.MainNetParams)
+		if err != nil {
+			return "", err
+		}
+		txout := createTxOut(out.Value, addr)
+		tx.AddTxOut(txout)
+	}
+
+	t := Transaction{*tx}
+	d, err := t.Serialize()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(d), nil
 }
 
 // SignRawTx sign bitcoin transaction.
@@ -82,5 +141,9 @@ func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error
 
 		tx.TxIn[i].SignatureScript = sig
 	}
-	return "", err
+	txb, err := tx.Serialize()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txb), nil
 }

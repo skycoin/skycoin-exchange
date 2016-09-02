@@ -44,7 +44,9 @@ func registerUtxoHandlers(rt *httprouter.Router, se api.Servicer) {
 func registerTxnHandlers(rt *httprouter.Router, se api.Servicer) {
 	rt.POST("/api/v1/inject_tx", api.InjectTx(se))
 	rt.GET("/api/v1/tx", api.GetTx(se))
+	rt.POST("/api/v1/rawtx", api.CreateRawTx(se))
 	rt.GET("/api/v1/rawtx", api.GetRawTx(se))
+
 }
 
 // wallet handlers.
