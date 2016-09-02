@@ -23,7 +23,14 @@ type TxHandler interface {
 	GetTx(txid string) (*pp.Tx, error)
 	GetRawTx(txid string) (string, error)
 	InjectTx(rawtx string) (string, error)
+	CreateRawTx(txIns []TxIn, txOuts interface{}) (string, error)
 	SignRawTx(rawtx string, getKey GetPrivKey) (string, error)
+}
+
+// TxIn records the tx vin info, txid is the prevous txid, Index is the out index in previous tx.
+type TxIn struct {
+	Txid string
+	Vout uint32
 }
 
 // GetPrivKey is a callback func used for SignTx func to get relevant private key of specific address.
