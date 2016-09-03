@@ -1,6 +1,7 @@
 package skycoin_interface
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -129,9 +130,11 @@ func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, er
 
 	for _, o := range outs {
 		out := o.(TxOut)
+		if (out.Coins % 1e6) != 0 {
+			return "", errors.New("skycoin coins must be multiple of 1e6")
+		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
-	// tx.Verify()
 
 	tx.UpdateHeader()
 	d, err := tx.Serialize()
@@ -144,15 +147,54 @@ func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, er
 // SignRawTx sign skycoin transaction.
 func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error) {
 	// decode the rawtx
-	// tx := Transaction{}
-	// if err := tx.Deserialize(strings.NewReader(rawtx)); err != nil {
-	// 	return "", err
-	// }
+	tx := Transaction{}
+	b, err := hex.DecodeString(rawtx)
+	if err != nil {
+		return "", err
+	}
+	if err := tx.Deserialize(bytes.NewBuffer(b)); err != nil {
+		return "", err
+	}
 
 	// TODO: need to get the address of the in hash, then get key of those address, and sign.
-	// tx.In
+	hashes := make([]string, len(tx.In))
+	for i, in := range tx.In {
+		hashes[i] = in.Hex()
+	}
 
-	// tx.SignInputs(keys)
-	// tx.UpdateHeader()
-	return "", nil
+	// get utxos of thoes hashes.
+	utxos, err := getUnspentOutputsByHashes(hashes)
+	if err != nil {
+		return "", err
+	}
+
+	if len(utxos) != len(hashes) {
+		return "", errors.New("failed to search tx in's address")
+	}
+
+	hashAddrMap := map[string]string{}
+	for _, u := range utxos {
+		hashAddrMap[u.GetHash()] = u.GetAddress()
+	}
+
+	keys := make([]cipher.SecKey, len(hashes))
+	for i, h := range hashes {
+		key, err := getKey(hashAddrMap[h])
+		if err != nil {
+			return "", err
+		}
+
+		keys[i], err = cipher.SecKeyFromHex(key)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	tx.SignInputs(keys)
+	tx.UpdateHeader()
+	d, err := tx.Serialize()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(d), nil
 }
