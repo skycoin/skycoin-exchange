@@ -204,7 +204,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		return nil, pp.MakeErrRes(errors.New("skycoin tx serialize failed"))
 	}
 
-	newTxid, err := skycoin.BroadcastTx(string(rawtx))
+	newTxid, err := skycoin.BroadcastTx(hex.EncodeToString(rawtx))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
