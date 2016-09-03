@@ -14,12 +14,14 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			req := pp.InjectTxnReq{}
 			if err := getRequest(c, &req); err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
 			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
@@ -27,6 +29,7 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			// get coin gateway
 			gateway, err := coin.GetGateway(cp)
 			if err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
@@ -34,7 +37,8 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			// inject tx.
 			txid, err := gateway.InjectTx(req.GetTx())
 			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
