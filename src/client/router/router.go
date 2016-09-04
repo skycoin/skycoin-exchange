@@ -42,9 +42,10 @@ func registerUtxoHandlers(rt *httprouter.Router, se api.Servicer) {
 
 // transaction handlers.
 func registerTxnHandlers(rt *httprouter.Router, se api.Servicer) {
-	rt.POST("/api/v1/inject_tx", api.InjectTx(se))
 	rt.GET("/api/v1/tx", api.GetTx(se))
-	rt.POST("/api/v1/rawtx", api.CreateRawTx(se))
+	rt.POST("/api/v1/create_rawtx", api.CreateRawTx(se))
+	rt.POST("/api/v1/sign_rawtx", api.SignRawTx(se))
+	rt.POST("/api/v1/inject_rawtx", api.InjectTx(se))
 	rt.GET("/api/v1/rawtx", api.GetRawTx(se))
 
 }
@@ -56,7 +57,6 @@ func registerWalletHandlers(rt *httprouter.Router, se api.Servicer) {
 	rt.GET("/api/v1/wallet/addresses", api.GetAddresses(se))
 	rt.GET("/api/v1/wallet/address/key", api.GetKeys(se))
 	rt.GET("/api/v1/wallet/balance", api.GetWalletBalance(se))
-	rt.GET("/api/v1/wallet/tx/sign", api.WalletSignTx(se))
 }
 
 // admin handlers.

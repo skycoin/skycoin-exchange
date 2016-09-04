@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -255,78 +254,5 @@ func GetWalletBalance(se Servicer) httprouter.Handle {
 			return
 		}
 		sendJSON(w, rlt)
-	}
-}
-
-// WalletSignTx sign transaction in local wallet.
-// mode: GET
-// url: /api/v1/wallet/tx/sign?coin_type=[:coin_type]&rawtx=[:rawtx]
-// params:
-// 		coin_type: skycoin or bitcoin.
-// 		rawtx: raw transaction.
-func WalletSignTx(se Servicer) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var rlt *pp.EmptyRes
-		for {
-			// check coin type
-			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			// get raw tx
-			rawtx := r.FormValue("rawtx")
-			if rawtx == "" {
-				err := errors.New("rawtx is empty")
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			gw, err := coin.GetGateway(cp)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			tx, err := gw.SignRawTx(rawtx, getPrivKey(cp))
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-			res := struct {
-				Result *pp.Result `json:"result"`
-				Rawtx  string     `json:"rawtx"`
-			}{
-				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
-				Rawtx:  tx,
-			}
-			sendJSON(w, &res)
-			return
-		}
-		sendJSON(w, rlt)
-	}
-}
-
-func getPrivKey(cp coin.Type) coin.GetPrivKey {
-	return func(addr string) (string, error) {
-		a, err := account.GetActive()
-		if err != nil {
-			return "", err
-		}
-		wltID := a.WltIDs[cp]
-		if wltID == "" {
-			return "", fmt.Errorf("does not have %s wallet", cp)
-		}
-
-		_, key, err := wallet.GetKeypair(wltID, addr)
-		if err != nil {
-			return "", err
-		}
-		return key, nil
 	}
 }

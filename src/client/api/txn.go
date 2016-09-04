@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -12,10 +13,16 @@ import (
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
+	"github.com/skycoin/skycoin-exchange/src/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 // InjectTx broadcast transaction.
+// mode: POST
+// url: /api/v1/inject_rawtx?rawtx=[:rawtx]&coin_type=[:coin_type]
+// params:
+// 		rawtx: raw tx that's going to be injected.
+// 		coin_type: skycoin or bitcoin.
 func InjectTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
@@ -27,10 +34,11 @@ func InjectTx(se Servicer) httprouter.Handle {
 				break
 			}
 			// get tx
-			tx := r.FormValue("tx")
-			if tx == "" {
-				logger.Error("empty tx")
-				rlt = pp.MakeErrRes(errors.New("empty tx"))
+			rawtx := r.FormValue("rawtx")
+			if rawtx == "" {
+				err := errors.New("rawtx is empty")
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
@@ -44,7 +52,7 @@ func InjectTx(se Servicer) httprouter.Handle {
 
 			req := pp.InjectTxnReq{
 				CoinType: pp.PtrString(cp),
-				Tx:       pp.PtrString(tx),
+				Tx:       pp.PtrString(rawtx),
 			}
 
 			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
@@ -74,7 +82,9 @@ func InjectTx(se Servicer) httprouter.Handle {
 	}
 }
 
-// GetTx get transaction.
+// GetTx get verbose transaction info by transacton id.
+// mode: GET
+// url: /api/v1/tx?coin_type=[:coin_type]&txid=[:txid]
 func GetTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
@@ -126,7 +136,9 @@ func GetTx(se Servicer) httprouter.Handle {
 	}
 }
 
-// GetRawTx get raw tx from exchange server.
+// GetRawTx get raw tx by txid.
+// mode: GET
+// url: /api/v1/rawtx?coin_type=[:coin_type]&txid=[:txid]
 func GetRawTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
@@ -192,8 +204,9 @@ type rawTxParams struct {
 
 // CreateRawTx create raw tx base on some utxos.
 // mode: POST
-// url: /api/v1/rawtx?coin_type=[:coin_type]
-// request body:
+// url: /api/v1/create_rawtx?coin_type=[:coin_type]
+// request json:
+// 		different in bitcoin and skycoin.
 func CreateRawTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
@@ -263,5 +276,78 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 			return
 		}
 		sendJSON(w, rlt)
+	}
+}
+
+// SignRawTx sign transaction.
+// mode: GET
+// url: /api/v1/signrawtx?coin_type=[:coin_type]&rawtx=[:rawtx]
+// params:
+// 		coin_type: skycoin or bitcoin.
+// 		rawtx: raw transaction.
+func SignRawTx(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		var rlt *pp.EmptyRes
+		for {
+			// check coin type
+			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			// get raw tx
+			rawtx := r.FormValue("rawtx")
+			if rawtx == "" {
+				err := errors.New("rawtx is empty")
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			gw, err := coin.GetGateway(cp)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			tx, err := gw.SignRawTx(rawtx, getPrivKey(cp))
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			res := struct {
+				Result *pp.Result `json:"result"`
+				Rawtx  string     `json:"rawtx"`
+			}{
+				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
+				Rawtx:  tx,
+			}
+			sendJSON(w, &res)
+			return
+		}
+		sendJSON(w, rlt)
+	}
+}
+
+func getPrivKey(cp coin.Type) coin.GetPrivKey {
+	return func(addr string) (string, error) {
+		a, err := account.GetActive()
+		if err != nil {
+			return "", err
+		}
+		wltID := a.WltIDs[cp]
+		if wltID == "" {
+			return "", fmt.Errorf("does not have %s wallet", cp)
+		}
+
+		_, key, err := wallet.GetKeypair(wltID, addr)
+		if err != nil {
+			return "", err
+		}
+		return key, nil
 	}
 }
