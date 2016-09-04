@@ -57,7 +57,7 @@ response json:
     "errcode": 0,
     "reason": "Success"
   },
-  "pubkey": the"03c9852d11d2d84d23356df6390f10a53dbd8026ed4bc58f9ccddd7a7c69e00715",
+  "pubkey": "03c9852d11d2d84d23356df6390f10a53dbd8026ed4bc58f9ccddd7a7c69e00715",
   "created_at": 1470188576
 }
 ```
