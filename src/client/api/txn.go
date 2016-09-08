@@ -280,8 +280,8 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 }
 
 // SignRawTx sign transaction.
-// mode: GET
-// url: /api/v1/signrawtx?coin_type=[:coin_type]&rawtx=[:rawtx]
+// mode: POST
+// url: /api/v1/signr_awtx?coin_type=[:coin_type]&rawtx=[:rawtx]
 // params:
 // 		coin_type: skycoin or bitcoin.
 // 		rawtx: raw transaction.
