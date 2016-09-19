@@ -36,7 +36,7 @@ type UtxoWithkey interface {
 	GetPrivKey() string
 }
 
-type UtxoOut struct {
+type TxOut struct {
 	Addr  string
 	Value uint64
 }

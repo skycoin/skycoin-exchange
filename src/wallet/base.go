@@ -3,6 +3,7 @@ package wallet
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
@@ -41,13 +42,13 @@ func (wlt *walletBase) GetAddresses() []string {
 }
 
 // GetKeypair get pub/sec key pair of specific address
-func (wlt walletBase) GetKeypair(addr string) (string, string) {
+func (wlt walletBase) GetKeypair(addr string) (string, string, error) {
 	for _, e := range wlt.AddressEntries {
 		if e.Address == addr {
-			return e.Public, e.Secret
+			return e.Public, e.Secret, nil
 		}
 	}
-	return "", ""
+	return "", "", fmt.Errorf("%s addr does not exist in wallet", addr)
 }
 
 // Save save the wallet

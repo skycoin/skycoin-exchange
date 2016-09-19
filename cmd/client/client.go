@@ -2,21 +2,21 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime/pprof"
 	"syscall"
 
 	"gopkg.in/op/go-logging.v1"
 
-	"github.com/skycoin/skycoin-exchange/src/rpclient"
+	"github.com/skycoin/skycoin-exchange/src/client"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
 const (
-	ServPubkey = "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"
+	servPubkey = "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"
 )
 
 var (
@@ -28,20 +28,22 @@ var (
 )
 
 func main() {
-	servAddr := flag.String("s", "localhost:8080", "server address")
-	port := flag.Int("port", 6060, "rpc port")
+	var cfg client.Config
+	home := util.UserHome()
+
+	flag.StringVar(&cfg.ServAddr, "s", "localhost:8080", "server address")
+	flag.IntVar(&cfg.Port, "p", 6060, "rpc port")
+	flag.StringVar(&cfg.GuiDir, "gui-dir", "./src/web-app/static", "webapp static dir")
+	flag.StringVar(&cfg.WalletDir, "wlt-dir", filepath.Join(home, ".exchange-client/wallet"), "wallet dir")
+	flag.StringVar(&cfg.AccountDir, "account-dir", filepath.Join(home, ".exchange-client/account"), "account dir")
+
 	flag.Parse()
+
+	cfg.ServPubkey = cipher.MustPubKeyFromHex(servPubkey)
+	cfg.GuiDir = util.ResolveResourceDirectory(cfg.GuiDir)
 
 	// init logger.
 	initLogging(logging.DEBUG, true)
-
-	pk := cipher.MustPubKeyFromHex(ServPubkey)
-	cfg := rpclient.Config{
-		APIRoot:    *servAddr,
-		ServPubkey: pk,
-	}
-
-	svr := rpclient.New(cfg)
 
 	quit := make(chan int)
 	go catchInterrupt(quit)
@@ -49,8 +51,7 @@ func main() {
 	// Watch for SIGUSR1
 	go catchDebug()
 
-	staticDir := util.ResolveResourceDirectory("./src/web-app/static")
-	svr.Run(fmt.Sprintf("127.0.0.1:%d", *port), staticDir)
+	client.New(cfg).Run()
 
 	<-quit
 
@@ -98,12 +99,12 @@ func printProgramStatus() {
 	f, err := os.Create(fn)
 	defer f.Close()
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error(err.Error())
 		return
 	}
 	err = p.WriteTo(f, 2)
 	if err != nil {
-		logger.Error("%v", err)
+		logger.Error(err.Error())
 		return
 	}
 }

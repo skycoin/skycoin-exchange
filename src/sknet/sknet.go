@@ -71,9 +71,9 @@ func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
 		panic("empty path")
 	}
 
-	root := ps[0]
+	root := ps[1]
 	for p := range engine.groupHandlers {
-		if strings.HasPrefix(p, root) {
+		if strings.HasPrefix(p[1:], root) {
 			panic(fmt.Sprintf("conflict group path name:%s with %s", path, p))
 		}
 	}

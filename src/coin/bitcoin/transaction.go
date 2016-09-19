@@ -41,7 +41,7 @@ type Transaction struct {
 // of the slice is an UtxoWithPrivkey interface.
 // outAddrs is the output address array.
 // using the api of blockchain.info to get the raw trasaction info of txid.
-func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*Transaction, error) {
+func NewTransaction(utxos interface{}, outAddrs []TxOut) (*Transaction, error) {
 	s := reflect.ValueOf(utxos)
 	if s.Kind() != reflect.Slice {
 		return nil, errors.New("error utxo type")
@@ -90,7 +90,7 @@ func NewTransaction(utxos interface{}, outAddrs []UtxoOut) (*Transaction, error)
 	// sign the transaction
 	for i, r := range ret {
 		utxo := r.(UtxoWithkey)
-		sig, err := signRawTransaction(&Transaction{*tx}, i, utxo.GetPrivKey(), oldTxOuts[i].PkScript)
+		sig, err := signRawTx(&Transaction{*tx}, i, utxo.GetPrivKey(), oldTxOuts[i].PkScript)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func BroadcastTx(rawtx string) (string, error) {
 // signRawTransaction requires a transaction, a private key, and the bytes of the raw
 // scriptPubKey. It will then generate a signature over all of the outputs of
 // the provided tx. This is the last step of creating a valid transaction.
-func signRawTransaction(tx *Transaction, index int, wifPrivKey string, scriptPubKey []byte) ([]byte, error) {
+func signRawTx(tx *Transaction, index int, wifPrivKey string, scriptPubKey []byte) ([]byte, error) {
 	wif, err := btcutil.DecodeWIF(wifPrivKey)
 	if err != nil {
 		return []byte{}, err

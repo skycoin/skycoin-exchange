@@ -120,12 +120,34 @@ func (wlts *wallets) getAddresses(id string) ([]string, error) {
 	return []string{}, fmt.Errorf("%s wallet does not exist", id)
 }
 
+func (wlts *wallets) isContain(id string, addrs []string) (bool, error) {
+	wlts.mtx.Lock()
+	defer wlts.mtx.Unlock()
+	if wlt, ok := wlts.Value[id]; ok {
+		as := wlt.GetAddresses()
+		for _, addr := range addrs {
+			have := func(addr string) bool {
+				for _, a := range as {
+					if a == addr {
+						return true
+					}
+				}
+				return false
+			}
+			if !have(addr) {
+				return false, nil
+			}
+		}
+		return true, nil
+	}
+	return false, fmt.Errorf("wallet %s does not exist", id)
+}
+
 func (wlts *wallets) getKeypair(id string, addr string) (string, string, error) {
 	wlts.mtx.Lock()
 	defer wlts.mtx.Unlock()
 	if wlt, ok := wlts.Value[id]; ok {
-		p, s := wlt.GetKeypair(addr)
-		return p, s, nil
+		return wlt.GetKeypair(addr)
 	}
 	return "", "", fmt.Errorf("%s wallet does not exist", id)
 }
@@ -153,6 +175,15 @@ func (wlts *wallets) store(wlt Walleter) error {
 	}
 
 	return os.Rename(tmpPath, path)
+}
+
+func (wlts *wallets) isExist(id string) bool {
+	wlts.mtx.Lock()
+	defer wlts.mtx.Unlock()
+	if _, ok := wlts.Value[id]; ok {
+		return true
+	}
+	return false
 }
 
 func storeAddr(wlt Walleter) string {

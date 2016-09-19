@@ -15,17 +15,17 @@ type Walleter interface {
 	GetID() string                                     // get wallet id.
 	SetID(id string)                                   // set wallet id.
 	SetSeed(seed string)                               // init the wallet seed.
-	GetCoinType() coin.Type                            // get the wallet coin type.
+	GetType() coin.Type                                // get the wallet coin type.
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
-	GetKeypair(addr string) (string, string)           // get pub/sec key pair of specific address
+	GetKeypair(addr string) (string, string, error)    // get pub/sec key pair of specific address
 	Save(w io.Writer) error                            // save the wallet.
 	Load(r io.Reader) error                            // load wallet from reader.
 	Copy() Walleter                                    // copy of self, for thread safe.
 }
 
 // wltDir default wallet dir, wallet file name sturct: $type_$seed.wlt.
-// example: btc_seed.wlt, sky_seed.wlt.
+// example: bitcoin_seed.wlt, skycoin_seed.wlt.
 var wltDir = filepath.Join(util.UserHome(), ".exchange-client/wallet")
 
 // Ext wallet file extension name
@@ -87,7 +87,7 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 
 	// create wallet base on the wallet creator.
 	wlt := newWlt()
-	wlt.SetID(fmt.Sprintf("%s_%s", tp, seed))
+	wlt.SetID(MakeWltID(tp, seed))
 	wlt.SetSeed(seed)
 
 	if err := gWallets.add(wlt); err != nil {
@@ -95,6 +95,16 @@ func New(tp coin.Type, seed string) (Walleter, error) {
 	}
 
 	return wlt.Copy(), nil
+}
+
+// IsExist check if the wallet is already exist.
+func IsExist(id string) bool {
+	return gWallets.isExist(id)
+}
+
+// MakeWltID make wallet id base on coin type and seed.
+func MakeWltID(cp coin.Type, seed string) string {
+	return fmt.Sprintf("%s_%s", cp, seed)
 }
 
 // NewAddresses create address
@@ -105,6 +115,11 @@ func NewAddresses(id string, num int) ([]coin.AddressEntry, error) {
 // GetAddresses get all addresses in specific wallet.
 func GetAddresses(id string) ([]string, error) {
 	return gWallets.getAddresses(id)
+}
+
+// IsContain check if the addresses are int the wallet.
+func IsContain(id string, addrs []string) (bool, error) {
+	return gWallets.isContain(id, addrs)
 }
 
 // GetKeypair get pub/sec key pair of specific addresse in wallet.

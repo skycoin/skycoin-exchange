@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
@@ -14,18 +14,22 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 		for {
 			req := pp.InjectTxnReq{}
 			if err := getRequest(c, &req); err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			// get coin gateway
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
@@ -33,7 +37,8 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			// inject tx.
 			txid, err := gateway.InjectTx(req.GetTx())
 			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
@@ -60,14 +65,14 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -92,6 +97,7 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
+// GetRawTx return rawtx of specifc tx.
 func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var rlt *pp.EmptyRes
@@ -102,13 +108,13 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			tp, err := coin.TypeFromStr(req.GetCoinType())
+			cp, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin.GetGateway(tp)
+			gateway, err := coin.GetGateway(cp)
 			if err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break

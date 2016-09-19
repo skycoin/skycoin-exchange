@@ -1,53 +1,99 @@
 package api
 
 import (
-	"github.com/skycoin/skycoin-exchange/src/pp"
+	"strings"
+
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func GetBalance(ee engine.Exchange) sknet.HandlerFunc {
+// GetBalance return balance of specific account.
+func GetAccountBalance(ee engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
-		errRlt := &pp.EmptyRes{}
+		rlt := &pp.EmptyRes{}
 		for {
-			breq := pp.GetBalanceReq{}
-			if err := getRequest(c, &breq); err != nil {
+			req := pp.GetAccountBalanceReq{}
+			if err := getRequest(c, &req); err != nil {
 				logger.Error(err.Error())
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			// convert to cipher.PubKey
-			if _, err := cipher.PubKeyFromHex(breq.GetAccountId()); err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+			// validate pubkey
+			pubkey := req.GetPubkey()
+			if err := validatePubkey(pubkey); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
-			a, err := ee.GetAccount(breq.GetAccountId())
+			a, err := ee.GetAccount(pubkey)
 			if err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
 			}
 
-			ct, err := coin.TypeFromStr(breq.GetCoinType())
+			ct, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
-				errRlt = pp.MakeErrRes(err)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			bal := a.GetBalance(ct)
-			bres := pp.GetBalanceRes{
-				Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-				AccountId: breq.AccountId,
-				CoinType:  breq.CoinType,
-				Balance:   &bal,
+			bres := pp.GetAccountBalanceRes{
+				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+				Balance: &pp.Balance{Amount: pp.PtrUint64(bal)},
 			}
 			reply(c, bres)
 			return
 		}
 
-		c.JSON(errRlt)
+		c.JSON(rlt)
+	}
+}
+
+// GetAddrBalance get balance of specific address.
+func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
+		var rlt *pp.EmptyRes
+		for {
+			req := pp.GetAddrBalanceReq{}
+			if err := getRequest(c, &req); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			cp, err := coin.TypeFromStr(req.GetCoinType())
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			gw, err := coin.GetGateway(cp)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				break
+			}
+			addrs := strings.Split(req.GetAddrs(), ",")
+			b, err := gw.GetBalance(addrs)
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			res := pp.GetAddrBalanceRes{
+				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+				Balance: &b,
+			}
+
+			reply(c, &res)
+			return
+		}
+		c.JSON(rlt)
 	}
 }

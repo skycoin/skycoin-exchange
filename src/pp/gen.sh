@@ -8,4 +8,5 @@ protoc --go_out=./ pp.common.proto \
   pp.coin.proto \
   pp.request.proto \
   pp.utxo.proto \
-  pp.transaction.proto
+  pp.transaction.proto \
+  pp.admin.proto

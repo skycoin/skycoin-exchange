@@ -15,14 +15,17 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// ChooseUtxoTmout max time that will be allowed in choosing sufficient utxos.
 var ChooseUtxoTmout = 5 * time.Second
 
+// BtcTxResult be used in creating bitcoin withdraw transaction.
 type BtcTxResult struct {
 	Tx         *bitcoin.Transaction
 	UsingUtxos []bitcoin.Utxo
 	ChangeAddr string
 }
 
+// SkyTxResult be used in creating skycoin withdraw transaction.
 type SkyTxResult struct {
 	Tx         *skycoin.Transaction
 	UsingUtxos []skycoin.Utxo
@@ -36,24 +39,32 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 		for {
 			rp := NewReqParams()
 
-			wr := pp.WithdrawalReq{}
-			if err := getRequest(c, &wr); err != nil {
+			req := pp.WithdrawalReq{}
+			if err := getRequest(c, &req); err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			if _, err := cipher.PubKeyFromHex(wr.GetAccountId()); err != nil {
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongAccountId)
+			// validate pubkey
+			pubkey := req.GetPubkey()
+			if err := validatePubkey(pubkey); err != nil {
+				logger.Error(err.Error())
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
 				break
 			}
 
-			a, err := ee.GetAccount(wr.GetAccountId())
+			if _, err := cipher.PubKeyFromHex(req.GetPubkey()); err != nil {
+				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongPubkey)
+				break
+			}
+
+			a, err := ee.GetAccount(req.GetPubkey())
 			if err != nil {
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_NotExits)
 				break
 			}
 
-			ct, err := coin.TypeFromStr(wr.GetCoinType())
+			ct, err := coin.TypeFromStr(req.GetCoinType())
 			if err != nil {
 				errRlt = pp.MakeErrRes(err)
 				break
@@ -61,8 +72,8 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 			rp.Values["engine"] = ee
 			rp.Values["account"] = a
 			rp.Values["cointype"] = ct
-			rp.Values["amt"] = wr.GetCoins()
-			rp.Values["toAddr"] = wr.GetOutputAddress()
+			rp.Values["amt"] = req.GetCoins()
+			rp.Values["toAddr"] = req.GetOutputAddress()
 
 			resp, rlt := withdrawlWork(c, rp)
 			if rlt != nil {
@@ -141,11 +152,9 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		ee.WatchAddress(ct, btcTxRlt.ChangeAddr)
 	}
 
-	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-		AccountId: &id,
-		NewTxid:   &newTxid,
+		Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+		NewTxid: &newTxid,
 	}
 	return &resp, nil
 }
@@ -195,7 +204,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		return nil, pp.MakeErrRes(errors.New("skycoin tx serialize failed"))
 	}
 
-	newTxid, err := skycoin.BroadcastTx(string(rawtx))
+	newTxid, err := skycoin.BroadcastTx(hex.EncodeToString(rawtx))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
@@ -207,11 +216,9 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		ee.WatchAddress(ct, skyTxRlt.ChangeAddr)
 	}
 
-	id := acnt.GetID()
 	resp := pp.WithdrawalRes{
-		Result:    pp.MakeResultWithCode(pp.ErrCode_Success),
-		AccountId: &id,
-		NewTxid:   &newTxid,
+		Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
+		NewTxid: &newTxid,
 	}
 	return &resp, nil
 }
@@ -220,7 +227,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 // amount is the number of coins that want to withdraw.
 // toAddr is the address that the coins will be sent to.
 func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*BtcTxResult, error) {
-	uxs, err := egn.ChooseUtxos(coin.Bitcoin, amount+egn.GetBtcFee(), 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Bitcoin, amount+egn.GetBtcFee(), ChooseUtxoTmout)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +249,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		totalAmounts += u.GetAmount()
 	}
 	fee := egn.GetBtcFee()
-	outAddrs := []bitcoin.UtxoOut{}
+	outAddrs := []bitcoin.TxOut{}
 	chgAmt := totalAmounts - fee - amount
 	chgAddr := ""
 	if chgAmt > 0 {
@@ -250,10 +257,10 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 		chgAddr = egn.GetNewAddress(coin.Bitcoin)
 		// egn.AddWatchAddress(coinType, chgAddr)
 		outAddrs = append(outAddrs,
-			bitcoin.UtxoOut{Addr: toAddr, Value: amount},
-			bitcoin.UtxoOut{Addr: chgAddr, Value: chgAmt})
+			bitcoin.TxOut{Addr: toAddr, Value: amount},
+			bitcoin.TxOut{Addr: chgAddr, Value: chgAmt})
 	} else {
-		outAddrs = append(outAddrs, bitcoin.UtxoOut{Addr: toAddr, Value: amount})
+		outAddrs = append(outAddrs, bitcoin.TxOut{Addr: toAddr, Value: amount})
 	}
 	// change utxo to UtxoWithkey
 	utxoKeys, err := makeBtcUtxoWithkeys(utxos, egn)
@@ -277,7 +284,7 @@ func createBtcWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Bt
 }
 
 func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*SkyTxResult, error) {
-	uxs, err := egn.ChooseUtxos(coin.Skycoin, amount, 5*time.Second)
+	uxs, err := egn.ChooseUtxos(coin.Skycoin, amount, ChooseUtxoTmout)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +308,7 @@ func createSkyWithdrawTx(egn engine.Exchange, amount uint64, toAddr string) (*Sk
 		totalHours += u.GetHours()
 	}
 
-	outAddrs := []skycoin.UtxoOut{}
+	outAddrs := []skycoin.TxOut{}
 	chgAmt := totalAmounts - amount
 	chgHours := totalHours / 4
 	chgAddr := ""

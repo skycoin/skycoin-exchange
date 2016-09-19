@@ -6,6 +6,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
+// GetCoins get supported coins.
 func GetCoins(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		coins := pp.CoinsRes{

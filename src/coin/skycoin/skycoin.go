@@ -35,7 +35,7 @@ type SkyUtxo struct {
 	visor.ReadableOutput
 }
 
-type UtxoOut struct {
+type TxOut struct {
 	skycoin.TransactionOutput
 }
 
@@ -63,8 +63,8 @@ func (su SkyUtxo) GetHours() uint64 {
 	return su.Hours
 }
 
-func MakeUtxoOutput(addr string, amount uint64, hours uint64) UtxoOut {
-	uo := UtxoOut{}
+func MakeUtxoOutput(addr string, amount uint64, hours uint64) TxOut {
+	uo := TxOut{}
 	uo.Address = cipher.MustDecodeBase58Address(addr)
 	uo.Coins = amount
 	uo.Hours = hours
@@ -106,6 +106,28 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	rsp, err := http.Get(url)
 	if err != nil {
 		return []Utxo{}, errors.New("get skycoin outputs failed")
+	}
+	defer rsp.Body.Close()
+	outputs := []SkyUtxo{}
+	if err := json.NewDecoder(rsp.Body).Decode(&outputs); err != nil {
+		return []Utxo{}, err
+	}
+	ux := make([]Utxo, len(outputs))
+	for i, u := range outputs {
+		ux[i] = u
+	}
+	return ux, nil
+}
+
+func getUnspentOutputsByHashes(hashes []string) ([]Utxo, error) {
+	if len(hashes) == 0 {
+		return []Utxo{}, nil
+	}
+
+	url := fmt.Sprintf("%s/outputs?hashes=%s", ServeAddr, strings.Join(hashes, ","))
+	rsp, err := http.Get(url)
+	if err != nil {
+		return []Utxo{}, err
 	}
 	defer rsp.Body.Close()
 	outputs := []SkyUtxo{}

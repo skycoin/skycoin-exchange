@@ -21,7 +21,7 @@ type Transaction struct {
 }
 
 // NewTransaction create skycoin transaction.
-func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []UtxoOut) *Transaction {
+func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []TxOut) *Transaction {
 	tx := Transaction{}
 	// keys := make([]cipher.SecKey, len(utxos))
 	for _, u := range utxos {

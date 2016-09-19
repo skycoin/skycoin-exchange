@@ -21,6 +21,7 @@ type Accounter interface {
 	CreateAccountWithPubkey(pubkey string) (account.Accounter, error)
 	GetAccount(id string) (account.Accounter, error)
 	SaveAccount() error
+	IsAdmin(pubkey string) bool
 }
 
 type Addresser interface {

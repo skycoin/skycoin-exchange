@@ -2,15 +2,31 @@ package pp;
 
 import "pp.common.proto";
 
-message GetBalanceReq {
-  optional string account_id = 10;
+// Balance the both skycoin and bitcoin have amount field, 
+// while the hours will be omited when used as bitcoin balance.
+message Balance {
+  optional uint64 amount = 10;
+  optional uint64 hours = 11;
+}
+
+message GetAccountBalanceReq {
+  optional string pubkey = 10;
   optional string coin_type = 11;
 }
 
-message GetBalanceRes {
+message GetAccountBalanceRes {
   required Result result = 1;
 
-  optional string account_id = 10;
-  optional string coin_type = 11;
-  optional uint64 balance = 12;
+  optional Balance balance = 12;
+}
+
+message GetAddrBalanceReq {
+  optional string coin_type = 10; 
+  optional string addrs = 20;
+}
+
+message GetAddrBalanceRes {
+  required Result result = 1;
+
+  optional Balance balance = 10;
 }

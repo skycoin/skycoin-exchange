@@ -5,29 +5,19 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/julienschmidt/httprouter"
+	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
 // GetUtxos get utxos through exchange server.
-func GetUtxos(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetUtxos(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			if r.Method != "GET" {
-				logger.Error("require GET method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			_, key, err := getAccountAndKey(r)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			tp := r.FormValue("coin_type")
-			if tp == "" {
+			cp := r.FormValue("coin_type")
+			if cp == "" {
 				logger.Error("coin type empty")
 				rlt = pp.MakeErrRes(errors.New("coin type empty"))
 				break
@@ -45,10 +35,17 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 			}
 
 			req := pp.GetUtxoReq{
-				CoinType:  pp.PtrString(tp),
+				CoinType:  pp.PtrString(cp),
 				Addresses: addrArray,
 			}
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), key)
+
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -60,7 +57,7 @@ func GetUtxos(se Servicer) http.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetUtxoRes{})
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetUtxoRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)

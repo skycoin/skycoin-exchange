@@ -86,7 +86,7 @@ func TestIncreaseBalance(t *testing.T) {
 			}
 
 			if a.GetBalance(cp) != d.Expect {
-				t.Errorf("decrease %s balance failed, v:%d, expect:%d", cp, b, d.Expect)
+				t.Errorf("decrease %s balance failed, v:%d, expect:%d", cp, a.GetBalance(cp), d.Expect)
 				return
 			}
 		}

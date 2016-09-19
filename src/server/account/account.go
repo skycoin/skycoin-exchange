@@ -25,6 +25,7 @@ type Accounter interface {
 	AddDepositAddress(ct coin.Type, addr string) // add the deposit address to the account.
 	DecreaseBalance(ct coin.Type, amt uint64) error
 	IncreaseBalance(ct coin.Type, amt uint64) error
+	SetBalance(cp coin.Type, amt uint64) error
 }
 
 // ExchangeAccount maintains the account state
@@ -87,13 +88,13 @@ func (self *ExchangeAccount) AddDepositAddress(coinType coin.Type, addr string) 
 }
 
 // SetBalance update the balanace of specific coin.
-func (self *ExchangeAccount) setBalance(coinType coin.Type, balance uint64) error {
+func (self *ExchangeAccount) SetBalance(cp coin.Type, amt uint64) error {
 	self.balance_mtx.Lock()
 	defer self.balance_mtx.Unlock()
-	if _, ok := self.Balance[coinType]; !ok {
-		return fmt.Errorf("the account does not have %s", coinType)
+	if _, ok := self.Balance[cp]; !ok {
+		return fmt.Errorf("the account does not have %s", cp)
 	}
-	self.Balance[coinType] = balance
+	self.Balance[cp] = amt
 	return nil
 }
 

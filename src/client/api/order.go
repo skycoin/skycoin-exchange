@@ -1,39 +1,45 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/julienschmidt/httprouter"
+	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
 // CreateOrder create order through exchange server.
-func CreateOrder(se Servicer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// mode: POST
+// url: /api/v1/account/order?coin_pair=[:coin_pair]&type=[:type]&price=[:price]&amt=[:amt]
+// params:
+// 		coin_pair: order coin pair.
+// 		type: order type, can be bid or ask.
+// 		price: price.
+// 		amt: amount.
+func CreateOrder(se Servicer) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "POST" {
-				logger.Error("require POST method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			rawReq := pp.OrderReq{}
-			if err := bindJSON(r, &rawReq); err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			id, key, err := getAccountAndKey(r)
+			rawReq, err := makeOrderReq(r)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			rawReq.AccountId = &id
-			req, err := makeEncryptReq(&rawReq, se.GetServKey().Hex(), key)
+			a, err := account.GetActive()
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			rawReq.Pubkey = pp.PtrString(a.Pubkey)
+			req, err := makeEncryptReq(rawReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -46,7 +52,7 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 				break
 			}
 
-			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.OrderRes{})
+			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.OrderRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -59,26 +65,62 @@ func CreateOrder(se Servicer) http.HandlerFunc {
 	}
 }
 
+func makeOrderReq(r *http.Request) (*pp.OrderReq, error) {
+	// get coin_pair
+	cp := r.FormValue("coin_pair")
+	if cp == "" {
+		return nil, errors.New("coin_pair is empty")
+	}
+
+	// get order type
+	tp := r.FormValue("type")
+	if tp == "" {
+		return nil, errors.New("type is empty")
+	}
+
+	// get price
+	pc := r.FormValue("price")
+	if pc == "" {
+		return nil, errors.New("price is empty")
+	}
+	price, err := strconv.ParseUint(pc, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// get amount
+	amt := r.FormValue("amt")
+	if amt == "" {
+		return nil, errors.New("amt is empty")
+	}
+	amount, err := strconv.ParseUint(amt, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pp.OrderReq{
+		CoinPair: pp.PtrString(cp),
+		Type:     pp.PtrString(tp),
+		Price:    pp.PtrUint64(price),
+		Amount:   pp.PtrUint64(amount),
+	}, nil
+}
+
 // GetBidOrders get bid orders through exchange server.
-func GetBidOrders(se Servicer) http.HandlerFunc {
+func GetBidOrders(se Servicer) httprouter.Handle {
 	return getOrders(se, "bid")
 }
 
 // GetAskOrders get ask orders through exchange server.
-func GetAskOrders(se Servicer) http.HandlerFunc {
+func GetAskOrders(se Servicer) httprouter.Handle {
 	return getOrders(se, "ask")
 }
 
-func getOrders(se Servicer, tp string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func getOrders(se Servicer, tp string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			if r.Method != "GET" {
-				logger.Error("require GET method")
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			_, key, err := getAccountAndKey(r)
+			a, err := account.GetActive()
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
@@ -113,7 +155,7 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 				End:      &end,
 			}
 
-			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), key)
+			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), a.Seckey)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
@@ -126,7 +168,7 @@ func getOrders(se Servicer, tp string) http.HandlerFunc {
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), key, &pp.GetOrderRes{})
+			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetOrderRes{})
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
