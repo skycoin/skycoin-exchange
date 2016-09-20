@@ -7,6 +7,7 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 
 declare var moment: any;
+declare var _: any;
 
 @Component({
     selector: "app",
@@ -20,13 +21,18 @@ export class AppComponent implements OnInit {
     depositList: Array<any>;
     accountList: Array<any>;
     eventList: Array<any>;
-    accountId:any;
-    key:any;
+    pubkey:any;
     balance:any;
     OrderInputIsVisible:boolean;
     orderType:number;
     orderPrice:number;
     orderAmount:number;
+    createWalletVisible:boolean;
+    walletSeed:any;
+    wallets:any;
+    updateWalletVisible:boolean;
+    walletAmount:number;
+    tempWallet:any;
 
     //Constructor method for load HTTP object
     constructor(private http: Http) { }
@@ -37,11 +43,14 @@ export class AppComponent implements OnInit {
         this.depositList = [];
         this.accountList = [];
         this.eventList = [];
-        this.accountId = null;
-        this.key = null;
         this.orderPrice = 0;
         this.orderAmount = 0;
         this.OrderInputIsVisible = false;
+        this.createWalletVisible = false;
+        this.updateWalletVisible = false;
+        this.walletSeed = '';
+        this.walletAmount = 0;
+        this.wallets = [];
         this.balance = {
           skycoin:0,
           bitcoin:0
@@ -50,30 +59,64 @@ export class AppComponent implements OnInit {
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         var self = this;
         this.getAccountList();
-        this.http.post('/api/v1/accounts', '')
-            .map((res) => res.json())
-            .subscribe(data => {
-              console.log('request account', data);
-              if (data.result.success) {
-                self.accountId = data.account_id;
-                self.key = data.key;
-                self.loadBidList();
-                self.loadAskList();
-                self.getBalance();
-                self.getDepositList();
-                self.getEventList();
-              } else {
-                alert("Cannot get account from server. please check connection with server");
-                return;
+        this.http.get('/api/v1/account?active=1')
+          .map((res) => res.json())
+          .subscribe(data => {
+            if (data.result.success) {
+              //got active user
+              console.log("Found active user", data.accounts[0]);
+              self.pubkey = data.accounts[0].pubkey;
+              if (data.accounts[0].wallet_ids) {
+                this.wallets = [];
+                if (data.accounts[0].wallet_ids.bitcoin) {
+                  this.wallets.push({
+                    type:'bitcoin',
+                    id:data.accounts[0].wallet_ids.bitcoin,
+                    balance:{amount:0}
+                  });
+                }
+                if (data.accounts[0].wallet_ids.skycoin) {
+                  this.wallets.push({
+                    type:'skycoin',
+                    id:data.accounts[0].wallet_ids.skycoin,
+                    balance:{amount:0}
+                  });
+                }
               }
-            }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
+              this.getWalletBalance();
+              this.loadBidList();
+              this.loadAskList();
+              this.getBalance();
+              this.getDepositList();
+              this.getEventList();
+            } else {
+              //create new account
+              this.http.post('/api/v1/accounts', '')
+                .map((res) => res.json())
+                .subscribe(data => {
+                  console.log('request account', data);
+                  if (data.result.success) {
+                    this.pubkey = data.pubkey;
+                    this.wallets = [];
+                    this.loadBidList();
+                    this.loadAskList();
+                    this.getBalance();
+                    this.getDepositList();
+                    this.getEventList();
+                  } else {
+                    alert("Cannot get account from server. please check connection with server");
+                    return;
+                  }
+                }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
+            }
+          }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
     }
 
     loadBidList() {
         var self = this;
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
-        var url = '/api/v1/orders/bid?coin_pair=bitcoin/skycoin&id=' + this.accountId + "&key=" + this.key + '&start=1&end=10';
+        var url = '/api/v1/orders/bid?coin_pair=bitcoin/skycoin&pubkey=' + this.pubkey + '&start=1&end=10';
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
@@ -91,7 +134,7 @@ export class AppComponent implements OnInit {
         var self = this;
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
-        var url = '/api/v1/orders/ask?coin_pair=bitcoin/skycoin&id=' + this.accountId + '&key=' + this.key + '&start=1&end=10';
+        var url = '/api/v1/orders/ask?coin_pair=bitcoin/skycoin&pubkey=' + this.pubkey + '&start=1&end=10';
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
@@ -107,7 +150,7 @@ export class AppComponent implements OnInit {
     getBalance() {
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
-        var url = '/api/v1/account/balance?id=' + this.accountId + '&key=' + this.key + '&coin_type=skycoin';
+        var url = '/api/v1/account/balance?pubkey=' + this.pubkey + '&coin_type=skycoin';
         var self = this;
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
@@ -115,7 +158,7 @@ export class AppComponent implements OnInit {
               console.log("get skycoin balance", url, data);
               self.balance.skycoin = data.balance;
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
-        url = '/api/v1/account/balance?id=' + this.accountId + '&key=' + this.key + '&coin_type=bitcoin';
+        url = '/api/v1/account/balance?pubkey=' + this.pubkey + '&coin_type=bitcoin';
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
@@ -124,28 +167,41 @@ export class AppComponent implements OnInit {
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
     }
 
+    getWalletBalance() {
+        var self = this;
+        this.wallets.map(function(o){
+          var url = '/api/v1/wallet/balance?id=' + o.id;
+          self.http.get(url, {})
+              .map((res) => res.json())
+              .subscribe(data => {
+                console.log("get wallet balance", url, data);
+                o.balance = data.balance;
+              }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
+        });
+    }
+
     getDepositList() {
       var self = this;
       var headers = new Headers();
       headers.append('Content-Type', 'application/x-www-form-urlencoded');
-      this.http.post('/api/v1/account/deposit_address?id=' + this.accountId + '&key=' + this.key + '&coin_type=skycoin', '')
+      this.http.post('/api/v1/account/deposit_address?pubkey=' + this.pubkey + '&coin_type=skycoin', '')
           .map((res) => res.json())
           .subscribe(data => {
             if (data.result.success) {
-                self.depositList.push({
-                "coin_type": 'SKY',
-                "address": data.address
+                self.depositList['SKY'] = [];
+                self.depositList['SKY'].push({
+                  "address": data.address
                 });
             }
           }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
-      this.http.post('/api/v1/account/deposit_address?id=' + this.accountId + '&key=' + this.key + '&coin_type=bitcoin', '')
+      this.http.post('/api/v1/account/deposit_address?pubkey=' + this.pubkey + '&coin_type=bitcoin', '')
           .map((res) => res.json())
           .subscribe(data => {
           console.log("deposite-bitcoin", data);
             if (data.result.success) {
-                self.depositList.push({
-                "coin_type": 'BTC',
-                "address": data.address
+                self.depositList['BTC'] = [];
+                self.depositList['BTC'].push({
+                  "address": data.address
                 });
             }
           }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
@@ -153,30 +209,19 @@ export class AppComponent implements OnInit {
 
     getAccountList() {
       var self = this;
-      this.accountList.push({
-      "id": "kjh12kj214hjk4j234k234hk235h23k54",
-      "key": "asasfsg76sgsags87gsdag6sad8g",
-      "skycoin": 850000,
-      "bitcoin": 234000
-      });
-      this.accountList.push({
-      "id": "asf67f8sdgsd67g6sd8g78d578dg585sd",
-      "key": "dfb8768dfg68dfhg68dh68dfh6fd8dzfh",
-      "skycoin": 351000,
-      "bitcoin": 0
-      });
-      this.accountList.push({
-      "id": "sagay89ag9ag67aegagre4a52g5eagaeg7",
-      "key": "897ar9a8rh7a8e047ea4h0a6egaegaeg",
-      "skycoin": 0,
-      "bitcoin": 6760000
-      });
-      this.accountList.push({
-      "id": "dsz789fd5fde5h9e78r9er6h9rs8706a05eh",
-      "key": "sd679gsd67g59d6a7g59g569rehehea79hge",
-      "skycoin": 83000,
-      "bitcoin": 123000
-      });
+      this.http.get('/api/v1/account')
+        .map((res) => res.json())
+        .subscribe(data => {
+          if (data.result.success) {
+            console.log("getAccountList", data);
+            data.accounts.map(function(o){
+              self.accountList.push({
+              "pubkey": o.pubkey,
+              "wallet_ids": o.wallet_ids
+              });
+            });
+          }
+        }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
     }
 
     getEventList() {
@@ -220,7 +265,7 @@ export class AppComponent implements OnInit {
                      "price":Number(price)
                   };
       var self = this;
-      this.http.post('/api/v1/account/order?id=' + this.accountId + '&key=' + this.key, JSON.stringify(data))
+      this.http.post('/api/v1/account/order?pubkey=' + this.pubkey, JSON.stringify(data))
           .map((res) => res.json())
           .subscribe(data => {
           console.log("create order", data);
@@ -242,5 +287,102 @@ export class AppComponent implements OnInit {
 
     hideOrderInputDialog() {
       this.OrderInputIsVisible = false;
+    }
+
+    createWallet() {
+      this.walletSeed = this.randomString(16, 36);
+      this.createWalletVisible = true;
+    }
+
+    hideCreateWallet() {
+      this.createWalletVisible = false;
+    }
+
+    createWalletDo(seed, type) {
+      //create wallet
+      this.http.post('/api/v1/wallet?type=' + type + '&seed=' + seed, '')
+          .map((res) => res.json())
+          .subscribe(data => {
+          console.log("create wallet", data);
+            if (data.result.success) {
+              var oldWallet = _.find(this.wallets, function(o){
+                return o.type === type;
+              });
+              if (oldWallet) {
+                oldWallet.id = data.id;
+              } else {
+                this.wallets.push({
+                  type:type,
+                  id:data.id,
+                  balance:{amount:0}
+                });
+              }
+
+              //create addrsss
+              this.http.post('/api/v1/wallet/address?id=' + data.id, '')
+                  .map((res) => res.json())
+                  .subscribe(data => {
+                    if (data.result.success) {
+                      console.log("create address", data.address);
+                      this.getWalletBalance();
+                    }
+                    this.hideCreateWallet();
+                  }, err => console.log("Error on create wallet: " + err), () => {
+
+                  });
+            } else {
+              alert(data.result.reason);
+            }
+          }, err => console.log("Error on create wallet: " + err), () => {
+
+          }
+          );
+    }
+
+    updateWallet(wallet) {
+      this.walletAmount = 0;
+      this.updateWalletVisible = true;
+      this.tempWallet = wallet;
+    }
+
+    hideUpdateWallet() {
+      this.updateWalletVisible = false;
+    }
+
+    updateWalletDo(amount) {
+      //create wallet
+      var url = '/api/v1/admin/account/balance?coin_type=' + this.tempWallet.type + '&dst=' + this.pubkey + '&amt=' + amount;
+      console.log(url);
+      this.http.put(url, '')
+          .map((res) => res.json())
+          .subscribe(data => {
+          console.log("update wallet", data);
+            if (data.result.success) {
+
+            } else {
+              alert(data.result.reason);
+            }
+          }, err => console.log("Error on update wallet: " + err), () => {
+
+          }
+          );
+    }
+
+    randomString(len, bits) {
+        bits = bits || 36;
+        var outStr = "", newStr;
+        while (outStr.length < len) {
+            newStr = Math.random().toString(bits).slice(2);
+            outStr += newStr.slice(0, Math.min(newStr.length, (len - outStr.length)));
+        }
+        return outStr.toUpperCase();
+    }
+
+    convertCoinType(type) {
+      if (type === 'bitcoin') {
+        return 'BTC';
+      } else {
+        return 'SKY';
+      }
     }
 }
