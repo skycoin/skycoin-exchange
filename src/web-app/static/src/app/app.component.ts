@@ -150,20 +150,20 @@ export class AppComponent implements OnInit {
     getBalance() {
         var headers = new Headers();
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
-        var url = '/api/v1/account/balance?pubkey=' + this.pubkey + '&coin_type=skycoin';
+        var url = '/api/v1/account/balance?coin_type=skycoin';
         var self = this;
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
               console.log("get skycoin balance", url, data);
-              self.balance.skycoin = data.balance;
+              self.balance.skycoin = data.balance.amount;
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
-        url = '/api/v1/account/balance?pubkey=' + this.pubkey + '&coin_type=bitcoin';
+        url = '/api/v1/account/balance?coin_type=bitcoin';
         this.http.get(url, { headers: headers })
             .map((res) => res.json())
             .subscribe(data => {
               console.log("get bitcoin balance", url, data);
-              self.balance.bitcoin = data.balance;
+              self.balance.bitcoin = data.balance.amount;
             }, err => console.log("Error on load outputs: " + err), () => console.log('Connection load done'));
     }
 
