@@ -1,14 +1,104 @@
 <div class="panel panel-default">
   <div class="panel-body">
     <ul class="nav nav-tabs" role="tablist">
-      <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a></li>
+      <li role="presentation" class="active"><a href="#wallet" aria-controls="wallet" role="tab" data-toggle="tab">Wallet</a></li>
+      <li role="presentation"><a href="#exchange" aria-controls="exchange" role="tab" data-toggle="tab">Exchange</a></li>
       <li role="presentation"><a href="#deposit" aria-controls="deposit" role="tab" data-toggle="tab">Deposit</a></li>
       <li role="presentation"><a href="#admin" aria-controls="admin" role="tab" data-toggle="tab">Admin</a></li>
       <li role="presentation"><a href="#user" aria-controls="user" role="tab" data-toggle="tab">User</a></li>
     </ul>
     <!-- Tab panes -->
     <div class="tab-content">
-      <div role="tabpanel" class="tab-pane fade in active" id="home">
+      <div role="tabpanel" class="tab-pane fade in active" id="wallet">
+        <div class="container-fluid content">
+            <div class="content-body">
+              <div class="row">
+                <div class="col-sm-12">
+                    <table class="table table-striped" style="max-width:800px">
+                        <thead>
+                        <tr>
+                            <th>Wallet Type</th>
+                            <th>ID</th>
+                            <th>Balance</th>
+                            <th><button type="button" class="btn btn-default pull-right" (click)="createWallet()">Load Wallet From Seed</button></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="#item of wallets">
+                            <td>{{convertCoinType(item.type)}}</td>
+                            <td>{{item.id}}</td>
+                            <td>{{item.balance?item.balance.amount:0}}</td>
+                            <td>
+                              <button type="button" class="btn btn-sm btn-default pull-right" (click)="showHistory()">History</button>
+                              <button type="button" class="btn btn-sm btn-primary pull-right" (click)="updateWallet(item)" style="margin-right:10px;">Update</button>
+                              <button type="button" class="btn btn-sm btn-primary pull-right" (click)="send()" style="margin-right:10px;">Send</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div *ngIf="createWalletVisible" class="modal fade show in" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" (click)="hideCreateWallet()" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Create Wallet</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                          <div class="form-group">
+                              <label class="col-sm-3 control-label">Wallet Seed:</label>
+                              <div class="col-sm-9">
+                                  <input class="form-control" value="{{walletSeed}}" readonly/>
+                              </div>
+                          </div>
+                          <div class="form-group">
+                              <label class="col-sm-3 control-label">Wallet Type:</label>
+                              <div class="col-sm-9">
+                                  <select #walletType class="form-control">
+                                    <option value='bitcoin'>BTC</option>
+                                    <option value='skycoin'>SKY</option>
+                                  </select>
+                              </div>
+                          </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" (click)="createWalletDo(walletSeed, walletType.value)">Ok</button>
+                        <button type="button" class="btn btn-default" (click)="hideCreateWallet()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="updateWalletVisible" class="modal fade show in" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" (click)="hideUpdateWallet()" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Update Wallet</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                          <div class="form-group">
+                              <label class="col-sm-3 control-label">Wallet Amount:</label>
+                              <div class="col-sm-9">
+                                  <input [(ngModel)]="walletAmount" class="form-control" required/>
+                              </div>
+                          </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" (click)="updateWalletDo(walletAmount)">Ok</button>
+                        <button type="button" class="btn btn-default" (click)="hideUpdateWallet()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+      <div role="tabpanel" class="tab-pane fade" id="exchange">
         <div class="container-fluid content">
             <div class="content-body">
               <div class="row">
@@ -109,8 +199,8 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" (click)="createOrderDo(orderType, orderAmount.value, orderPrice.value)">Ok</button>
-                        <button type="button" class="btn" (click)="hideOrderInputDialog()">Cancel</button>
+                        <button type="button" class="btn btn-primary" (click)="createOrderDo(orderType, orderAmount.value, orderPrice.value)">Ok</button>
+                        <button type="button" class="btn btn-default" (click)="hideOrderInputDialog()">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -119,23 +209,40 @@
       <div role="tabpanel" class="tab-pane fade" id="deposit">
         <div class="container-fluid content">
             <div class="content-body">
-                <div class="row">
-                    <div class="col-xs-12 col-sm-12">
-                        <table class="table table-striped">
-                            <thead>
-                            <tr>
-                                <th>Coin Type</th>
-                                <th>Address</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr *ngFor="#item of depositList">
-                                <td>{{item.coin_type|uppercase}}</td>
-                                <td>{{item.address}}</td>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+              <div class="row">
+                  <div class="col-xs-12 col-sm-12">
+                      <h4>SKYCOIN</h4>
+                      <table class="table table-striped">
+                          <thead>
+                          <tr>
+                              <th>Address</th>
+                              <th><button class="btn btn-primary pull-right">New deposit address</button></th>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          <tr *ngFor="#item of depositList['SKY']">
+                              <td colspan="2">{{item.address}}</td>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+              <div class="row">
+                  <div class="col-xs-12 col-sm-12">
+                      <h4>BITCOIN</h4>
+                      <table class="table table-striped">
+                          <thead>
+                          <tr>
+                              <th>Address</th>
+                              <th><button class="btn btn-primary pull-right">New deposit address</button></th>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          <tr *ngFor="#item of depositList['BTC']">
+                              <td colspan="2">{{item.address}}</td>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
             </div>
         </div>
       </div>
@@ -149,24 +256,17 @@
                             <thead>
                             <tr>
                                 <th>No</th>
-                                <th>Account ID</th>
-                                <th>Key</th>
+                                <th>Pubkey</th>
                                 <th>Skycoin</th>
                                 <th>Bitcoin</th>
-                                <th>Action</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr *ngFor="#item of accountList;#i=index">
                                 <td>{{i+1}}</td>
-                                <td>{{item.id}}</td>
-                                <td>{{item.key}}</td>
-                                <td>{{item.skycoin|number}}</td>
-                                <td>{{item.bitcoin|number}}</td>
-                                <td>
-                                  <button class="btn btn-sm btn-danger">Deposit</button>
-                                  <button class="btn btn-sm btn-primary">Withdraw</button>
-                                </td>
+                                <td>{{item.pubkey}}</td>
+                                <td>{{item.wallet_ids?item.wallet_ids.skycoin:'-'}}</td>
+                                <td>{{item.wallet_ids?item.wallet_ids.bitcoin:'-'}}</td>
                             </tbody>
                         </table>
                     </div>
