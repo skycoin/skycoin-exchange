@@ -12,6 +12,7 @@ import (
 	"reflect"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -56,7 +57,7 @@ func NewTransaction(utxos interface{}, outAddrs []TxOut) (*Transaction, error) {
 	oldTxOuts := make([]*wire.TxOut, len(ret))
 	for i, r := range ret {
 		utxo := r.(UtxoWithkey)
-		txid, err := wire.NewShaHashFromStr(utxo.GetTxid())
+		txid, err := chainhash.NewHashFromStr(utxo.GetTxid())
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +164,7 @@ func signRawTx(tx *Transaction, index int, wifPrivKey string, scriptPubKey []byt
 
 // Uses the txid of the target funding transaction and asks blockchain.info's
 // api for information (in json) related to that transaction.
-func lookupTxid(hash *wire.ShaHash) (*blockChainInfoTx, error) {
+func lookupTxid(hash *chainhash.Hash) (*blockChainInfoTx, error) {
 	url := "https://blockchain.info/rawtx/" + hash.String()
 	resp, err := http.Get(url)
 	if err != nil {
@@ -196,7 +197,7 @@ func lookupTxid(hash *wire.ShaHash) (*blockChainInfoTx, error) {
 func getFundingParams(rawtx *blockChainInfoTx, vout uint32) (*wire.TxOut, *wire.OutPoint, error) {
 	blkChnTxOut := rawtx.Outputs[vout]
 
-	hash, err := wire.NewShaHashFromStr(rawtx.Hash)
+	hash, err := chainhash.NewHashFromStr(rawtx.Hash)
 	if err != nil {
 		return nil, nil, err
 	}

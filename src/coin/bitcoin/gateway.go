@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/skycoin/skycoin-exchange/src/coin"
@@ -45,7 +46,8 @@ func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, er
 	tx := wire.NewMsgTx()
 	oldTxOuts := make([]*wire.TxOut, len(txIns))
 	for i, in := range txIns {
-		txid, err := wire.NewShaHashFromStr(in.Txid)
+		txid, err := chainhash.NewHashFromStr(in.Txid)
+		// txid, err := chainhash.NewShaHashFromStr(in.Txid)
 		if err != nil {
 			return "", err
 		}
