@@ -154,37 +154,6 @@ func Write(w io.Writer, v interface{}) error {
 	return nil
 }
 
-// Get send request to server, then read response and return.
-func Get(addr string, path string, v interface{}) (*Response, error) {
-	c, err := net.Dial("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-	defer c.Close()
-
-	r, err := MakeRequest(path, v)
-	if err != nil {
-		return nil, err
-	}
-
-	d, err := json.Marshal(r)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := make([]byte, 4+len(d))
-	binary.BigEndian.PutUint32(buf[:], uint32(len(d)))
-	copy(buf[4:], d)
-	if err := binary.Write(c, binary.BigEndian, buf); err != nil {
-		return nil, err
-	}
-
-	rsp := Response{}
-	if err := Read(c, &rsp); err != nil {
-		return nil, err
-	}
-	return &rsp, nil
-}
 
 func Read(r io.Reader, v interface{}) error {
 	var len uint32
