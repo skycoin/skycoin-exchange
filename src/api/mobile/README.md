@@ -6,7 +6,7 @@ to install and run a skycoin exchange server.
 
 ## Build
 
-The following cmd will build an ios framework file. For androind just replace the target `ios` with `android`.
+The following cmd will build an ios framework file. For android just replace the target `ios` with `android`.
 
 ``` bash
 $ gomobile bind -target=ios github.com/skycoin/skycoin-exchange/src/api/mobile
