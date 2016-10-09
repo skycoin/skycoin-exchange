@@ -52,7 +52,12 @@ func NewAddress(walletID string, num int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	d, err := json.Marshal(es)
+	var res = struct {
+		Entries []coin.AddressEntry `json:"addresses"`
+	}{
+		es,
+	}
+	d, err := json.Marshal(res)
 	if err != nil {
 		return "", err
 	}
@@ -77,6 +82,27 @@ func GetAddresses(walletID string) (string, error) {
 		return "", err
 	}
 
+	return string(d), nil
+}
+
+// GetKeyPairOfAddr get pubkey and seckey pair of address in specific wallet.
+func GetKeyPairOfAddr(walletID string, addr string) (string, error) {
+	p, s, err := wallet.GetKeypair(walletID, addr)
+	if err != nil {
+		return "", err
+	}
+	var res = struct {
+		Pubkey string `json:"pubkey"`
+		Seckey string `json:"seckey"`
+	}{
+		p,
+		s,
+	}
+
+	d, err := json.Marshal(res)
+	if err != nil {
+		return "", err
+	}
 	return string(d), nil
 }
 
