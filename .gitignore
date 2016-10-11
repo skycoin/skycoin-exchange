@@ -27,3 +27,5 @@ test.json
 
 *.zip
 .vscode/
+*.framework
+*.aar
