@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 )
@@ -68,11 +68,11 @@ func ToReadable(tx *skycoin.Transaction) *TxReadable {
 }
 
 func main() {
-	flag.StringVar(&rawtx, "rawtx", "", "rawtx")
-	flag.Parse()
+	// flag.StringVar(&rawtx, "rawtx", "", "rawtx")
+	// flag.Parse()
 
 	tx := skycoin.Transaction{}
-	b, err := hex.DecodeString(rawtx)
+	b, err := hex.DecodeString(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
