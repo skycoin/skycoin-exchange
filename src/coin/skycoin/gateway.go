@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
@@ -43,13 +44,11 @@ func (gw *Gateway) GetRawTx(txid string) (string, error) {
 		return "", err
 	}
 	defer rsp.Body.Close()
-	res := struct {
-		Rawtx string `json:"rawtx"`
-	}{}
-	if err := json.NewDecoder(rsp.Body).Decode(&res); err != nil {
+	s, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
 		return "", err
 	}
-	return res.Rawtx, nil
+	return strings.Trim(string(s), "\""), nil
 }
 
 // InjectTx inject skycoin transaction.
