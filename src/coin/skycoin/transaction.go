@@ -3,13 +3,11 @@ package skycoin_interface
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-
-	"encoding/hex"
+	"strings"
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/cipher/encoder"
@@ -40,15 +38,10 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []TxOut) *Transacti
 
 // BroadcastTx skycoin broadcast tx.
 func BroadcastTx(rawtx string) (string, error) {
-	tx, err := hex.DecodeString(rawtx)
-	if err != nil {
-		return "", err
-	}
-
 	v := struct {
-		Rawtx []byte `json:"rawtx"`
+		Rawtx string `json:"rawtx"`
 	}{
-		tx,
+		rawtx,
 	}
 
 	d, err := json.Marshal(v)
@@ -61,19 +54,12 @@ func BroadcastTx(rawtx string) (string, error) {
 		return "", fmt.Errorf("post rawtx to %s failed", url)
 	}
 	defer rsp.Body.Close()
-	rslt := struct {
-		Success bool   `json:"success"`
-		Reason  string `json:"reason"`
-		Txid    string `json:"txid"`
-	}{}
-
-	if err := json.NewDecoder(rsp.Body).Decode(&rslt); err != nil {
+	s, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
 		return "", err
 	}
-	if rslt.Success {
-		return rslt.Txid, nil
-	}
-	return "", errors.New(rslt.Reason)
+	fmt.Println(string(s))
+	return strings.Trim(string(s), "\""), nil
 }
 
 func (tx *Transaction) Serialize() ([]byte, error) {
