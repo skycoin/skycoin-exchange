@@ -1,6 +1,8 @@
 package mobile
 
 import (
+	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -15,14 +17,14 @@ func (bn btcNode) ValidateAddr(address string) error {
 	return err
 }
 
-func (bn btcNode) GetBalance(addr string) (uint64, error) {
+func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
 	// get uxout of the address
 	_, s := cipher.GenerateKeyPair()
 	sknet.SetKey(s.Hex())
 
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("bitcoin"),
-		Addresses: []string{addr},
+		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
 	if err := sknet.EncryGet(bn.NodeAddr, "/auth/get/utxos", req, &res); err != nil {
@@ -34,4 +36,18 @@ func (bn btcNode) GetBalance(addr string) (uint64, error) {
 	}
 
 	return bal, nil
+}
+
+func (bn btcNode) CreateRawTx(txIns []coin.TxIn, keys []cipher.SecKey, txOuts interface{}) (string, error) {
+	gw := bitcoin.Gateway{}
+	return gw.CreateRawTx(txIns, txOuts)
+}
+
+func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
+	gw := bitcoin.Gateway{}
+	return gw.InjectTx(rawtx)
+}
+
+func (bn btcNode) PrepareTx(addrs []string, toAddr string, amt uint64) ([]coin.TxIn, []string, interface{}, error) {
+	return nil, nil, nil, nil
 }
