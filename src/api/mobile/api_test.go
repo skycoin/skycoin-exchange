@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"strings"
+
 	api "github.com/skycoin/skycoin-exchange/src/api/mobile"
 	"github.com/stretchr/testify/assert"
 )
@@ -135,5 +137,28 @@ func TestGetAddresses(t *testing.T) {
 				t.Fatalf("addr: %s not expected", addr)
 			}
 		}
+	}
+}
+
+func TestSend(t *testing.T) {
+	_, teardown, err := setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+
+	id, err := api.NewWallet("skycoin", "laslfjaewof")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = api.NewAddress(id, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = api.Send(id, "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", "4000000")
+	if !strings.Contains(err.Error(), "balance is not sufficient") {
+		t.Fatal(err)
 	}
 }
