@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"strings"
+
+	"strconv"
+
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 var config Config
@@ -117,7 +122,7 @@ func GetBalance(coinType string, address string) (string, error) {
 		return "", err
 	}
 
-	bal, err := node.GetBalance(address)
+	bal, err := node.GetBalance([]string{address})
 	if err != nil {
 		return "", err
 	}
@@ -133,4 +138,55 @@ func GetBalance(coinType string, address string) (string, error) {
 		return "", err
 	}
 	return string(d), nil
+}
+
+func Send(walletID string, toAddr string, amount string) (string, error) {
+	tp := strings.Split(walletID, "_")[0]
+	node, ok := nodeMap[tp]
+	if !ok {
+		return "", fmt.Errorf("%s coin does not support", tp)
+	}
+
+	// validate address
+	if err := node.ValidateAddr(toAddr); err != nil {
+		return "", err
+	}
+
+	// validate amount
+	amt, err := strconv.ParseUint(amount, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
+	}
+
+	addrs, err := wallet.GetAddresses(walletID)
+	if err != nil {
+		return "", err
+	}
+
+	txIns, inAddrs, txOut, err := node.PrepareTx(addrs, toAddr, amt)
+	if err != nil {
+		return "", err
+	}
+
+	// prepare keys
+	keys := make([]cipher.SecKey, len(inAddrs))
+	for i, a := range inAddrs {
+		_, s, err := wallet.GetKeypair(walletID, a)
+		if err != nil {
+			return "", fmt.Errorf("get key failed:%v", err)
+		}
+
+		k, err := cipher.SecKeyFromHex(s)
+		if err != nil {
+			return "", fmt.Errorf("error private key:%v", err)
+		}
+		keys[i] = k
+	}
+
+	rawtx, err := node.CreateRawTx(txIns, keys, txOut)
+	if err != nil {
+		return "", fmt.Errorf("create raw transaction failed:%v", err)
+	}
+
+	return node.BroadcastTx(rawtx)
 }
