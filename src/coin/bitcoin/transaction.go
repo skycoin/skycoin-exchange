@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"strings"
+
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
@@ -131,9 +133,12 @@ func BroadcastTx(rawtx string) (string, error) {
 		Txid string `json:"txid"`
 	}{}
 
+	if strings.Contains(string(b), "Code:") {
+		return "", fmt.Errorf("Broadcast tx failed, %v", string(b))
+	}
+
 	if err := json.Unmarshal(b, &v); err != nil {
-		fmt.Println(string(b))
-		return "", fmt.Errorf("Broadcasting tx failed, unmarshal result failed, %v", err)
+		return "", fmt.Errorf("Broadcasting tx failed, unmarshal result failed, err:%v", err)
 	}
 	return v.Txid, nil
 }
