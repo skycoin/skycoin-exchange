@@ -138,7 +138,6 @@ func GetBalance(coinType string, address string) (string, error) {
 	return string(d), nil
 }
 
-// func SendSky(walletID string, toAddr string, amount string) (string, error) {
 func SendSky(walletID string, toAddr string, amount string) (string, error) {
 	// validate amount
 	amt, err := strconv.ParseUint(amount, 10, 64)
@@ -163,7 +162,11 @@ func SendSky(walletID string, toAddr string, amount string) (string, error) {
 		return "", fmt.Errorf("create raw transaction failed:%v", err)
 	}
 
-	return node.BroadcastTx(rawtx)
+	txid, err := node.BroadcastTx(rawtx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
 func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error) {
@@ -199,7 +202,11 @@ func SendBtc(walletID string, toAddr string, amount string, fee string) (string,
 		return "", fmt.Errorf("create raw transaction failed:%v", err)
 	}
 
-	return node.BroadcastTx(rawtx)
+	txid, err := node.BroadcastTx(rawtx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
 func getPrivateKey(walletID string) coin.GetPrivKey {
