@@ -58,7 +58,6 @@ func BroadcastTx(rawtx string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(string(s))
 	return strings.Trim(string(s), "\""), nil
 }
 
