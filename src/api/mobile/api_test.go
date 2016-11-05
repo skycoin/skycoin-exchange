@@ -6,10 +6,9 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
-
-	"strings"
 
 	api "github.com/skycoin/skycoin-exchange/src/api/mobile"
 	"github.com/stretchr/testify/assert"
@@ -140,14 +139,14 @@ func TestGetAddresses(t *testing.T) {
 	}
 }
 
-func TestSend(t *testing.T) {
+func TestSendBtc(t *testing.T) {
 	_, teardown, err := setup(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer teardown()
 
-	id, err := api.NewWallet("skycoin", "laslfjaewof")
+	id, err := api.NewWallet("bitcoin", "adfasda")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,8 +156,41 @@ func TestSend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = api.Send(id, "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", "4000000")
-	if !strings.Contains(err.Error(), "balance is not sufficient") {
+	txid, err := api.SendBtc(id, "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1000", "1000")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// 	return
+	// }
+	if !strings.Contains(err.Error(), "insufficient balance") {
 		t.Fatal(err)
 	}
+	fmt.Println(txid)
+}
+
+func TestSendSky(t *testing.T) {
+	_, teardown, err := setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+
+	id, err := api.NewWallet("skycoin", "adfasda")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = api.NewAddress(id, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txid, err := api.SendSky(id, "fyqX5YuwXMUs4GEUE3LjLyhrqvNztFHQ4B", "1000000")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// 	return
+	// }
+	if !strings.Contains(err.Error(), "insufficient balance") {
+		t.Fatal(err)
+	}
+	fmt.Println(txid)
 }
