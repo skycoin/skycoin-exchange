@@ -154,3 +154,51 @@ Return:
 ```
 
 the balance unit of skycoin is `drop`, bitcoin is `satoshi`.
+
+### Send skycoin
+
+This api can be used to send skycoin to one recipient address.
+
+```go
+func SendSky(walletID string, toAddr string, amount string) (string, error)
+```
+
+Params:
+
+* walletID: wallet id
+* toAddr: recipient address
+* amount: the coins you will send, it's value must be the multiple of 1e6.
+
+Return:
+
+* first: txid json, eg:
+
+```json
+{
+    "txid":"05d52650917f4233795d12e76f7f228409863ce8b304b0d0dfc778f2b023112a"
+}
+```
+
+* second: error info
+
+### Send bitcoin
+
+This api can be used to send bitcoin to one recipient address, this api could be very slow or failed finally,
+cause we get bitcoin utxos and broadcast the raw transaction through the api of blockexplorer.com.
+
+```go
+func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error)
+```
+
+Params:
+
+* walletID: wallet id
+* toAddr: recipient address
+* amount: the coins you will send
+* fee: bitcoin fee, it must >= 1000, otherwise broadcast the transaction will fail,
+    sometime it will fail even the fee equal 1000, but will alwasy success when fee is 10000
+
+Return:
+
+* first: txid json as send skycoin's
+* second: error info.
