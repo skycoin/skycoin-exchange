@@ -183,8 +183,10 @@ Return:
 
 ### Send bitcoin
 
-This api can be used to send bitcoin to one recipient address, this api could be very slow or failed finally,
-cause we get bitcoin utxos and broadcast the raw transaction through the api of blockexplorer.com.
+This api can be used to send bitcoin to one recipient address.
+
+Note: As we use the apis from blockexplorer.com to get utxos and
+broadcast transaction, sometime it could be very slow and have no response.
 
 ```go
 func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error)
@@ -195,8 +197,7 @@ Params:
 * walletID: wallet id
 * toAddr: recipient address
 * amount: the coins you will send
-* fee: bitcoin fee, it must >= 1000, otherwise broadcast the transaction will fail,
-    sometime it will fail even the fee equal 1000, but will alwasy success when fee is 10000
+* fee: bitcoin fee, must >= 1000
 
 Return:
 
