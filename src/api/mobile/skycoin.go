@@ -6,15 +6,24 @@ import (
 	"fmt"
 	"reflect"
 
+	"strings"
+
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
+	"github.com/skycoin/skycoin-exchange/src/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
 type skyNode struct {
 	NodeAddr string
+}
+
+type skySendParams struct {
+	WalletID string
+	ToAddr   string
+	Amount   uint64
 }
 
 func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
@@ -57,7 +66,7 @@ func (sn skyNode) ValidateAddr(address string) error {
 	return err
 }
 
-func (sn skyNode) CreateRawTx(txIns []coin.TxIn, keys []cipher.SecKey, txOuts interface{}) (string, error) {
+func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
 	tx := skycoin.Transaction{}
 	for _, in := range txIns {
 		tx.PushInput(cipher.MustSHA256FromHex(in.Txid))
@@ -83,6 +92,20 @@ func (sn skyNode) CreateRawTx(txIns []coin.TxIn, keys []cipher.SecKey, txOuts in
 		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
+
+	keys := make([]cipher.SecKey, len(txIns))
+	for i, in := range txIns {
+		s, err := getKey(in.Address)
+		if err != nil {
+			return "", fmt.Errorf("get private key failed:%v", err)
+		}
+		k, err := cipher.SecKeyFromHex(s)
+		if err != nil {
+			return "", fmt.Errorf("invalid private key:%v", err)
+		}
+		keys[i] = k
+	}
+
 	tx.SignInputs(keys)
 	tx.UpdateHeader()
 
@@ -98,71 +121,106 @@ func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
 	return gw.InjectTx(rawtx)
 }
 
-func (sn skyNode) PrepareTx(addrs []string, toAddr string, amt uint64) ([]coin.TxIn, []string, interface{}, error) {
-	outMap := make(map[string][]*pp.SkyUtxo)
-	utxos, err := sn.getOutputs(addrs)
-	if err != nil {
-		return nil, nil, nil, err
+func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
+	p := params.(skySendParams)
+
+	tp := strings.Split(p.WalletID, "_")[0]
+	if tp != "skycoin" {
+		return nil, nil, fmt.Errorf("invalid wallet %v", tp)
 	}
 
+	// validate address
+	if err := sn.ValidateAddr(p.ToAddr); err != nil {
+		return nil, nil, err
+	}
+
+	addrs, err := wallet.GetAddresses(p.WalletID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// outMap := make(map[string][]*pp.SkyUtxo)
+	totalUtxos, err := sn.getOutputs(addrs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	utxos, err := sn.getSufficientOutputs(totalUtxos, p.Amount)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bal, hours := func(utxos []*pp.SkyUtxo) (uint64, uint64) {
+		var c, h uint64
+		for _, u := range utxos {
+			c += u.GetCoins()
+			h += u.GetHours()
+		}
+		return c, h
+	}(utxos)
+
+	txIns := make([]coin.TxIn, len(utxos))
+	for i, u := range utxos {
+		txIns[i] = coin.TxIn{
+			Txid:    u.GetHash(),
+			Address: u.GetAddress(),
+		}
+		// _, s, err := wallet.GetKeypair(p.WalletID, u.GetAddress())
+		// if err != nil {
+		// 	return nil, nil, nil, errors.New("get private key failed")
+		// }
+
+		// k, err := cipher.SecKeyFromHex(s)
+		// if err != nil {
+		// 	return nil, nil, nil, errors.New("invalid private key")
+		// }
+		// keys[i] = k
+	}
+
+	var txOut []skycoin.TxOut
+	chgAmt := bal - p.Amount
+	chgHours := hours / 4
+	chgAddr := addrs[0]
+	if chgAmt > 0 {
+		txOut = append(txOut,
+			sn.makeTxOut(p.ToAddr, p.Amount, chgHours/2),
+			sn.makeTxOut(chgAddr, chgAmt, chgHours/2))
+	} else {
+		txOut = append(txOut, sn.makeTxOut(p.ToAddr, p.Amount, chgHours/2))
+	}
+	return txIns, txOut, nil
+}
+
+func (sn skyNode) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {
+	outMap := make(map[string][]*pp.SkyUtxo)
 	for _, u := range utxos {
 		outMap[u.GetAddress()] = append(outMap[u.GetAddress()], u)
 	}
 
 	allUtxos := []*pp.SkyUtxo{}
 	var allBal uint64
-	var allHours uint64
 	for _, utxos := range outMap {
-		bal, hour := func(utxos []*pp.SkyUtxo) (uint64, uint64) {
+		allBal += func(utxos []*pp.SkyUtxo) uint64 {
 			var bal uint64
-			var hour uint64
 			for _, u := range utxos {
 				if u.GetCoins() == 0 {
 					continue
 				}
 				bal += u.GetCoins()
-				hour += u.GetHours()
 			}
-			return bal, hour
+			return bal
 		}(utxos)
 
 		allUtxos = append(allUtxos, utxos...)
-
-		allHours += hour
-		allBal += bal
 		if allBal >= amt {
-			break
+			return allUtxos, nil
 		}
 	}
 
-	if allBal >= amt {
-		txIns := make([]coin.TxIn, len(allUtxos))
-		inAddrs := make([]string, len(allUtxos))
-		for i, u := range allUtxos {
-			txIns[i] = coin.TxIn{
-				Txid: u.GetHash(),
-			}
-			inAddrs[i] = u.GetAddress()
-		}
-
-		var txOut []skycoin.TxOut
-		chgAmt := allBal - amt
-		chgHours := allHours / 4
-		chgAddr := addrs[0]
-		if chgAmt > 0 {
-			txOut = append(txOut,
-				makeSkyTxOut(toAddr, amt, chgHours/2),
-				makeSkyTxOut(chgAddr, chgAmt, chgHours/2))
-		} else {
-			txOut = append(txOut, makeSkyTxOut(toAddr, amt, chgHours/2))
-		}
-		return txIns, inAddrs, txOut, nil
-	}
-
-	return nil, nil, nil, errors.New("balance is not sufficient")
+	return nil, errors.New("insufficient balance")
 }
 
-func makeSkyTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
+func (sn skyNode) makeTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
 	out := skycoin.TxOut{}
 	out.Address = cipher.MustDecodeBase58Address(addr)
 	out.Coins = coins
