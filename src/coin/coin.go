@@ -29,8 +29,9 @@ type TxHandler interface {
 
 // TxIn records the tx vin info, txid is the prevous txid, Index is the out index in previous tx.
 type TxIn struct {
-	Txid string
-	Vout uint32
+	Txid    string
+	Address string
+	Vout    uint32
 }
 
 // GetPrivKey is a callback func used for SignTx func to get relevant private key of specific address.
