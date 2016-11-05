@@ -2,15 +2,12 @@ package mobile
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-
-	"strings"
-
 	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 var config Config
@@ -32,6 +29,7 @@ func NewConfig() *Config {
 func Init(cfg *Config) {
 	wallet.InitDir(cfg.WalletDirPath)
 	config = *cfg
+
 	nodeMap = map[string]noder{
 		"skycoin": &skyNode{NodeAddr: config.ServerAddr},
 		"bitcoin": &btcNode{NodeAddr: config.ServerAddr},
@@ -140,53 +138,73 @@ func GetBalance(coinType string, address string) (string, error) {
 	return string(d), nil
 }
 
-func Send(walletID string, toAddr string, amount string) (string, error) {
-	tp := strings.Split(walletID, "_")[0]
-	node, ok := nodeMap[tp]
-	if !ok {
-		return "", fmt.Errorf("%s coin does not support", tp)
-	}
-
-	// validate address
-	if err := node.ValidateAddr(toAddr); err != nil {
-		return "", err
-	}
-
+// func SendSky(walletID string, toAddr string, amount string) (string, error) {
+func SendSky(walletID string, toAddr string, amount string) (string, error) {
 	// validate amount
 	amt, err := strconv.ParseUint(amount, 10, 64)
 	if err != nil {
 		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
 	}
 
-	addrs, err := wallet.GetAddresses(walletID)
-	if err != nil {
-		return "", err
+	params := skySendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt}
+	node, ok := nodeMap["skycoin"]
+	if !ok {
+		return "", errors.New("skycoin is not supported")
 	}
 
-	txIns, inAddrs, txOut, err := node.PrepareTx(addrs, toAddr, amt)
+	txIns, txOut, err := node.PrepareTx(params)
 	if err != nil {
 		return "", err
 	}
 
 	// prepare keys
-	keys := make([]cipher.SecKey, len(inAddrs))
-	for i, a := range inAddrs {
-		_, s, err := wallet.GetKeypair(walletID, a)
-		if err != nil {
-			return "", fmt.Errorf("get key failed:%v", err)
-		}
-
-		k, err := cipher.SecKeyFromHex(s)
-		if err != nil {
-			return "", fmt.Errorf("error private key:%v", err)
-		}
-		keys[i] = k
-	}
-
-	rawtx, err := node.CreateRawTx(txIns, keys, txOut)
+	rawtx, err := node.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
 	if err != nil {
 		return "", fmt.Errorf("create raw transaction failed:%v", err)
 	}
 
 	return node.BroadcastTx(rawtx)
+}
+
+func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error) {
+	// validate amount
+	amt, err := strconv.ParseUint(amount, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
+	}
+
+	// validate fee
+	fe, err := strconv.ParseUint(fee, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse fee string to uint64 failed: %v", err)
+	}
+
+	if fe < 1000 {
+		return "", fmt.Errorf("insufficient fee")
+	}
+
+	params := btcSendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt, Fee: fe}
+	node, ok := nodeMap["bitcoin"]
+	if !ok {
+		return "", errors.New("bitcoin is not supported")
+	}
+
+	txIns, txOut, err := node.PrepareTx(params)
+	if err != nil {
+		return "", err
+	}
+
+	rawtx, err := node.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
+	if err != nil {
+		return "", fmt.Errorf("create raw transaction failed:%v", err)
+	}
+
+	return node.BroadcastTx(rawtx)
+}
+
+func getPrivateKey(walletID string) coin.GetPrivKey {
+	return func(addr string) (string, error) {
+		_, s, err := wallet.GetKeypair(walletID, addr)
+		return s, err
+	}
 }
