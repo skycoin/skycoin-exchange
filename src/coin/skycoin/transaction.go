@@ -48,7 +48,7 @@ func BroadcastTx(rawtx string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	url := fmt.Sprintf("%s/injectTransaction", ServeAddr)
+	url := fmt.Sprintf("http://%s/injectTransaction", ServeAddr)
 	rsp, err := http.Post(url, "application/json", bytes.NewBuffer(d))
 	if err != nil {
 		return "", fmt.Errorf("post rawtx to %s failed", url)
