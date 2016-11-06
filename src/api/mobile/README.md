@@ -1,14 +1,14 @@
 # Mobile API Description
 
 The mobile APIs will communicate with skycoin-exchange, so make sure you have a running skycoin-exchange. 
-If you don't have, following the instructions here: [skycoin exchange](https://github.com/skycoin/skycoin-exchange)
+If you don't have, follow the instructions here: [skycoin exchange](https://github.com/skycoin/skycoin-exchange)
 to install and run a exchange server.
 
 ## Build
 
-The following cmd will build an ios framework file. For android just replace the target `ios` with `android`.
+Use the following cmd to build an ios framework file; for android just replace the target `ios` with `android`.
 
-``` bash
+```bash
 $ gomobile bind -target=ios github.com/skycoin/skycoin-exchange/src/api/mobile
 ```
 
@@ -21,13 +21,13 @@ func Init(cfg *Config)
 ```
 
 We use `Config` to init the API env, there're two fields in the struct, wallet dir
-and exchange server address(`ip:port`, eg: `127.0.0.1:8080`). Wallet dir is the place where we used to persist the
+and exchange server address(`ip:port`, eg: `127.0.0.1:8080`). Wallet dir is the place for persisting the
 wallet files;
 
 
 ### Create wallet
 
-This api is used to create wallet base on coin type and seed.
+Create wallet base on coin type and seed.
 
 ```go
 func NewWallet(coinType string, seed string) (string, error)
