@@ -32,6 +32,7 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&cfg.Seed, "seed", "", "wallet's seed")
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
+	flag.StringVar(&cfg.SkycoinNodeAddr, "skycoin_node_addr", "127.0.0.1:6420", "skycoin node address")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()

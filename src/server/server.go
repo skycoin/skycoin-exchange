@@ -25,13 +25,14 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
-	Port         int           // api port
-	BtcFee       int           // btc transaction fee
-	DataDir      string        // data directory
-	Seed         string        // seed
-	Seckey       cipher.SecKey // private key
-	UtxoPoolSize int           // utxo pool size.
-	Admins       string        // admins joined with `,`
+	Port            int           // api port
+	BtcFee          int           // btc transaction fee
+	DataDir         string        // data directory
+	Seed            string        // seed
+	Seckey          cipher.SecKey // private key
+	UtxoPoolSize    int           // utxo pool size.
+	Admins          string        // admins joined with `,`
+	SkycoinNodeAddr string
 }
 
 type ExchangeServer struct {
@@ -132,6 +133,8 @@ func (self *ExchangeServer) Run() {
 	// register coins
 	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
 	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
+	// init the skycoin node address.
+	skycoin.ServeAddr = self.cfg.SkycoinNodeAddr
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
