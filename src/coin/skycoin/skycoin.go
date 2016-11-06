@@ -18,7 +18,7 @@ import (
 
 var (
 	HideSeckey bool   = false
-	ServeAddr  string = "http://127.0.0.1:6420"
+	ServeAddr  string = "127.0.0.1:6420"
 	logger            = logging.MustGetLogger("exchange.skycoin")
 	GatewayIns        = Gateway{}
 )
@@ -101,7 +101,7 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	}
 
 	addrParam := strings.Join(addrs, ",")
-	url = fmt.Sprintf("%s/outputs?addrs=%s", ServeAddr, addrParam)
+	url = fmt.Sprintf("http://%s/outputs?addrs=%s", ServeAddr, addrParam)
 
 	rsp, err := http.Get(url)
 	if err != nil {
@@ -124,7 +124,7 @@ func getUnspentOutputsByHashes(hashes []string) ([]Utxo, error) {
 		return []Utxo{}, nil
 	}
 
-	url := fmt.Sprintf("%s/outputs?hashes=%s", ServeAddr, strings.Join(hashes, ","))
+	url := fmt.Sprintf("http://%s/outputs?hashes=%s", ServeAddr, strings.Join(hashes, ","))
 	rsp, err := http.Get(url)
 	if err != nil {
 		return []Utxo{}, err

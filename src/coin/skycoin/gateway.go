@@ -23,7 +23,7 @@ type Gateway struct{}
 
 // GetTx get skycoin verbose transaction.
 func (gw *Gateway) GetTx(txid string) (*pp.Tx, error) {
-	url := fmt.Sprintf("%s/transaction?txid=%s", ServeAddr, txid)
+	url := fmt.Sprintf("http://%s/transaction?txid=%s", ServeAddr, txid)
 	rsp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (gw *Gateway) GetTx(txid string) (*pp.Tx, error) {
 
 // GetRawTx get raw tx by txid.
 func (gw *Gateway) GetRawTx(txid string) (string, error) {
-	url := fmt.Sprintf("%s/rawtx?txid=%s", ServeAddr, txid)
+	url := fmt.Sprintf("http://%s/rawtx?txid=%s", ServeAddr, txid)
 	rsp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -58,7 +58,7 @@ func (gw *Gateway) InjectTx(rawtx string) (string, error) {
 
 // GetBalance get skycoin balance of specific addresses.
 func (gw *Gateway) GetBalance(addrs []string) (pp.Balance, error) {
-	url := fmt.Sprintf("%s/balance?addrs=%s", ServeAddr, strings.Join(addrs, ","))
+	url := fmt.Sprintf("http://%s/balance?addrs=%s", ServeAddr, strings.Join(addrs, ","))
 	rsp, err := http.Get(url)
 	if err != nil {
 		return pp.Balance{}, err
