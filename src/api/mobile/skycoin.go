@@ -117,8 +117,24 @@ func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 }
 
 func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
-	gw := skycoin.Gateway{}
-	return gw.InjectTx(rawtx)
+	// inject transaction
+	_, s := cipher.GenerateKeyPair()
+	sknet.SetKey(s.Hex())
+
+	req := pp.InjectTxnReq{
+		CoinType: pp.PtrString("skycoin"),
+		Tx:       pp.PtrString(rawtx),
+	}
+	res := pp.InjectTxnRes{}
+	if err := sknet.EncryGet(sn.NodeAddr, "/auth/inject/tx", req, &res); err != nil {
+		return "", err
+	}
+
+	if !res.Result.GetSuccess() {
+		return "", fmt.Errorf("broadcast tx failed: %v", res.Result.GetReason())
+	}
+
+	return res.GetTxid(), nil
 }
 
 func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
