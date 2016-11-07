@@ -35,6 +35,11 @@ func process(id int, c net.Conn, engine *Engine) {
 	w := &Response{c: c}
 
 	defer func() {
+		// catch panic
+		if r := recover(); r != nil {
+			logger.Critical("porcess [%d] crashed, %v", r)
+		}
+
 		c.Close()
 		logger.Debug("[%d] worker done", id)
 	}()
