@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 )
 
@@ -34,6 +35,7 @@ func Init(cfg *Config) {
 		"skycoin": &skyNode{NodeAddr: config.ServerAddr},
 		"bitcoin": &btcNode{NodeAddr: config.ServerAddr},
 	}
+	skycoin.ServeAddr = cfg.ServerAddr
 }
 
 // NewWallet create a new wallet base on the wallet type and seed
