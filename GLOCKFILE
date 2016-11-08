@@ -1,7 +1,7 @@
-github.com/btcsuite/btcd 6e644855f54d269f41785b01c3544d13f11e5ecc
+github.com/btcsuite/btcd d0a9c03844a4a7f4c27e24fdc856333d17ec2f6f
 github.com/btcsuite/btclog f96df2375f37300305f329b8e5258764b4f19a7f
 github.com/btcsuite/btcrpcclient 64922553b5c21f333438edaed6e0ba2b5a7760ee
-github.com/btcsuite/btcutil 2c26dd81a59fd671a2218d63ad138a6dd4d693bd
+github.com/btcsuite/btcutil 68e5965458062d031a6e333b35c778ce464fb73f
 github.com/btcsuite/fastsha256 302ad4db268b46f9ebda3078f6f7397f96047735
 github.com/btcsuite/go-socks cfe8b59e565c1a5bd4e2005d77cd9aa8b2e14524
 github.com/btcsuite/golangcrypto 53f62d9b43e87a6c56975cf862af7edf33a8d0df
@@ -13,7 +13,7 @@ github.com/gin-gonic/gin f931d1ea80ae95a6fc739213cdd9399bd2967fb6
 github.com/golang/glog 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 github.com/golang/protobuf c3cefd437628a0b7d31b34fe44b3a7a540e98527
 github.com/manucorporat/sse ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
-github.com/skycoin/skycoin 372a560c715828f639309141ae93e187aebd78fd
+github.com/skycoin/skycoin 8dff8b8995b0a903b73926478d346f19e91aebf8 
 github.com/stretchr/testify 6fe211e493929a8aac0469b93f28b1d0688a9a3a
 github.com/toqueteos/webbrowser 21fc9f95c83442fd164094666f7cb4f9fdd56cd6
 golang.org/x/net 6a513affb38dc9788b449d59ffed099b8de18fa0
