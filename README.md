@@ -6,14 +6,26 @@
 go get github.com/skycoin/skycoin-exchange
 ```
 
-## Running server 
+## Sync the dependencies
+
+```bash
+go get github.com/robfig/glock
+glock sync github.com/skycoin/skycoin-exchange
+```
+
+## Running server
 
 ``` bash
 cd skycoin-exchange/cmd/server
-go run main.go -seed="wallet seed name"
+go run main.go -seed=$seed -skycoin_node_addr=$skycoin_node_address
 ```
 
-The `seed` flag must be specificed, server will generate wallet base on it. The default server port is 8080, and you can use the `port` flag to change it.
+The `seed` flag must be specificed, server will generate wallet base on it.
+The default server port is 8080, and you can use the `port` flag to change it.
+
+As the exchange will comunicate with skycoin node, we use the `skycoin_node_addr`
+flag to make it configurable. The default value of `127.0.0.1:6420` will be used
+if it's not set.
 
 ## Setup admin in server <a id="setup-admin"></a>
 
