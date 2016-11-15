@@ -10,3 +10,4 @@ github.com/btcsuite/websocket 31079b6807923eb23992c421b114992b95131b55
 github.com/codahale/chacha20 ec07b4f69a3f70b1dd2a8ad77230deb1ba5d6953
 github.com/golang/protobuf c3cefd437628a0b7d31b34fe44b3a7a540e98527
 github.com/stretchr/testify 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+github.com/op/go-logging b2cb9fa56473e98db8caba80237377e83fe44db
