@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/op/go-logging.v1"
-
 	"net/http"
 
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/cipher"
 )

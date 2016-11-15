@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
-
-	"gopkg.in/op/go-logging.v1"
+	logging "github.com/op/go-logging"
 )
 
 var (

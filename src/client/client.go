@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/client/router"
 	"github.com/skycoin/skycoin-exchange/src/coin"
@@ -13,7 +14,6 @@ import (
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
-	"gopkg.in/op/go-logging.v1"
 )
 
 var logger = logging.MustGetLogger("client.rpclient")

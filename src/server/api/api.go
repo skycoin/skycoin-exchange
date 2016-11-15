@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/cipher"
-
-	"gopkg.in/op/go-logging.v1"
 )
 
 var logger = logging.MustGetLogger("exchange.api")

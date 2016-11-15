@@ -8,8 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/op/go-logging.v1"
-
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"

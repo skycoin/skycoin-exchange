@@ -6,8 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"gopkg.in/op/go-logging.v1"
-
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 )

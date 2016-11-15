@@ -11,9 +11,8 @@ import (
 	"runtime/debug"
 	"strings"
 
+	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/pp"
-
-	"gopkg.in/op/go-logging.v1"
 )
 
 var (
@@ -153,7 +152,6 @@ func Write(w io.Writer, v interface{}) error {
 	}
 	return nil
 }
-
 
 func Read(r io.Reader, v interface{}) error {
 	var len uint32
