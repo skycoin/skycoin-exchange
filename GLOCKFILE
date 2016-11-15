@@ -15,7 +15,3 @@ github.com/golang/protobuf c3cefd437628a0b7d31b34fe44b3a7a540e98527
 github.com/manucorporat/sse ee05b128a739a0fb76c7ebd3ae4810c1de808d6d
 github.com/stretchr/testify 6fe211e493929a8aac0469b93f28b1d0688a9a3a
 github.com/toqueteos/webbrowser 21fc9f95c83442fd164094666f7cb4f9fdd56cd6
-golang.org/x/net 6a513affb38dc9788b449d59ffed099b8de18fa0
-gopkg.in/go-playground/validator.v8 5f57d2222ad794d0dffb07e664ea05e2ee07d60c
-gopkg.in/op/go-logging.v1 b2cb9fa56473e98db8caba80237377e83fe44db5
-gopkg.in/yaml.v2 e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
