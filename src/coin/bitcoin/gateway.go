@@ -149,3 +149,12 @@ func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error
 	}
 	return hex.EncodeToString(txb), nil
 }
+
+func (gw *Gateway) ValidateTxid(txid string) bool {
+	if len(txid) != 64 {
+		return false
+	}
+
+	_, err := hex.DecodeString(txid)
+	return err == nil
+}
