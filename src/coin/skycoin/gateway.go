@@ -76,6 +76,11 @@ func (gw *Gateway) GetBalance(addrs []string) (pp.Balance, error) {
 		Hours:  pp.PtrUint64(bal.Confirmed.Hours)}, nil
 }
 
+func (gw *Gateway) ValidateTxid(txid string) bool {
+	_, err := cipher.SHA256FromHex(txid)
+	return err == nil
+}
+
 func newPPTx(tx *visor.TransactionResult) *pp.Tx {
 	return &pp.Tx{
 		Sky: &pp.SkyTx{
