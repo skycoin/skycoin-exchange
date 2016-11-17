@@ -215,6 +215,20 @@ func SendBtc(walletID string, toAddr string, amount string, fee string) (string,
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
+func GetTransactionByID(coinType, txid string) (string, error) {
+	node, ok := nodeMap[coinType]
+	if !ok {
+		return "", fmt.Errorf("%s is not supported", coinType)
+	}
+
+	return node.GetTransactionByID(txid)
+}
+
+// GetSkyOutputByHash get skycoin output info by hash
+func GetSkyOutputByHash(hash string) (string, error) {
+
+}
+
 func getPrivateKey(walletID string) coin.GetPrivKey {
 	return func(addr string) (string, error) {
 		_, s, err := wallet.GetKeypair(walletID, addr)
