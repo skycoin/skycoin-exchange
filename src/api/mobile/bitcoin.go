@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -72,6 +73,27 @@ func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
 	}
 
 	return res.GetTxid(), nil
+}
+
+func (bn btcNode) GetTransactionByID(txid string) (string, error) {
+	req := pp.GetTxReq{
+		CoinType: pp.PtrString("bitcoin"),
+		Txid:     pp.PtrString(txid),
+	}
+	res := pp.GetTxRes{}
+	if err := sknet.EncryGet(bn.NodeAddr, "/auth/get/tx", req, &res); err != nil {
+		return "", err
+	}
+
+	if !res.Result.GetSuccess() {
+		return "", fmt.Errorf("get bitcoin transaction by id failed: %v", res.Result.GetReason())
+	}
+
+	d, err := json.Marshal(res.GetTx())
+	if err != nil {
+		return "", err
+	}
+	return string(d), nil
 }
 
 func (bn btcNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
