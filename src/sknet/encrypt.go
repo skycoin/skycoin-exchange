@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"fmt"
+
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -35,7 +37,7 @@ func decrypt(r io.Reader, pubkey string, seckey string, v interface{}) error {
 
 	// handle the response
 	if !res.Result.GetSuccess() {
-		return nil
+		return fmt.Errorf("%v", res.Result.GetReason())
 	}
 	d, err := pp.Decrypt(res.Encryptdata, res.GetNonce(), pubkey, seckey)
 	if err != nil {
