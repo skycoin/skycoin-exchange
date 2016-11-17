@@ -119,7 +119,7 @@ func GetKeyPairOfAddr(walletID string, addr string) (string, error) {
 func GetBalance(coinType string, address string) (string, error) {
 	node, ok := nodeMap[coinType]
 	if !ok {
-		return "", fmt.Errorf("%s coin does not support", coinType)
+		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
 	if err := node.ValidateAddr(address); err != nil {
