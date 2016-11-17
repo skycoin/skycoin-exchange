@@ -8,4 +8,5 @@ type noder interface {
 	PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error)
 	CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error)
 	BroadcastTx(rawtx string) (string, error)
+	GetTransactionByID(txid string) (string, error)
 }
