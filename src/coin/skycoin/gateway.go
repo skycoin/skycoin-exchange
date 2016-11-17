@@ -29,8 +29,17 @@ func (gw *Gateway) GetTx(txid string) (*pp.Tx, error) {
 		return nil, err
 	}
 	defer rsp.Body.Close()
+	d, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode != 200 {
+		return nil, errors.New(string(d))
+	}
+
 	tx := visor.TransactionResult{}
-	if err := json.NewDecoder(rsp.Body).Decode(&tx); err != nil {
+	if err := json.Unmarshal(d, &tx); err != nil {
 		return nil, err
 	}
 	return newPPTx(&tx), nil
