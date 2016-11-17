@@ -25,6 +25,7 @@ type TxHandler interface {
 	InjectTx(rawtx string) (string, error)
 	CreateRawTx(txIns []TxIn, txOuts interface{}) (string, error)
 	SignRawTx(rawtx string, getKey GetPrivKey) (string, error)
+	ValidateTxid(txid string) bool
 }
 
 // TxIn records the tx vin info, txid is the prevous txid, Index is the out index in previous tx.
