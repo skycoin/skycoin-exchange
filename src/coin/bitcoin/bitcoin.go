@@ -57,9 +57,12 @@ func GenerateAddresses(seed []byte, num int) (string, []coin.AddressEntry) {
 
 // GetBalance, query balance of address through the API of blockexplorer.com.
 func GetBalance(addr []string) (uint64, error) {
-	// if AddressValid(addr) != nil {
-	// 	log.Fatal("Address is invalid")
-	// }
+	for _, a := range addr {
+		if !validateAddress(a) {
+			return 0, fmt.Errorf("invalid bitcoin address %v", a)
+		}
+	}
+
 	// blkEplUrl := fmt.Sprintf("https://blockexplorer.com/api/addr/%s/balance", addr)
 	addrs := strings.Join(addr, "|")
 	blkChnUrl := fmt.Sprintf("https://blockchain.info/q/addressbalance/%s", addrs)
@@ -90,7 +93,7 @@ func NewUtxoWithKey(utxo Utxo, key string) UtxoWithkey {
 func getDataOfUrl(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("access %v failed", url)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
@@ -99,4 +102,9 @@ func getDataOfUrl(url string) ([]byte, error) {
 	}
 	resp.Body.Close()
 	return data, nil
+}
+
+func validateAddress(addr string) bool {
+	_, err := cipher.BitcoinDecodeBase58Address(addr)
+	return err == nil
 }
