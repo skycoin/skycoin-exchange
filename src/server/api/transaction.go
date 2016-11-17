@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
@@ -78,10 +80,17 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
+
+			// brief validate transaction id
+			if !gateway.ValidateTxid(req.GetTxid()) {
+				rlt = pp.MakeErrRes(errors.New("invalid transaction id"))
+				break
+			}
+
 			tx, err := gateway.GetTx(req.GetTxid())
 			if err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
