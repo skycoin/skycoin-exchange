@@ -7,7 +7,9 @@ import (
 	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
 var config Config
@@ -27,6 +29,10 @@ func NewConfig() *Config {
 
 // Init initialize wallet dir and node instance.
 func Init(cfg *Config) {
+	// init the privatekey
+	_, privateKey := cipher.GenerateKeyPair()
+	sknet.SetKey(privateKey.Hex())
+
 	wallet.InitDir(cfg.WalletDirPath)
 	config = *cfg
 

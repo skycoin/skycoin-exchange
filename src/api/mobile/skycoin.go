@@ -16,6 +16,8 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// var privateKey cipher.SecKey
+
 type skyNode struct {
 	NodeAddr string
 }
@@ -27,10 +29,6 @@ type skySendParams struct {
 }
 
 func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
-	// get uxout of the address
-	_, s := cipher.GenerateKeyPair()
-	sknet.SetKey(s.Hex())
-
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("skycoin"),
 		Addresses: addrs,
@@ -117,10 +115,6 @@ func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 }
 
 func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
-	// inject transaction
-	_, s := cipher.GenerateKeyPair()
-	sknet.SetKey(s.Hex())
-
 	req := pp.InjectTxnReq{
 		CoinType: pp.PtrString("skycoin"),
 		Tx:       pp.PtrString(rawtx),
@@ -181,16 +175,6 @@ func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error
 			Txid:    u.GetHash(),
 			Address: u.GetAddress(),
 		}
-		// _, s, err := wallet.GetKeypair(p.WalletID, u.GetAddress())
-		// if err != nil {
-		// 	return nil, nil, nil, errors.New("get private key failed")
-		// }
-
-		// k, err := cipher.SecKeyFromHex(s)
-		// if err != nil {
-		// 	return nil, nil, nil, errors.New("invalid private key")
-		// }
-		// keys[i] = k
 	}
 
 	var txOut []skycoin.TxOut

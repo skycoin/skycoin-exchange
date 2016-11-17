@@ -31,10 +31,6 @@ func (bn btcNode) ValidateAddr(address string) error {
 }
 
 func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
-	// get uxout of the address
-	_, s := cipher.GenerateKeyPair()
-	sknet.SetKey(s.Hex())
-
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("bitcoin"),
 		Addresses: addrs,
@@ -62,10 +58,6 @@ func (bn btcNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 }
 
 func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
-	// inject transaction
-	_, s := cipher.GenerateKeyPair()
-	sknet.SetKey(s.Hex())
-
 	req := pp.InjectTxnReq{
 		CoinType: pp.PtrString("bitcoin"),
 		Tx:       pp.PtrString(rawtx),
@@ -169,10 +161,6 @@ func (bn btcNode) getSufficientOutputs(utxos []*pp.BtcUtxo, amt uint64) ([]*pp.B
 }
 
 func (bn btcNode) getOutputs(addrs []string) ([]*pp.BtcUtxo, error) {
-	// get uxout of the address
-	_, s := cipher.GenerateKeyPair()
-	sknet.SetKey(s.Hex())
-
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("bitcoin"),
 		Addresses: addrs,
