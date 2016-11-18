@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"runtime/debug"
 	"strings"
 
 	logging "github.com/op/go-logging"
@@ -100,19 +99,6 @@ func (engine *Engine) Run(port int) {
 		}
 		logger.Debug("new connection:%s", c.RemoteAddr())
 		engine.connPool <- c
-	}
-}
-
-// Recovery is middleware for catching panic.
-func Recovery() HandlerFunc {
-	return func(c *Context) {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Critical("%s", r)
-				debug.PrintStack()
-			}
-		}()
-		c.Next()
 	}
 }
 
