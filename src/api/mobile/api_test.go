@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"reflect"
+
 	api "github.com/skycoin/skycoin-exchange/src/api/mobile"
 	"github.com/stretchr/testify/assert"
 )
@@ -197,6 +199,12 @@ func TestSendSky(t *testing.T) {
 }
 
 func TestGetTransactionByID(t *testing.T) {
+	_, teardown, err := setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+
 	type args struct {
 		coinType string
 		txid     string
@@ -274,12 +282,60 @@ func TestGetTransactionByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		got, err := api.GetTransactionByID(tt.args.coinType, tt.args.txid)
-		if !assert.Equal(t, err, tt.wantErr) {
+		if !reflect.DeepEqual(err, tt.wantErr) {
 			t.Errorf("%q. GetTransactionByID() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
 		if !strings.Contains(got, tt.contain) {
 			t.Errorf("%q. GetTransactionByID() = %v, want %v", tt.name, got, tt.contain)
+		}
+	}
+}
+
+func TestGetSkyOutputByID(t *testing.T) {
+	_, teardown, err := setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+
+	type args struct {
+		hash string
+	}
+	tests := []struct {
+		name    string
+		hash    string
+		contain string
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{
+			"normal",
+			"a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c5",
+			"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW",
+			nil,
+		},
+		{
+			"invalid hash len",
+			"a57c038",
+			"",
+			errors.New("invalid output hash, encoding/hex: odd length hex string"),
+		},
+		{
+			"invalid hash",
+			"a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c9",
+			"",
+			errors.New("not found\n"),
+		},
+	}
+	for _, tt := range tests {
+		got, err := api.GetSkyOutputByID(tt.hash)
+		if !reflect.DeepEqual(err, tt.wantErr) {
+			t.Errorf("%q. GetSkyOutputByHash() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			continue
+		}
+		if !strings.Contains(got, tt.contain) {
+			t.Errorf("%q. GetSkyOutputByHash() = %v, want contains %v", tt.name, got, tt.contain)
 		}
 	}
 }
