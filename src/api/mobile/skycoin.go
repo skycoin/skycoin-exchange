@@ -29,6 +29,10 @@ type skySendParams struct {
 	Amount   uint64
 }
 
+func (sn skyNode) GetNodeAddr() string {
+	return sn.NodeAddr
+}
+
 func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("skycoin"),

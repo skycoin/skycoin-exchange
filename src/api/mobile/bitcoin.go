@@ -26,6 +26,10 @@ type btcSendParams struct {
 	Fee      uint64
 }
 
+func (bn btcNode) GetNodeAddr() string {
+	return bn.NodeAddr
+}
+
 func (bn btcNode) ValidateAddr(address string) error {
 	_, err := cipher.BitcoinDecodeBase58Address(address)
 	return err
