@@ -225,15 +225,15 @@ func GetTransactionByID(coinType, txid string) (string, error) {
 	return node.GetTransactionByID(txid)
 }
 
-// GetSkyOutputByHash get skycoin output info by hash
-func GetSkyOutputByHash(hash string) (string, error) {
+// GetSkyOutputByID get skycoin output info by id
+func GetSkyOutputByID(id string) (string, error) {
 	node, ok := nodeMap["skycoin"]
 	if !ok {
 		return "", fmt.Errorf("skycoin is not supported")
 	}
 
 	req := pp.GetOutputReq{
-		Hash: pp.PtrString(hash),
+		Hash: pp.PtrString(id),
 	}
 
 	res := pp.GetOutputRes{}
