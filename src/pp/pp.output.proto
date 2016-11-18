@@ -1,0 +1,23 @@
+package pp;
+
+import "pp.common.proto";
+
+message GetOutputReq {
+	optional string hash  = 1;
+}
+
+message GetOutputRes {
+	optional Result result = 1;
+	optional Output output = 10;
+}
+
+message Output {
+	optional uint64	time = 1;
+	optional uint64 src_block_seq = 2;
+	optional string src_tx = 3;
+	optional string owner_address = 4; 
+	optional uint64 coins = 5;
+	optional uint64	hours = 6;
+	optional uint64 spent_block_seq = 7;
+	optional string spent_tx = 8;
+}
