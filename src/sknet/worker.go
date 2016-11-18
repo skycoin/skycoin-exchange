@@ -2,6 +2,7 @@ package sknet
 
 import (
 	"net"
+	"runtime/debug"
 	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/pp"
@@ -37,7 +38,8 @@ func process(id int, c net.Conn, engine *Engine) {
 	defer func() {
 		// catch panic
 		if r := recover(); r != nil {
-			logger.Critical("porcess [%d] crashed, %v", r)
+			logger.Critical("%s", r)
+			debug.PrintStack()
 		}
 
 		c.Close()
