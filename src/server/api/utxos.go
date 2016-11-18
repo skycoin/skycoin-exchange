@@ -9,7 +9,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
 
-// GetUtxos get utxos of specific address.
+// GetUtxos get unspent output of specific address.
 func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 	return func(c *sknet.Context) {
 		var req pp.GetUtxoReq
@@ -35,6 +35,36 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 			}
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
 			reply(c, res)
+			return
+		}
+		c.JSON(rlt)
+	}
+}
+
+// GetOutput  gets skycoin output by output hash id.
+func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
+	return func(c *sknet.Context) {
+		var rlt *pp.EmptyRes
+		for {
+			req := pp.GetOutputReq{}
+			if err := getRequest(c, &req); err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				break
+			}
+
+			output, err := skycoin.GetOutput(req.GetHash())
+			if err != nil {
+				logger.Error(err.Error())
+				rlt = pp.MakeErrRes(err)
+				break
+			}
+
+			res := pp.GetOutputRes{
+				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
+				Output: output,
+			}
+			reply(c, &res)
 			return
 		}
 		c.JSON(rlt)
