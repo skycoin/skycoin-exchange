@@ -9,7 +9,6 @@ import (
 // New create sknet engine and register handlers.
 func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 	nt := sknet.New(quit)
-	nt.Use(sknet.Recovery())
 	nt.Use(sknet.Logger())
 
 	auth := nt.Group("/auth", api.Authorize(ee))
