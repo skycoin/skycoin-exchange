@@ -203,3 +203,78 @@ Return:
 
 * first: txid json as send skycoin's
 * second: error info.
+
+### Get transaction
+
+```go
+func GetTransactionByID(coinType, txid string) (string, error)
+```
+
+Params:
+
+* coinType: the coin type, can be `skycoin` or `bitcoin`
+* txid: transaction id
+
+Return:
+
+* first: detailed transaction info, eg:
+
+```json
+{
+    "status": {
+        "confirmed": true,
+        "unconfirmed": false,
+        "height": 89,
+        "unknown": false
+    },
+    "txn": {
+        "length": 183,
+        "type": 0,
+        "txid": "b1481d614ffcc27408fe2131198d9d2821c78601a0aa23d8e9965b2a5196edc0",
+        "inner_hash": "7583587d02bedbeb3c15dde9e13baac36b0eb2b7ba7b2063c323a226d0784619",
+        "sigs": [
+            "67565680295b8758e07d0ee67f4f07b711e1c711da6af025dd4e2277de6e54941e35e5123f3d45eaa9bca131240eeb2067274199109eba17e5f8b1ee5aeef62301"
+        ],
+        "inputs": [
+            "a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c5"
+        ],
+        "outputs": [
+            {
+                "uxid": "f9e39908677cae43832e1ead2514e01eaae48c9a3614a97970f381187ee6c4b1",
+                "dst": "fyqX5YuwXMUs4GEUE3LjLyhrqvNztFHQ4B",
+                "coins": "1",
+                "hours": 100
+            }
+        ]
+    }
+}
+```
+
+* second: error info
+
+### Get skycoin output by hash
+
+```go
+func GetSkyOutputByHash(hash string) (string, error)
+```
+
+Param:
+
+* hash: the output hash string
+
+Return:
+
+* first: output json info, eg:
+
+```json
+{
+    "time": 1477037552,
+    "src_block_seq": 443,
+    "src_tx": "b8ca61c0788bd711c89563f9bc60add172ee01b543ea5dcb1955c51bbfcbbaa2",
+    "owner_address": "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW",
+    "coins": 1000000,
+    "hours": 7,
+    "spent_block_seq": 450,
+    "spent_tx": "b1481d614ffcc27408fe2131198d9d2821c78601a0aa23d8e9965b2a5196edc0"
+}
+```
