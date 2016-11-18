@@ -27,6 +27,9 @@ func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
 		// utxos handler
 		auth.Register("/get/utxos", api.GetUtxos(ee))
 
+		// output history handler
+		auth.Register("/get/output", api.GetOutput(ee))
+
 		// transaction handler
 		auth.Register("/inject/tx", api.InjectTx(ee))
 		auth.Register("/get/tx", api.GetTx(ee))
