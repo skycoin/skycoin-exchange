@@ -8,8 +8,11 @@ import (
 	"strconv"
 	"strings"
 
+	"io/ioutil"
+
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 	skycoin "github.com/skycoin/skycoin/src/coin"
 	"github.com/skycoin/skycoin/src/visor"
@@ -138,4 +141,34 @@ func getUnspentOutputsByHashes(hashes []string) ([]Utxo, error) {
 		ux[i] = u
 	}
 	return ux, nil
+}
+
+func GetOutput(hash string) (*pp.Output, error) {
+	_, err := cipher.SHA256FromHex(hash)
+	if err != nil {
+		return nil, fmt.Errorf("invalid output hash, %v", err)
+	}
+
+	url := fmt.Sprintf("http://%s/uxout?uxid=%s", ServeAddr, hash)
+	rsp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	d, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode != 200 {
+		return nil, errors.New(string(d))
+	}
+
+	var v pp.Output
+	if err := json.Unmarshal(d, &v); err != nil {
+		return nil, err
+	}
+
+	return &v, nil
 }
