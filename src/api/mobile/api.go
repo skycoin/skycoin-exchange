@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -226,7 +227,30 @@ func GetTransactionByID(coinType, txid string) (string, error) {
 
 // GetSkyOutputByHash get skycoin output info by hash
 func GetSkyOutputByHash(hash string) (string, error) {
+	node, ok := nodeMap["skycoin"]
+	if !ok {
+		return "", fmt.Errorf("skycoin is not supported")
+	}
 
+	req := pp.GetOutputReq{
+		Hash: pp.PtrString(hash),
+	}
+
+	res := pp.GetOutputRes{}
+	if err := sknet.EncryGet(node.GetNodeAddr(), "/auth/get/output", req, &res); err != nil {
+		return "", err
+	}
+
+	if !res.Result.GetSuccess() {
+		return "", fmt.Errorf("get output failed: %v", res.Result.GetReason())
+	}
+
+	d, err := json.Marshal(res.GetOutput())
+	if err != nil {
+		return "", fmt.Errorf("unmarshal result failed, %v", err)
+	}
+
+	return string(d), nil
 }
 
 func getPrivateKey(walletID string) coin.GetPrivKey {
