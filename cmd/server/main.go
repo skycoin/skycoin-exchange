@@ -29,6 +29,7 @@ var (
 )
 
 func registerFlags(cfg *server.Config) {
+	flag.StringVar(&cfg.Server, "server", "127.0.0.1", "server ip")
 	flag.IntVar(&cfg.Port, "port", 8080, "server listen port")
 	flag.IntVar(&cfg.BtcFee, "btc-fee", 10000, "transaction fee in satoish")
 	flag.StringVar(&cfg.DataDir, "data-dir", ".skycoin-exchange", "data directory")
@@ -106,7 +107,7 @@ func initProfiling(httpProf, profileCPU bool, profileCPUFile string, profileMem 
 
 	if httpProf {
 		go func() {
-			log.Println(http.ListenAndServe("localhost:6060", nil))
+			log.Println(http.ListenAndServe(":6060", nil))
 		}()
 	}
 }

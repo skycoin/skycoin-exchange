@@ -24,6 +24,7 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
+	Server          string        // api server ip
 	Port            int           // api port
 	BtcFee          int           // btc transaction fee
 	DataDir         string        // data directory
@@ -133,7 +134,7 @@ func New(cfg Config) engine.Exchange {
 
 // Run start the exchange server.
 func (self *ExchangeServer) Run() {
-	logger.Info("server started, port:%d", self.cfg.Port)
+	logger.Info("server started %s:%d", self.cfg.Server, self.cfg.Port)
 	// register coins
 	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
 	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
@@ -156,7 +157,7 @@ func (self *ExchangeServer) Run() {
 	// start the api server.
 	// r := NewRouter(self)
 	r := router.New(self, c)
-	r.Run(self.cfg.Port)
+	r.Run(self.cfg.Server, self.cfg.Port)
 }
 
 // GetBtcFee get transaction fee of bitcoin.

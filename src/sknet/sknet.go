@@ -87,8 +87,8 @@ func (engine *Engine) Group(path string, handlers ...HandlerFunc) *Group {
 }
 
 // Run start the engine.
-func (engine *Engine) Run(port int) {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+func (engine *Engine) Run(ip string, port int) {
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
 		panic(err)
 	}
