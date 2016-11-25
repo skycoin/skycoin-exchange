@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	_ "net/http/pprof"
 	"os"
 
@@ -82,7 +83,7 @@ func initLogging(level logging.Level, color bool) {
 func initProfiling(httpProf bool) {
 	if httpProf {
 		go func() {
-			http.ListenAndServe(":6060", nil)
+			log.Println(http.ListenAndServe(":6060", nil))
 		}()
 	}
 }
