@@ -1,8 +1,6 @@
 package sknet
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"net"
 )
@@ -24,17 +22,20 @@ func Get(addr string, path string, v interface{}) (*Response, error) {
 		return nil, err
 	}
 
-	d, err := json.Marshal(r)
-	if err != nil {
+	if err := Write(c, r); err != nil {
 		return nil, err
 	}
+	// d, err := json.Marshal(r)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	buf := make([]byte, 4+len(d))
-	binary.BigEndian.PutUint32(buf[:], uint32(len(d)))
-	copy(buf[4:], d)
-	if err := binary.Write(c, binary.BigEndian, buf); err != nil {
-		return nil, err
-	}
+	// buf := make([]byte, 4+len(d))
+	// binary.BigEndian.PutUint32(buf[:], uint32(len(d)))
+	// copy(buf[4:], d)
+	// if err := binary.Write(c, binary.BigEndian, buf); err != nil {
+	// 	return nil, err
+	// }
 
 	rsp := Response{}
 	if err := Read(c, &rsp); err != nil {

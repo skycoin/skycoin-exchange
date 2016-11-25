@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	logger    = logging.MustGetLogger("exchange.net")
-	QueueSize = 1000
+	logger               = logging.MustGetLogger("exchange.net")
+	QueueSize            = 1000
+	version       uint32 = 1
+	maxRequestLen uint32 = 5 * 1024 * 1024 // 5M
 )
 
 // HandlerFunc important element for implementing the middleware function.
@@ -130,20 +132,42 @@ func Write(w io.Writer, v interface{}) error {
 		return err
 	}
 
-	buf := make([]byte, 4+len(d))
-	binary.BigEndian.PutUint32(buf[:], uint32(len(d)))
-	copy(buf[4:], d)
-	if err := binary.Write(w, binary.BigEndian, buf); err != nil {
-		return err
+	var data = []interface{}{
+		version,        // protocol version
+		uint32(len(d)), // payload len
+		d,              // payload
+	}
+
+	for _, dt := range data {
+		if err := binary.Write(w, binary.BigEndian, dt); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
+// Read read data from reader and unmarshal to specific struct.
+// |  4 bytes | 4 bytes | .........
+// |  version |   len   | payload |
 func Read(r io.Reader, v interface{}) error {
+	// read prefix head version
+	var ver uint32
+	if err := binary.Read(r, binary.BigEndian, &ver); err != nil {
+		return err
+	}
+	if ver != version {
+		return fmt.Errorf("invalid request")
+	}
+
 	var len uint32
 	if err := binary.Read(r, binary.BigEndian, &len); err != nil {
 		return err
 	}
+
+	if len > maxRequestLen {
+		return fmt.Errorf("request data length > %v, check if your request is legal", maxRequestLen)
+	}
+
 	d := make([]byte, len)
 	if err := binary.Read(r, binary.BigEndian, &d); err != nil {
 		return err
