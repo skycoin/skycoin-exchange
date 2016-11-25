@@ -2,11 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime/pprof"
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/server"
@@ -37,11 +34,6 @@ func registerFlags(cfg *server.Config) {
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
 	flag.StringVar(&cfg.SkycoinNodeAddr, "skycoin-node-addr", "127.0.0.1:6420", "skycoin node address")
-	flag.BoolVar(&cfg.ProfileCPU, "profile-cpu", false, "enable cpu profiling")
-	flag.StringVar(&cfg.ProfileCPUFile, "profile-cpu-file", "cpu.prof", "where to write the cpu profile file")
-	flag.BoolVar(&cfg.HTTPProf, "http-prof", false, "run the http profiling interfac")
-	flag.BoolVar(&cfg.ProfileMem, "profile-mem", false, "enable memory profiling")
-	flag.StringVar(&cfg.ProfileMemFile, "profile-mem-file", "mem.prof", "where to write the memory profile file")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -50,7 +42,6 @@ func registerFlags(cfg *server.Config) {
 func main() {
 	initLogging(logging.DEBUG, true)
 	cfg := initConfig()
-	go initProfiling(cfg.HTTPProf, cfg.ProfileCPU, cfg.ProfileCPUFile, cfg.ProfileMem, cfg.ProfileMemFile)
 	s := server.New(cfg)
 	s.Run()
 }
@@ -82,32 +73,4 @@ func initLogging(level logging.Level, color bool) {
 	}
 
 	logging.SetBackend(bkLvd)
-}
-
-func initProfiling(httpProf, profileCPU bool, profileCPUFile string, profileMem bool, profileMemFile string) {
-	if profileCPU {
-		f, err := os.Create(profileCPUFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		// defer pprof.StopCPUProfile()
-		// defer f.Close()
-	}
-
-	if profileMem {
-		mf, err := os.Create(profileMemFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		pprof.WriteHeapProfile(mf)
-		// defer mf.Close()
-	}
-
-	if httpProf {
-		go func() {
-			log.Println(http.ListenAndServe(":6060", nil))
-		}()
-	}
 }

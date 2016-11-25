@@ -33,11 +33,6 @@ type Config struct {
 	UtxoPoolSize    int           // utxo pool size.
 	Admins          string        // admins joined with `,`
 	SkycoinNodeAddr string
-	HTTPProf        bool
-	ProfileCPU      bool
-	ProfileCPUFile  string
-	ProfileMem      bool
-	ProfileMemFile  string
 }
 
 type ExchangeServer struct {
