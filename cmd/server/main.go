@@ -5,6 +5,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 
+	"net/http"
+
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/server"
 	"github.com/skycoin/skycoin/src/cipher"
@@ -34,6 +36,7 @@ func registerFlags(cfg *server.Config) {
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
 	flag.StringVar(&cfg.SkycoinNodeAddr, "skycoin-node-addr", "127.0.0.1:6420", "skycoin node address")
+	flag.BoolVar(&cfg.HttpProf, "http-prof", false, "enable http profiling")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -42,6 +45,7 @@ func registerFlags(cfg *server.Config) {
 func main() {
 	initLogging(logging.DEBUG, true)
 	cfg := initConfig()
+	initProfiling(cfg.HttpProf)
 	s := server.New(cfg)
 	s.Run()
 }
@@ -73,4 +77,12 @@ func initLogging(level logging.Level, color bool) {
 	}
 
 	logging.SetBackend(bkLvd)
+}
+
+func initProfiling(httpProf bool) {
+	if httpProf {
+		go func() {
+			http.ListenAndServe(":6060", nil)
+		}()
+	}
 }
