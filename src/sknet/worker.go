@@ -50,6 +50,7 @@ func process(id int, c net.Conn, engine *Engine) {
 	for {
 		r.Reset()
 		if err = Read(c, r); err != nil {
+			logger.Error("%v", err)
 			return
 		}
 		context := Context{
