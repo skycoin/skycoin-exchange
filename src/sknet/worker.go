@@ -47,19 +47,18 @@ func process(id int, c net.Conn, engine *Engine) {
 	}()
 
 	var err error
+	var context Context
 	for {
 		r.Reset()
+		context.Reset()
 		if err = Read(c, r); err != nil {
 			if err.Error() != "EOF" {
 				logger.Error("%v", err)
 			}
 			return
 		}
-		context := Context{
-			Request: r,
-			Resp:    w,
-			Data:    make(map[string]interface{}),
-		}
+		context.Request = r
+		context.Resp = w
 
 		// check if the path belongs to group.
 		hds, find := engine.findGroupHandlers(r.GetPath())

@@ -53,3 +53,11 @@ func (c *Context) MustGet(key string) interface{} {
 	}
 	return v
 }
+
+func (c *Context) Reset() {
+	c.Data = make(map[string]interface{})
+	c.index = 0
+	c.handlers = c.handlers[:0]
+	c.Request = nil
+	c.Resp = nil
+}
