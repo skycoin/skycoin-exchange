@@ -18,7 +18,7 @@ var (
 	logger               = logging.MustGetLogger("exchange.net")
 	QueueSize            = 1000
 	version       uint32 = 1
-	maxRequestLen uint32 = 5 * 1024 * 1024 // 5M
+	maxRequestLen uint32 = 32 * 1024 // 5M
 )
 
 // HandlerFunc important element for implementing the middleware function.
