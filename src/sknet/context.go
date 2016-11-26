@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+// ResponseWriter interface for writing response.
+type ResponseWriter interface {
+	Write(p []byte) (n int, err error)
+	SendJSON(data interface{}) error
+}
+
+// Context is the most important part of sknet. It allows us to pass variables between middleware,
+// manage the flow, validate the request, decrypt and encrypt request and response.
 type Context struct {
 	Request  *Request               // Request from client
 	Resp     ResponseWriter         // Response writer
@@ -18,14 +26,14 @@ func (c *Context) JSON(data interface{}) error {
 	return c.Resp.SendJSON(data)
 }
 
-// BindJSON marshal data from context.Request.
+// BindJSON unmarshal data from context.Request.
 func (c *Context) BindJSON(v interface{}) error {
 	return json.Unmarshal(c.Request.GetData(), v)
 }
 
 // Next execute the next handler.
 func (c *Context) Next() {
-	c.index += 1
+	c.index++
 	if c.index < len(c.handlers) {
 		c.handlers[c.index](c)
 	}
@@ -54,6 +62,7 @@ func (c *Context) MustGet(key string) interface{} {
 	return v
 }
 
+// Reset set all value to initial state.
 func (c *Context) Reset() {
 	c.Data = make(map[string]interface{})
 	c.index = 0

@@ -5,12 +5,6 @@ import (
 	"net"
 )
 
-// ResponseWriter interface for writing response.
-type ResponseWriter interface {
-	Write(p []byte) (n int, err error)
-	SendJSON(data interface{}) error
-}
-
 // Response concrete response writer.
 type Response struct {
 	c    net.Conn
