@@ -112,20 +112,6 @@ func Logger() HandlerFunc {
 	}
 }
 
-func MakeRequest(path string, data interface{}) (*Request, error) {
-	r := &Request{}
-	r.Path = pp.PtrString(path)
-	if data == nil {
-		return r, nil
-	}
-	d, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	r.Data = d[:]
-	return r, nil
-}
-
 func Write(w io.Writer, v interface{}) error {
 	d, err := json.Marshal(v)
 	if err != nil {
