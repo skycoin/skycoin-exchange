@@ -11,14 +11,13 @@ import (
 	"strings"
 
 	logging "github.com/op/go-logging"
-	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
 var (
 	logger               = logging.MustGetLogger("exchange.net")
-	QueueSize            = 1000
+	queueSize            = 1000
 	version       uint32 = 1
-	maxRequestLen uint32 = 32 * 1024 // 5M
+	maxReqPkgSize uint32 = 32 * 1024 // set max request package size: 32kb
 )
 
 // HandlerFunc important element for implementing the middleware function.
@@ -26,8 +25,8 @@ type HandlerFunc func(c *Context)
 
 // Engine is the core of the net package.
 type Engine struct {
-	handlerFunc   map[string]HandlerFunc
 	handlers      []HandlerFunc
+	handlerFunc   map[string]HandlerFunc
 	groupHandlers map[string]*Group
 	connPool      chan net.Conn
 }
@@ -37,16 +36,17 @@ func New(quit chan bool) *Engine {
 	e := &Engine{
 		handlerFunc:   make(map[string]HandlerFunc),
 		groupHandlers: make(map[string]*Group),
-		connPool:      make(chan net.Conn, QueueSize),
+		connPool:      make(chan net.Conn, queueSize),
 	}
 
-	for i := 0; i < QueueSize; i++ {
+	for i := 0; i < queueSize; i++ {
 		w := &Worker{
 			ID:   i,
 			Enge: e,
 		}
 		w.Start(quit)
 	}
+
 	return e
 }
 
@@ -150,8 +150,8 @@ func Read(r io.Reader, v interface{}) error {
 		return err
 	}
 
-	if len > maxRequestLen {
-		return fmt.Errorf("request data length > %v, check if your request is legal", maxRequestLen)
+	if len > maxReqPkgSize {
+		return fmt.Errorf("request data length > %v, check if your request is legal", maxReqPkgSize)
 	}
 
 	d := make([]byte, len)
