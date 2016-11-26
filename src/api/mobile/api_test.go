@@ -24,7 +24,7 @@ var _ = func() int64 {
 	return t
 }()
 
-func setup(t *testing.T) (string, func(), error) {
+func setup() (string, func(), error) {
 	wltName := fmt.Sprintf(".wallet%d", rand.Int31n(100))
 	teardown := func() {}
 	tmpDir := filepath.Join(os.TempDir(), wltName)
@@ -39,14 +39,15 @@ func setup(t *testing.T) (string, func(), error) {
 	}
 	api.Init(&api.Config{
 		WalletDirPath: tmpDir,
-		ServerAddr:    "localhost:8080",
+		// ServerAddr:    "121.41.103.148:8080",
+		ServerAddr: "localhost:8080",
 	})
 
 	return tmpDir, teardown, nil
 }
 
 func TestGetBalance(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +77,7 @@ func TestGetBalance(t *testing.T) {
 }
 
 func TestGetAddresses(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +144,7 @@ func TestGetAddresses(t *testing.T) {
 }
 
 func TestSendBtc(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +172,7 @@ func TestSendBtc(t *testing.T) {
 }
 
 func TestSendSky(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +200,7 @@ func TestSendSky(t *testing.T) {
 }
 
 func TestGetTransactionByID(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -293,7 +294,7 @@ func TestGetTransactionByID(t *testing.T) {
 }
 
 func TestGetSkyOutputByID(t *testing.T) {
-	_, teardown, err := setup(t)
+	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,3 +340,56 @@ func TestGetSkyOutputByID(t *testing.T) {
 		}
 	}
 }
+
+// func BenchmarkGetBalance(b *testing.B) {
+// 	_, teardown, err := setup()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	defer teardown()
+// 	for i := 0; i < b.N; i++ {
+// 		var testData = []struct {
+// 			coinType string
+// 			address  string
+// 			expect   uint64
+// 		}{
+// 			{"skycoin", "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", 4000000},
+// 			{"bitcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 938000},
+// 		}
+
+// 		var err error
+// 		for _, td := range testData {
+// 			_, err = api.GetBalance(td.coinType, td.address)
+// 			if err != nil {
+// 				panic(err)
+// 			}
+// 		}
+// 	}
+// }
+
+// func BenchmarkGetOutByID(b *testing.B) {
+// 	_, teardown, err := setup()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer teardown()
+// 	for i := 0; i < b.N; i++ {
+// 		api.GetSkyOutputByID("a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c5")
+// 	}
+// }
+
+// func BenchmarkGetTx(b *testing.B) {
+// 	_, teardown, err := setup()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer teardown()
+// 	for i := 0; i < b.N; i++ {
+// 		go func() {
+// 			api.GetTransactionByID("bitcoin", "69be3a3b98541e609f5a4935f94c92012d2b3e3437e9508770ba2257f532142f")
+// 			api.GetTransactionByID("skycoin", "b1481d614ffcc27408fe2131198d9d2821c78601a0aa23d8e9965b2a5196edc0")
+
+// 		}()
+// 	}
+// }
