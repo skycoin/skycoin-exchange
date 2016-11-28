@@ -60,7 +60,12 @@ func EncryGet(addr string, path string, req interface{}, res interface{}) error 
 	return decrypt(resp.Body, gPubkey, gSeckey, res)
 }
 
-// SetKey set local private key
-func SetKey(key string) {
+// SetPubkey updates the server's pubkey
+func SetPubkey(key string) {
+	gPubkey = key
+}
+
+// SetSecKey set local private key
+func SetSecKey(key string) {
 	gSeckey = key
 }
