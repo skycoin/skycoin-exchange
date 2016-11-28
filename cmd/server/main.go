@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	sk         = "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257"
+	secKey     = "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257"
 	logger     = logging.MustGetLogger("exchange.main")
 	logFormat  = "[%{module}:%{level}] %{message}"
 	logModules = []string{
@@ -38,6 +38,7 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
 	flag.StringVar(&cfg.SkycoinNodeAddr, "skycoin-node-addr", "127.0.0.1:6420", "skycoin node address")
 	flag.BoolVar(&cfg.HttpProf, "http-prof", false, "enable http profiling")
+	flag.StringVar(&cfg.Seckey, "seckey", "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257", "private key used for encrypting and decryping messages")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -47,6 +48,11 @@ func main() {
 	initLogging(logging.DEBUG, true)
 	cfg := initConfig()
 	initProfiling(cfg.HttpProf)
+
+	// print pubkey so that client can use that to communicate with server
+	sk := cipher.MustSecKeyFromHex(cfg.Seckey)
+	logger.Info("pubkey:%v", cipher.PubKeyFromSecKey(sk).Hex())
+
 	s := server.New(cfg)
 	s.Run()
 }
@@ -59,11 +65,6 @@ func initConfig() server.Config {
 		panic("seed must be set")
 	}
 
-	key, err := cipher.SecKeyFromHex(sk)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	cfg.Seckey = key
 	return cfg
 }
 
