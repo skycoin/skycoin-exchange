@@ -39,7 +39,7 @@ func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/auth/get/utxos", req, &res); err != nil {
+	if err := sknet.EncryGet(sn.NodeAddr, "/get/utxos", req, &res); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +125,7 @@ func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
 		Tx:       pp.PtrString(rawtx),
 	}
 	res := pp.InjectTxnRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/auth/inject/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(sn.NodeAddr, "/inject/tx", req, &res); err != nil {
 		return "", err
 	}
 
@@ -142,7 +142,7 @@ func (sn skyNode) GetTransactionByID(txid string) (string, error) {
 		Txid:     pp.PtrString(txid),
 	}
 	res := pp.GetTxRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/auth/get/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(sn.NodeAddr, "/get/tx", req, &res); err != nil {
 		return "", err
 	}
 

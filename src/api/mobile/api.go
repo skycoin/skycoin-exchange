@@ -237,7 +237,7 @@ func GetSkyOutputByID(id string) (string, error) {
 	}
 
 	res := pp.GetOutputRes{}
-	if err := sknet.EncryGet(node.GetNodeAddr(), "/auth/get/output", req, &res); err != nil {
+	if err := sknet.EncryGet(node.GetNodeAddr(), "/get/output", req, &res); err != nil {
 		return "", err
 	}
 

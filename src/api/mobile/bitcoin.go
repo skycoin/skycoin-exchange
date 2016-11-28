@@ -41,7 +41,7 @@ func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
 		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
-	if err := sknet.EncryGet(bn.NodeAddr, "/auth/get/utxos", req, &res); err != nil {
+	if err := sknet.EncryGet(bn.NodeAddr, "/get/utxos", req, &res); err != nil {
 		return 0, err
 	}
 	var bal uint64
@@ -68,7 +68,7 @@ func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
 		Tx:       pp.PtrString(rawtx),
 	}
 	res := pp.InjectTxnRes{}
-	if err := sknet.EncryGet(bn.NodeAddr, "/auth/inject/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(bn.NodeAddr, "/inject/tx", req, &res); err != nil {
 		return "", err
 	}
 
@@ -85,7 +85,7 @@ func (bn btcNode) GetTransactionByID(txid string) (string, error) {
 		Txid:     pp.PtrString(txid),
 	}
 	res := pp.GetTxRes{}
-	if err := sknet.EncryGet(bn.NodeAddr, "/auth/get/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(bn.NodeAddr, "/get/tx", req, &res); err != nil {
 		return "", err
 	}
 
@@ -192,7 +192,7 @@ func (bn btcNode) getOutputs(addrs []string) ([]*pp.BtcUtxo, error) {
 		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
-	if err := sknet.EncryGet(bn.NodeAddr, "/auth/get/utxos", req, &res); err != nil {
+	if err := sknet.EncryGet(bn.NodeAddr, "/get/utxos", req, &res); err != nil {
 		return nil, err
 	}
 
