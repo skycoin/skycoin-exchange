@@ -12,7 +12,6 @@ import (
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
-	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -21,7 +20,6 @@ var logger = logging.MustGetLogger("client.rpclient")
 // Config client coinfig
 type Config struct {
 	ServAddr   string
-	ServPubkey cipher.PubKey
 	Port       int
 	GuiDir     string
 	AccountDir string
@@ -41,9 +39,9 @@ type Service struct {
 }
 
 // GetServKey get server pubkey.
-func (se Service) GetServKey() cipher.PubKey {
-	return se.cfg.ServPubkey
-}
+// func (se Service) GetServKey() cipher.PubKey {
+// 	return se.cfg.ServPubkey
+// }
 
 // GetServAddr get exchange server addresse.
 func (se Service) GetServAddr() string {
