@@ -41,6 +41,7 @@ type Utxor interface {
 
 type Server interface {
 	Run()
+	GetSecKey() string
 	GetBtcFee() uint64
 	GetSupportCoins() []string
 }
