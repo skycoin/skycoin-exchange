@@ -56,11 +56,12 @@ func (c *Context) BindJSON(v interface{}) error {
 }
 
 // Next execute the next handler.
-func (c *Context) Next() {
+func (c *Context) Next() error {
 	c.index++
 	if c.index < len(c.handlers) {
-		c.handlers[c.index](c)
+		return c.handlers[c.index](c)
 	}
+	return nil
 }
 
 // Set write data of key into context.Data.

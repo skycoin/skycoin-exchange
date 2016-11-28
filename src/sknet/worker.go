@@ -77,7 +77,10 @@ func process(id int, c net.Conn, engine *Engine) {
 			}
 		}
 
-		context.handlers[0](&context)
+		if err := context.handlers[0](&context); err != nil {
+			logger.Error(err.Error())
+			return
+		}
 	}
 }
 

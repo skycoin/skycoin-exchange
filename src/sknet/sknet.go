@@ -21,7 +21,7 @@ var (
 )
 
 // HandlerFunc important element for implementing the middleware function.
-type HandlerFunc func(c *Context)
+type HandlerFunc func(c *Context) error
 
 // Engine is the core of the net package.
 type Engine struct {
@@ -32,12 +32,14 @@ type Engine struct {
 }
 
 // New create an engine.
-func New(quit chan bool) *Engine {
+func New(seckey string, quit chan bool) *Engine {
 	e := &Engine{
 		handlerFunc:   make(map[string]HandlerFunc),
 		groupHandlers: make(map[string]*Group),
 		connPool:      make(chan net.Conn, queueSize),
 	}
+
+	e.Use(Authorize(seckey))
 
 	for i := 0; i < queueSize; i++ {
 		w := &Worker{
@@ -106,9 +108,9 @@ func (engine *Engine) Run(ip string, port int) {
 
 // Logger middleware
 func Logger() HandlerFunc {
-	return func(c *Context) {
+	return func(c *Context) error {
 		logger.Debug("request path:%s", c.Request.GetPath())
-		c.Next()
+		return c.Next()
 	}
 }
 
