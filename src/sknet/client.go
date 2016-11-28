@@ -64,8 +64,3 @@ func EncryGet(addr string, path string, req interface{}, res interface{}) error 
 func SetPubkey(key string) {
 	gPubkey = key
 }
-
-// SetSecKey set local private key
-func SetSecKey(key string) {
-	gSeckey = key
-}
