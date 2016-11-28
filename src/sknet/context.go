@@ -16,18 +16,19 @@ type ResponseWriter interface {
 // Context is the most important part of sknet. It allows us to pass variables between middleware,
 // manage the flow, validate the request, decrypt and encrypt request and response.
 type Context struct {
-	Request  *Request               // Request from client
-	Raw      []byte                 // the decrypted raw data
-	Pubkey   string                 // request pubkey
-	Resp     ResponseWriter         // Response writer
-	handlers []HandlerFunc          // request handlers, for records the middlewares.
-	index    int                    // index points to the current request handler.
-	Data     map[string]interface{} // data map, for transafer data between handlers.
+	Request    *Request               // Request from client
+	Raw        []byte                 // the decrypted raw data
+	Pubkey     string                 // client pubkey
+	ServSeckey string                 // server seckey
+	Resp       ResponseWriter         // Response writer
+	handlers   []HandlerFunc          // request handlers, for records the middlewares.
+	index      int                    // index points to the current request handler.
+	Data       map[string]interface{} // data map, for transafer data between handlers.
 }
 
 // JSON encrypt the data and write response.
 func (c *Context) SendJSON(data interface{}) error {
-	encData, nonce, err := pp.Encrypt(data, c.Pubkey, gSeckey)
+	encData, nonce, err := pp.Encrypt(data, c.Pubkey, c.ServSeckey)
 	if err != nil {
 		return err
 	}
