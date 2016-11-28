@@ -20,29 +20,17 @@ func GetCoins(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-			rq := pp.GetCoinsReq{
+			req := pp.GetCoinsReq{
 				Pubkey: pp.PtrString(a.Pubkey),
 			}
 
-			req, err := makeEncryptReq(&rq, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
+			var res pp.CoinsRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/coins", req, &res); err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/coins", req)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.CoinsRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}

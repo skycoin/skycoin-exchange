@@ -21,30 +21,15 @@ func CreateAccount(se Servicer) httprouter.Handle {
 			r := pp.CreateAccountReq{
 				Pubkey: pp.PtrString(a.Pubkey),
 			}
-
-			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
+			res := pp.CreateAccountRes{}
+			if err := sknet.EncryGet(se.GetServAddr(), "/create/account", r, &res); err != nil {
 				logger.Error(err.Error())
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
 
-			rsp, err := sknet.Get(se.GetServAddr(), "/auth/create/account", req)
-			if err != nil {
-				logger.Error(err.Error())
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.CreateAccountRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				errRlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-
-			acntRes := res.(*pp.CreateAccountRes)
-			if !acntRes.GetResult().GetSuccess() {
+			// acntRes := res.(*pp.CreateAccountRes)
+			if !res.GetResult().GetSuccess() {
 				sendJSON(w, res)
 			} else {
 				ret := struct {
@@ -52,9 +37,9 @@ func CreateAccount(se Servicer) httprouter.Handle {
 					Pubkey    string    `json:"pubkey"`
 					CreatedAt int64     `json:"created_at"`
 				}{
-					Result:    *acntRes.Result,
+					Result:    *res.Result,
 					Pubkey:    a.Pubkey,
-					CreatedAt: acntRes.GetCreatedAt(),
+					CreatedAt: res.GetCreatedAt(),
 				}
 				account.Set(a)
 				sendJSON(w, &ret)

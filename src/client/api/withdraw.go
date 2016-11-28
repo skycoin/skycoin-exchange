@@ -48,32 +48,20 @@ func Withdraw(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-			wr := pp.WithdrawalReq{
+			req := pp.WithdrawalReq{
 				Pubkey:        &a.Pubkey,
 				CoinType:      &cp,
 				Coins:         &amt,
 				OutputAddress: &toAddr,
 			}
 
-			req, err := makeEncryptReq(&wr, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/withdrawl", req)
-			if err != nil {
+			var res pp.WithdrawalRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/withdrawl", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.WithdrawalRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}

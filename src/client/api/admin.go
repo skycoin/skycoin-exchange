@@ -69,31 +69,20 @@ func AdminUpdateBalance(se Servicer) httprouter.Handle {
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-			r := pp.UpdateCreditReq{
+			req := pp.UpdateCreditReq{
 				Pubkey:   pp.PtrString(a.Pubkey),
 				CoinType: pp.PtrString(cp),
 				Amount:   pp.PtrUint64(amount),
 				Dst:      pp.PtrString(dstPk),
 			}
 
-			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			rsp, err := sknet.Get(se.GetServAddr(), "/admin/update/credit", req)
-			if err != nil {
+			res := pp.UpdateCreditRes{}
+			if err := sknet.EncryGet(se.GetServAddr(), "/admin/update/credit", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.UpdateCreditRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
+
 			sendJSON(w, res)
 			return
 		}
