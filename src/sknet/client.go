@@ -3,11 +3,18 @@ package sknet
 import (
 	"errors"
 	"net"
+
+	"github.com/skycoin/skycoin/src/cipher"
 )
 
-const gPubkey = "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"
+var gPubkey = "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"
 
 var gSeckey string
+
+func init() {
+	_, s := cipher.GenerateKeyPair()
+	gSeckey = s.Hex()
+}
 
 // Get send request to server, then read response and return.
 func Get(addr string, path string, v interface{}) (*Response, error) {
