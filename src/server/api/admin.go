@@ -9,11 +9,11 @@ import (
 
 // IsAdmin middleware for checking if the account is admin.
 func IsAdmin(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.UpdateCreditReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -24,20 +24,19 @@ func IsAdmin(ee engine.Exchange) sknet.HandlerFunc {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_UnAuthorized)
 				break
 			}
-			c.Next()
-			return
+			return c.Next()
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // UpdateCredit update credit.
 func UpdateCredit(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.UpdateCreditReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -77,9 +76,8 @@ func UpdateCredit(ee engine.Exchange) sknet.HandlerFunc {
 				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 			}
 
-			reply(c, res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }

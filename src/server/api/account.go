@@ -10,11 +10,11 @@ import (
 
 // CreateAccount create account with specific pubkey,
 func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		errRlt := &pp.EmptyRes{}
 		for {
 			req := pp.CreateAccountReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				errRlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -40,10 +40,9 @@ func CreateAccount(ee engine.Exchange) sknet.HandlerFunc {
 				CreatedAt: pp.PtrInt64(time.Now().Unix()),
 			}
 
-			reply(c, res)
-			return
+			return c.SendJSON(&res)
 		}
 
-		c.JSON(errRlt)
+		return c.Error(errRlt)
 	}
 }

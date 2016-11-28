@@ -14,11 +14,11 @@ import (
 
 // CreateOrder create specifc order.
 func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		rlt := &pp.EmptyRes{}
 		req := &pp.OrderReq{}
 		for {
-			if err := getRequest(c, req); err != nil {
+			if err := c.BindJSON(req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
 				break
@@ -93,20 +93,19 @@ func CreateOrder(egn engine.Exchange) sknet.HandlerFunc {
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
 				OrderId: &oid,
 			}
-			reply(c, res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // GetOrders get order list.
 func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		rlt := &pp.EmptyRes{}
 		for {
 			req := pp.GetOrderReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -140,10 +139,9 @@ func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
 			}
 
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 

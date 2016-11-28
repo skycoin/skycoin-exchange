@@ -55,7 +55,7 @@ func process(id int, c net.Conn, engine *Engine) {
 		if err = Read(c, r); err != nil {
 			if err.Error() != "EOF" {
 				logger.Error("%v", err)
-				context.JSON(pp.MakeErrRes(err))
+				context.Error(pp.MakeErrRes(err))
 			}
 			return
 		}
@@ -72,7 +72,7 @@ func process(id int, c net.Conn, engine *Engine) {
 			} else {
 				logger.Error("no handler for path: %s", r.GetPath())
 				res := pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				context.JSON(res)
+				context.Error(res)
 				return
 			}
 		}

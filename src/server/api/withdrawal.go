@@ -36,17 +36,13 @@ type SkyTxResult struct {
 func getWithdrawReqParams(c *sknet.Context, ee engine.Exchange) (*ReqParams, error) {
 	rp := NewReqParams()
 	req := pp.WithdrawalReq{}
-	if err := getRequest(c, &req); err != nil {
+	if err := c.BindJSON(&req); err != nil {
 		return nil, err
 	}
 
 	// validate pubkey
 	pubkey := req.GetPubkey()
 	if err := validatePubkey(pubkey); err != nil {
-		return nil, err
-	}
-
-	if err := validatePubkey(req.GetPubkey()); err != nil {
 		return nil, err
 	}
 
@@ -69,7 +65,7 @@ func getWithdrawReqParams(c *sknet.Context, ee engine.Exchange) (*ReqParams, err
 
 // Withdraw api for handlering withdraw process.
 func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		rlt := &pp.EmptyRes{}
 		for {
 			reqParam, err := getWithdrawReqParams(c, ee)
@@ -145,10 +141,9 @@ func Withdraw(ee engine.Exchange) sknet.HandlerFunc {
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
 				NewTxid: &txid,
 			}
-			reply(c, &resp)
-			return
+			return c.SendJSON(&resp)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
@@ -157,18 +152,6 @@ func getAddrPrivKey(ee engine.Exchange, cp coin.Type) coin.GetPrivKey {
 		return ee.GetAddrPrivKey(cp, addr)
 	}
 }
-
-// func withdrawlWork(c *sknet.Context, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
-// 	ct := rp.Values["cointype"].(coin.Type)
-// 	switch ct {
-// 	case coin.Bitcoin:
-// 		return btcWithdraw(rp)
-// 	case coin.Skycoin:
-// 		return skyWithdrawl(rp)
-// 	default:
-// 		return nil, pp.MakeErrRes(errors.New("unknow coin type"))
-// 	}
-// }
 
 // txInOutHandler used to generate TxIns and txOuts.
 type txInOutHandler func(ee engine.Exchange, a account.Accounter, amount uint64, outAddr string) (*txInOutResult, error)

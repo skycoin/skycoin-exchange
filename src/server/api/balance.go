@@ -11,11 +11,11 @@ import (
 
 // GetBalance return balance of specific account.
 func GetAccountBalance(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		rlt := &pp.EmptyRes{}
 		for {
 			req := pp.GetAccountBalanceReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -46,21 +46,19 @@ func GetAccountBalance(ee engine.Exchange) sknet.HandlerFunc {
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
 				Balance: &pp.Balance{Amount: pp.PtrUint64(bal)},
 			}
-			reply(c, bres)
-			return
+			return c.SendJSON(&bres)
 		}
-
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // GetAddrBalance get balance of specific address.
 func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.GetAddrBalanceReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -91,9 +89,8 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 				Balance: &b,
 			}
 
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }

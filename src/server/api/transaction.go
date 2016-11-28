@@ -11,11 +11,11 @@ import (
 
 // InjectTx inject transaction.
 func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.InjectTxnReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -48,20 +48,19 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 				Txid:   pp.PtrString(txid),
 			}
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // GetTx get transaction by id.
 func GetTx(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.GetTxReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -99,20 +98,19 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				CoinType: req.CoinType,
 				Tx:       tx,
 			}
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // GetRawTx return rawtx of specifc tx.
 func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.GetRawTxReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
 			}
@@ -140,9 +138,8 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 				CoinType: req.CoinType,
 				Rawtx:    pp.PtrString(rawtx),
 			}
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
