@@ -6,7 +6,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 type Exchange interface {
@@ -43,6 +42,5 @@ type Utxor interface {
 type Server interface {
 	Run()
 	GetBtcFee() uint64
-	GetServPrivKey() cipher.SecKey
 	GetSupportCoins() []string
 }
