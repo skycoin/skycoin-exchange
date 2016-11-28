@@ -10,12 +10,14 @@ import (
 )
 
 // Authorize will decrypt the request, and it's a buildin middleware for skynet.
-func Authorize() HandlerFunc {
+func Authorize(servSeckey string) HandlerFunc {
 	return func(c *Context) error {
 		var (
 			req pp.EncryptReq
 			rlt *pp.EmptyRes
 		)
+
+		c.ServSeckey = servSeckey
 
 		for {
 			if c.UnmarshalReq(&req) == nil {
@@ -33,7 +35,7 @@ func Authorize() HandlerFunc {
 				}
 				c.Pubkey = pubkey.Hex()
 
-				seckey, err := cipher.SecKeyFromHex(gSeckey)
+				seckey, err := cipher.SecKeyFromHex(servSeckey)
 				if err != nil {
 					logger.Error(err.Error())
 					rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
