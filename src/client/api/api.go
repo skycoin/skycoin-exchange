@@ -15,7 +15,7 @@ var logger = logging.MustGetLogger("client.api")
 
 // Servicer api service interface
 type Servicer interface {
-	GetServKey() cipher.PubKey
+	// GetServKey() cipher.PubKey
 	GetServAddr() string
 }
 

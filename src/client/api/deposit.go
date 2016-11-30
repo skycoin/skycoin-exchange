@@ -30,31 +30,19 @@ func GetDepositAddress(se Servicer) httprouter.Handle {
 				break
 			}
 
-			r := pp.GetDepositAddrReq{
+			req := pp.GetDepositAddrReq{
 				Pubkey:   pp.PtrString(a.Pubkey),
 				CoinType: pp.PtrString(cp),
 			}
 
-			req, err := makeEncryptReq(&r, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
+			var res pp.GetDepositAddrRes
 
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/create/deposit_address", req)
-			if err != nil {
+			if err := sknet.EncryGet(se.GetServAddr(), "/create/deposit_address", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetDepositAddrRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}

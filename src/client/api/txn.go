@@ -27,12 +27,6 @@ func InjectTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
 			// get tx
 			rawtx := r.FormValue("rawtx")
 			if rawtx == "" {
@@ -55,27 +49,14 @@ func InjectTx(se Servicer) httprouter.Handle {
 				Tx:       pp.PtrString(rawtx),
 			}
 
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/inject/tx", encReq)
-			if err != nil {
+			var res pp.InjectTxnRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/inject/tx", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.InjectTxnRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			sendJSON(w, v)
+			sendJSON(w, res)
 			return
 		}
 		sendJSON(w, rlt)
@@ -89,12 +70,6 @@ func GetTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
 			// get coin type
 			cp := r.FormValue("coin_type")
 			if cp == "" {
@@ -112,22 +87,14 @@ func GetTx(se Servicer) httprouter.Handle {
 				CoinType: pp.PtrString(cp),
 				Txid:     pp.PtrString(txid),
 			}
-			encReq, err := makeEncryptReq(req, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
+
+			var res pp.GetTxRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/tx", req, &res); err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/tx", encReq)
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetTxRes{})
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}
@@ -143,12 +110,6 @@ func GetRawTx(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var rlt *pp.EmptyRes
 		for {
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
 			// get coin type
 			cp := r.FormValue("coin_type")
 			if cp == "" {
@@ -167,25 +128,13 @@ func GetRawTx(se Servicer) httprouter.Handle {
 				CoinType: pp.PtrString(cp),
 				Txid:     pp.PtrString(txid),
 			}
-			encReq, err := makeEncryptReq(req, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
+			var res pp.GetRawTxRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/rawtx", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/rawtx", encReq)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetRawTxRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}

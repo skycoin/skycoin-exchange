@@ -10,7 +10,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
-	"github.com/skycoin/skycoin/src/cipher"
 )
 
 var config Config
@@ -21,6 +20,7 @@ var nodeMap map[string]noder
 type Config struct {
 	WalletDirPath string `json:"wallet_dir_path"`
 	ServerAddr    string `json:"server_addr"`
+	ServerPubkey  string `json:"server_pubkey"`
 }
 
 // NewConfig create config instance.
@@ -30,9 +30,9 @@ func NewConfig() *Config {
 
 // Init initialize wallet dir and node instance.
 func Init(cfg *Config) {
-	// init the privatekey
-	_, privateKey := cipher.GenerateKeyPair()
-	sknet.SetKey(privateKey.Hex())
+	if cfg.ServerPubkey != "" {
+		sknet.SetPubkey(cfg.ServerPubkey)
+	}
 
 	wallet.InitDir(cfg.WalletDirPath)
 	config = *cfg
@@ -237,7 +237,7 @@ func GetSkyOutputByID(id string) (string, error) {
 	}
 
 	res := pp.GetOutputRes{}
-	if err := sknet.EncryGet(node.GetNodeAddr(), "/auth/get/output", req, &res); err != nil {
+	if err := sknet.EncryGet(node.GetNodeAddr(), "/get/output", req, &res); err != nil {
 		return "", err
 	}
 

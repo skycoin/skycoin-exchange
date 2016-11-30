@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 )
@@ -39,30 +38,13 @@ func GetUtxos(se Servicer) httprouter.Handle {
 				Addresses: addrArray,
 			}
 
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/utxos", encReq)
-			if err != nil {
+			var res pp.GetUtxoRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/utxos", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetUtxoRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
+
 			sendJSON(w, res)
 			return
 		}

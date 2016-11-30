@@ -160,6 +160,7 @@ func (bk *Book) Match() []Order {
 	for i, bid := range bk.bidOrders {
 		restAmt, askOrderNum := checkAskOrders(bid, &bk.askOrders)
 		if restAmt == bid.Amount {
+			// no ask was matched
 			break
 		}
 
@@ -206,6 +207,10 @@ func NewBookFromJson(bj BookJson) *Book {
 	return bk
 }
 
+// checkAskOrders check if there're asks that can match the bid order,
+// return value:
+// 				first: the reset bid amount that not matched.
+// 				second: ask orders number that has been used.
 func checkAskOrders(bid Order, askOrders *[]Order) (uint64, uint64) {
 	if bid.RestAmt == 0 {
 		panic("the bid amount already fullfilled")
@@ -223,12 +228,12 @@ func checkAskOrders(bid Order, askOrders *[]Order) (uint64, uint64) {
 			return 0, 0
 		} else if bid.RestAmt == ask.RestAmt {
 			(*askOrders)[i].RestAmt = 0
-			askNum += 1
+			askNum++
 			return 0, askNum
 		} else if bid.RestAmt > ask.RestAmt {
 			bid.RestAmt -= ask.RestAmt
 			(*askOrders)[i].RestAmt = 0
-			askNum += 1
+			askNum++
 		}
 	}
 	return bid.RestAmt, askNum

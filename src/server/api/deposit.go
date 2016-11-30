@@ -9,11 +9,11 @@ import (
 
 // GetNewAddress account create new address for depositing.
 func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		rlt := &pp.EmptyRes{}
 		for {
 			req := pp.GetDepositAddrReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -52,10 +52,9 @@ func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
 				Address:  &addr,
 			}
 
-			reply(c, ds)
-			return
+			return c.SendJSON(&ds)
 		}
 
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,7 +23,7 @@ func CreateOrder(se Servicer) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			rawReq, err := makeOrderReq(r)
+			req, err := makeOrderReq(r)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
@@ -38,27 +37,15 @@ func CreateOrder(se Servicer) httprouter.Handle {
 				break
 			}
 
-			rawReq.Pubkey = pp.PtrString(a.Pubkey)
-			req, err := makeEncryptReq(rawReq, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			resp, err := sknet.Get(se.GetServAddr(), fmt.Sprintf("/auth/create/order"), req)
-			if err != nil {
+			req.Pubkey = pp.PtrString(a.Pubkey)
+			var res pp.OrderRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/create/order", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			v, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.OrderRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			sendJSON(w, v)
+			sendJSON(w, res)
 			return
 		}
 		sendJSON(w, rlt)
@@ -120,12 +107,6 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rlt := &pp.EmptyRes{}
 		for {
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
 			cp := r.FormValue("coin_pair")
 			st := r.FormValue("start")
 			ed := r.FormValue("end")
@@ -148,32 +129,20 @@ func getOrders(se Servicer, tp string) httprouter.Handle {
 				break
 			}
 
-			getOrderReq := pp.GetOrderReq{
+			req := pp.GetOrderReq{
 				CoinPair: &cp,
 				Type:     pp.PtrString(tp),
 				Start:    &start,
 				End:      &end,
 			}
 
-			req, err := makeEncryptReq(&getOrderReq, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-			resp, err := sknet.Get(se.GetServAddr(), "/auth/get/orders", req)
-			if err != nil {
+			var res pp.GetOrderRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/orders", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res, err := decodeRsp(resp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetOrderRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}

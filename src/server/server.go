@@ -16,7 +16,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/router"
-	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -24,14 +23,14 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
-	Server          string        // api server ip
-	Port            int           // api port
-	BtcFee          int           // btc transaction fee
-	DataDir         string        // data directory
-	Seed            string        // seed
-	Seckey          cipher.SecKey // private key
-	UtxoPoolSize    int           // utxo pool size.
-	Admins          string        // admins joined with `,`
+	Server          string // api server ip
+	Port            int    // api port
+	BtcFee          int    // btc transaction fee
+	DataDir         string // data directory
+	Seed            string // seed
+	Seckey          string // server's private key
+	UtxoPoolSize    int    // utxo pool size.
+	Admins          string // admins joined with `,`
 	SkycoinNodeAddr string
 	HttpProf        bool
 }
@@ -161,8 +160,7 @@ func (self ExchangeServer) GetBtcFee() uint64 {
 	return uint64(self.cfg.BtcFee)
 }
 
-// GetServPrivKey returnt he sever's private key.
-func (self ExchangeServer) GetServPrivKey() cipher.SecKey {
+func (self ExchangeServer) GetSecKey() string {
 	return self.cfg.Seckey
 }
 

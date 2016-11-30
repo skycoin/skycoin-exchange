@@ -10,12 +10,8 @@ import (
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/client"
-	"github.com/skycoin/skycoin/src/cipher"
+	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/util"
-)
-
-const (
-	servPubkey = "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8"
 )
 
 var (
@@ -30,16 +26,20 @@ func main() {
 	var cfg client.Config
 	home := util.UserHome()
 
+	var servPubkey string
 	flag.StringVar(&cfg.ServAddr, "s", "localhost:8080", "server address")
 	flag.IntVar(&cfg.Port, "p", 6060, "rpc port")
 	flag.StringVar(&cfg.GuiDir, "gui-dir", "./src/web-app/static", "webapp static dir")
 	flag.StringVar(&cfg.WalletDir, "wlt-dir", filepath.Join(home, ".exchange-client/wallet"), "wallet dir")
 	flag.StringVar(&cfg.AccountDir, "account-dir", filepath.Join(home, ".exchange-client/account"), "account dir")
+	flag.StringVar(&servPubkey, "server-pubkey", "02942e46684114b35fe15218dfdc6e0d74af0446a397b8fcbf8b46fb389f756eb8", "server pubkey")
 
 	flag.Parse()
 
-	cfg.ServPubkey = cipher.MustPubKeyFromHex(servPubkey)
 	cfg.GuiDir = util.ResolveResourceDirectory(cfg.GuiDir)
+
+	// init sknet server pubkey
+	sknet.SetPubkey(servPubkey)
 
 	// init logger.
 	initLogging(logging.DEBUG, true)

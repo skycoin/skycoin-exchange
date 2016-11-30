@@ -8,37 +8,30 @@ import (
 
 // New create sknet engine and register handlers.
 func New(ee engine.Exchange, quit chan bool) *sknet.Engine {
-	nt := sknet.New(quit)
-	nt.Use(sknet.Logger())
+	engine := sknet.New(ee.GetSecKey(), quit)
+	engine.Use(sknet.Logger())
 
-	auth := nt.Group("/auth", api.Authorize(ee))
-	{
-		// baseic handlers.
-		auth.Register("/create/account", api.CreateAccount(ee))
-		auth.Register("/create/deposit_address", api.GetNewAddress(ee))
-		auth.Register("/get/account/balance", api.GetAccountBalance(ee))
-		auth.Register("/get/address/balance", api.GetAddrBalance(ee))
-		auth.Register("/withdrawl", api.Withdraw(ee))
-		auth.Register("/create/order", api.CreateOrder(ee))
-		auth.Register("/get/coins", api.GetCoins(ee))
-		auth.Register("/get/orders", api.GetOrders(ee))
+	engine.Register("/create/account", api.CreateAccount(ee))
+	engine.Register("/create/deposit_address", api.GetNewAddress(ee))
+	engine.Register("/get/account/balance", api.GetAccountBalance(ee))
+	engine.Register("/get/address/balance", api.GetAddrBalance(ee))
+	engine.Register("/withdrawl", api.Withdraw(ee))
+	engine.Register("/create/order", api.CreateOrder(ee))
+	engine.Register("/get/coins", api.GetCoins(ee))
+	engine.Register("/get/orders", api.GetOrders(ee))
 
-		// utxos handler
-		auth.Register("/get/utxos", api.GetUtxos(ee))
+	// utxos handler
+	engine.Register("/get/utxos", api.GetUtxos(ee))
 
-		// output history handler
-		auth.Register("/get/output", api.GetOutput(ee))
+	// output history handler
+	engine.Register("/get/output", api.GetOutput(ee))
 
-		// transaction handler
-		auth.Register("/inject/tx", api.InjectTx(ee))
-		auth.Register("/get/tx", api.GetTx(ee))
-		auth.Register("/get/rawtx", api.GetRawTx(ee))
-	}
+	// transaction handler
+	engine.Register("/inject/tx", api.InjectTx(ee))
+	engine.Register("/get/tx", api.GetTx(ee))
+	engine.Register("/get/rawtx", api.GetRawTx(ee))
 
-	admin := nt.Group("/admin", api.Authorize(ee), api.IsAdmin(ee))
-	{
-		admin.Register("/update/credit", api.UpdateCredit(ee))
-	}
+	engine.Register("/admin/update/credit", api.UpdateCredit(ee))
 
-	return nt
+	return engine
 }

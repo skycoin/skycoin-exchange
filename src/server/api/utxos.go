@@ -11,11 +11,11 @@ import (
 
 // GetUtxos get unspent output of specific address.
 func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var req pp.GetUtxoReq
 		var rlt *pp.EmptyRes
 		for {
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				logger.Error(err.Error())
 				break
@@ -34,20 +34,19 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
-			reply(c, res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 
 // GetOutput  gets skycoin output by output hash id.
 func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
-	return func(c *sknet.Context) {
+	return func(c *sknet.Context) error {
 		var rlt *pp.EmptyRes
 		for {
 			req := pp.GetOutputReq{}
-			if err := getRequest(c, &req); err != nil {
+			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
 				break
@@ -64,10 +63,9 @@ func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
 				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
 				Output: output,
 			}
-			reply(c, &res)
-			return
+			return c.SendJSON(&res)
 		}
-		c.JSON(rlt)
+		return c.Error(rlt)
 	}
 }
 

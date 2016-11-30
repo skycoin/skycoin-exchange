@@ -217,39 +217,20 @@ func GetWalletBalance(se Servicer) httprouter.Handle {
 			}
 
 			cp := strings.Split(id, "_")[0]
+
 			// get address balance.
 			req := pp.GetAddrBalanceReq{
 				CoinType: pp.PtrString(cp),
 				Addrs:    pp.PtrString(strings.Join(addrs, ",")),
 			}
 
-			a, err := account.GetActive()
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			encReq, err := makeEncryptReq(&req, se.GetServKey().Hex(), a.Seckey)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
-			rsp, err := sknet.Get(se.GetServAddr(), "/auth/get/address/balance", &encReq)
-			if err != nil {
+			var res pp.GetAddrBalanceRes
+			if err := sknet.EncryGet(se.GetServAddr(), "/get/address/balance", req, &res); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
 				break
 			}
 
-			res, err := decodeRsp(rsp.Body, se.GetServKey().Hex(), a.Seckey, &pp.GetAddrBalanceRes{})
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			sendJSON(w, res)
 			return
 		}
