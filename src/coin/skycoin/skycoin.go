@@ -252,6 +252,20 @@ func (sky *Skycoin) GetUtxos(addrs []string) (interface{}, error) {
 	return res, nil
 }
 
+// GetOutput gets output info of specific hash
+func (sky *Skycoin) GetOutput(hash string) (interface{}, error) {
+	out, err := GetOutput(sky.NodeAddress, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	res := pp.GetOutputRes{
+		Result: pp.MakeResultWithCode(pp.ErrCode_Success),
+		Output: out,
+	}
+	return res, nil
+}
+
 // Utxo unspent outputs interface
 type Utxo interface {
 	GetHash() string
