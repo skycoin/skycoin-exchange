@@ -14,26 +14,26 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 )
 
-// Gateway bitcoin gateway which implements the interface of coin.Gateway.
-type Gateway struct{}
+// Bitcoin implements the interface of coin.Gateway.
+type Bitcoin struct{}
 
 // GetTx get bitcoin transaction of specific txid.
-func (gw Gateway) GetTx(txid string) (*pp.Tx, error) {
+func (btc Bitcoin) GetTx(txid string) (*pp.Tx, error) {
 	return getTxVerboseExplr(txid)
 }
 
 // GetRawTx get bitcoin raw transaction of specific txid.
-func (gw Gateway) GetRawTx(txid string) (string, error) {
+func (btc Bitcoin) GetRawTx(txid string) (string, error) {
 	return getRawtxExplr(txid)
 }
 
 // InjectTx inject bitcoin raw transaction.
-func (gw Gateway) InjectTx(rawtx string) (string, error) {
+func (btc Bitcoin) InjectTx(rawtx string) (string, error) {
 	return BroadcastTx(rawtx)
 }
 
 // GetBalance get balance of specific addresses.
-func (gw Gateway) GetBalance(addrs []string) (pp.Balance, error) {
+func (btc Bitcoin) GetBalance(addrs []string) (pp.Balance, error) {
 	v, err := getBalanceExplr(addrs)
 	if err != nil {
 		return pp.Balance{}, err
@@ -42,7 +42,7 @@ func (gw Gateway) GetBalance(addrs []string) (pp.Balance, error) {
 }
 
 // CreateRawTx create bitcoin raw transaction.
-func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, error) {
+func (btc Bitcoin) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, error) {
 	tx := wire.NewMsgTx()
 	oldTxOuts := make([]*wire.TxOut, len(txIns))
 	for i, in := range txIns {
@@ -98,7 +98,7 @@ func (gw Gateway) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, er
 }
 
 // SignRawTx sign bitcoin transaction.
-func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error) {
+func (btc Bitcoin) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error) {
 	// decode the rawtx
 	tx := Transaction{}
 	d, err := hex.DecodeString(rawtx)
@@ -150,7 +150,8 @@ func (gw Gateway) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, error
 	return hex.EncodeToString(txb), nil
 }
 
-func (gw *Gateway) ValidateTxid(txid string) bool {
+// ValidateTxid check if the bitcoin transaction id is validated.
+func (btc *Bitcoin) ValidateTxid(txid string) bool {
 	if len(txid) != 64 {
 		return false
 	}
