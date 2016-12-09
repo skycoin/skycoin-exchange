@@ -227,6 +227,31 @@ func (sky Skycoin) SignRawTx(rawtx string, getKey coin.GetPrivKey) (string, erro
 	return hex.EncodeToString(d), nil
 }
 
+// GetUtxos returns utxos of specific addresses
+func (sky *Skycoin) GetUtxos(addrs []string) (interface{}, error) {
+	utxos, err := GetUnspentOutputs(sky.NodeAddress, addrs)
+	if err != nil {
+		return nil, err
+	}
+
+	uxs := make([]*pp.SkyUtxo, len(utxos))
+	for i, u := range utxos {
+		uxs[i] = &pp.SkyUtxo{
+			Hash:    pp.PtrString(u.GetHash()),
+			SrcTx:   pp.PtrString(u.GetSrcTx()),
+			Address: pp.PtrString(u.GetAddress()),
+			Coins:   pp.PtrUint64(u.GetCoins()),
+			Hours:   pp.PtrUint64(u.GetHours()),
+		}
+	}
+	res := pp.GetUtxoRes{
+		SkyUtxos: uxs,
+		Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
+	}
+
+	return res, nil
+}
+
 // Utxo unspent outputs interface
 type Utxo interface {
 	GetHash() string
