@@ -424,3 +424,13 @@ func GetOutput(nodeAddr string, hash string) (*pp.Output, error) {
 
 	return &v, nil
 }
+
+// Symbol returns skycoin sybmol
+func (sky *Skycoin) Symbol() string {
+	return "SKY"
+}
+
+// Type returns skycoin type name
+func (sky *Skycoin) Type() string {
+	return "skycoin"
+}
