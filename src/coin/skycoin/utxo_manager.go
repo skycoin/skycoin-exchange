@@ -21,14 +21,16 @@ type ExUtxoManager struct {
 	WatchAddress []string
 	UtxosCh      chan Utxo
 	UtxoStateMap map[string]Utxo
+	NodeAddr     string
 	mutx         sync.Mutex
 }
 
-func NewUtxoManager(utxoPoolsize int, watchAddrs []string) UtxoManager {
+func NewUtxoManager(utxoPoolsize int, watchAddrs []string, nodeAddr string) UtxoManager {
 	eum := &ExUtxoManager{
 		UtxosCh:      make(chan Utxo, utxoPoolsize),
 		UtxoStateMap: make(map[string]Utxo),
 		WatchAddress: watchAddrs,
+		NodeAddr:     nodeAddr,
 	}
 
 	return eum
@@ -71,7 +73,7 @@ func (eum *ExUtxoManager) WatchAddresses(addrs []string) {
 }
 
 func (eum *ExUtxoManager) checkNewUtxo() ([]Utxo, error) {
-	latestUtxos, err := GetUnspentOutputs(eum.WatchAddress)
+	latestUtxos, err := GetUnspentOutputs(eum.NodeAddr, eum.WatchAddress)
 	if err != nil {
 		return []Utxo{}, err
 	}
