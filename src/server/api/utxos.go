@@ -69,11 +69,11 @@ func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-func getUtxos(cp coin.Type, addrs []string) (*pp.GetUtxoRes, error) {
+func getUtxos(nodeAddr string, cp coin.Type, addrs []string) (*pp.GetUtxoRes, error) {
 	var res pp.GetUtxoRes
 	switch cp {
 	case coin.Bitcoin:
-		utxos, err := bitcoin.GetUnspentOutputs(addrs)
+		utxos, err := bitcoin.GetUnspentOutputs(nodeAddr, addrs)
 		if err != nil {
 			return nil, err
 		}
