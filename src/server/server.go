@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
+
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
@@ -44,7 +46,7 @@ type ExchangeServer struct {
 	wallets       wallets
 	wltMtx        sync.RWMutex                // mutex for protecting the wallet.
 	orderHandlers map[string]chan order.Order // order handlers, for handleing bid and ask.
-	coins         []string                    // supported coins
+	coins         map[coin.Type]coin.Gateway
 }
 
 // New create new server
