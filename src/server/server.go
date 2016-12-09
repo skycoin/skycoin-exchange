@@ -187,6 +187,33 @@ func (self *ExchangeServer) GetNewAddress(cp coin.Type) string {
 	return addrEntry[0].Address
 }
 
+func (serv *ExchangeServer) coin(ct coin.Type) (coin.Gateway, error) {
+	c, ok := serv.coins[ct]
+	if !ok {
+		return nil, fmt.Errorf("%s coin is not supported", ct)
+	}
+	return c, nil
+}
+
+// GetOutput gets output by hash of specific coin.
+func (serv *ExchangeServer) GetOutput(ct coin.Type, hash string) (interface{}, error) {
+	c, err := serv.coin(ct)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.GetOutput(hash)
+}
+
+// GetUtxos gets utxos by addresses of specific coin.
+func (self *ExchangeServer) GetUtxos(ct coin.Type, addrs []string) (interface{}, error) {
+	c, err := serv.coin(ct)
+	if err != nil {
+		return nil, err
+	}
+	return c.GetUtxos(addrs)
+}
+
 // ChooseUtxos choose appropriate bitcoin utxos,
 func (self *ExchangeServer) ChooseUtxos(cp coin.Type, amount uint64, tm time.Duration) (interface{}, error) {
 	switch cp {
