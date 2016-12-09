@@ -25,7 +25,7 @@ type ExUtxoManager struct {
 	mutx         sync.Mutex
 }
 
-func NewUtxoManager(utxoPoolsize int, watchAddrs []string, nodeAddr string) UtxoManager {
+func NewUtxoManager(nodeAddr string, utxoPoolsize int, watchAddrs []string) UtxoManager {
 	eum := &ExUtxoManager{
 		UtxosCh:      make(chan Utxo, utxoPoolsize),
 		UtxoStateMap: make(map[string]Utxo),
