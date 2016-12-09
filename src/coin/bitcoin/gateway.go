@@ -185,6 +185,17 @@ func (btc *Bitcoin) GetUtxos(addrs []string) (interface{}, error) {
 	return res, nil
 }
 
+// GetOutput not implemented yet.
 func (btc *Bitcoin) GetOutput(hash string) (interface{}, error) {
 	return nil, fmt.Errorf("get output by has is not supported by bitcoin")
+}
+
+// Symbol returns bitcoin symbol.
+func (btc *Bitcoin) Symbol() string {
+	return "BTC"
+}
+
+// Type returns bitcoin type.
+func (btc *Bitcoin) Type() string {
+	return "bitcoin"
 }
