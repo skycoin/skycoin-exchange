@@ -45,4 +45,5 @@ type Server interface {
 	GetBtcFee() uint64
 	GetSupportCoins() []string
 	GetCoin(ct coin.Type) (coin.Gateway, error)
+	BindCoins(cs ...coin.Gateway) error
 }
