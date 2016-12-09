@@ -6,6 +6,8 @@ import (
 	"errors"
 	"reflect"
 
+	"fmt"
+
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -158,4 +160,31 @@ func (btc *Bitcoin) ValidateTxid(txid string) bool {
 
 	_, err := hex.DecodeString(txid)
 	return err == nil
+}
+
+// GetUtxos gets bitcoin utxos of specific addresses.
+func (btc *Bitcoin) GetUtxos(addrs []string) (interface{}, error) {
+	utxos, err := GetUnspentOutputs(addrs)
+	if err != nil {
+		return nil, err
+	}
+	btcUxs := make([]*pp.BtcUtxo, len(utxos))
+	for i, u := range utxos {
+		btcUxs[i] = &pp.BtcUtxo{
+			Address: pp.PtrString(u.GetAddress()),
+			Txid:    pp.PtrString(u.GetTxid()),
+			Vout:    pp.PtrUint32(u.GetVout()),
+			Amount:  pp.PtrUint64(u.GetAmount()),
+		}
+	}
+
+	var res = pp.GetUtxoRes{
+		BtcUtxos: btcUxs,
+	}
+
+	return res, nil
+}
+
+func (btc *Bitcoin) GetOutput(hash string) (interface{}, error) {
+	return nil, fmt.Errorf("get output by has is not supported by bitcoin")
 }
