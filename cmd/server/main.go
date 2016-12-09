@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	logging "github.com/op/go-logging"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/server"
 	"github.com/skycoin/skycoin/src/cipher"
 )
@@ -54,6 +56,7 @@ func main() {
 	logger.Info("pubkey:%v", cipher.PubKeyFromSecKey(sk).Hex())
 
 	s := server.New(cfg)
+	s.BindCoins(&bitcoin.Bitcoin{}, &skycoin.Skycoin{NodeAddress: cfg.SkycoinNodeAddr})
 	s.Run()
 }
 
