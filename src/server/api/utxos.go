@@ -27,13 +27,21 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				logger.Error(err.Error())
 				break
 			}
-			res, err := getUtxos(cp, req.GetAddresses())
+
+			res, err := egn.GetUtxos(cp, req.GetAddresses())
 			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				rlt = pp.MakeErrRes(err)
 				logger.Error(err.Error())
 				break
 			}
-			res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
+
+			// res, err := getUtxos(cp, req.GetAddresses())
+			// if err != nil {
+			// 	rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+			// 	logger.Error(err.Error())
+			// 	break
+			// }
+			// res.Result = pp.MakeResultWithCode(pp.ErrCode_Success)
 			return c.SendJSON(&res)
 		}
 		return c.Error(rlt)
