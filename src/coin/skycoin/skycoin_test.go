@@ -17,7 +17,7 @@ func TestGetUnspentOutpts(t *testing.T) {
 		"24VUoHirWUpwJTjLxfMRkKjZZBsqESsagU9",
 	}
 
-	outpts, err := GetUnspentOutputs(addrs)
+	outpts, err := GetUnspentOutputs("127.0.0.1:6420", addrs)
 	assert.Nil(t, err)
 	d, err := json.MarshalIndent(outpts, "", " ")
 	assert.Nil(t, err)
@@ -76,7 +76,7 @@ func TestGetOutput(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got, err := GetOutput(tt.args.hash)
+		got, err := GetOutput("127.0.0.1:6420", tt.args.hash)
 		if !reflect.DeepEqual(err, tt.wantErr) {
 			t.Errorf("%q. GetOutput() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
