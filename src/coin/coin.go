@@ -13,6 +13,8 @@ var gateways = map[Type]Gateway{}
 // then this coin can be registered in this exchange system.
 type Gateway interface {
 	TxHandler
+	Symbol() string // return the coin symbol, SKY, BTC, MZC, etc.
+	Type() Type     // return the coin type, skycoin, bitcoin, etc.
 	// GetBalance interface for getting balance, the return value is an interface{}, cause
 	// the balance struct of skycoin and bitcoin are not the same.
 	GetBalance(addrs []string) (pp.Balance, error)
