@@ -60,17 +60,24 @@ func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			output, err := skycoin.GetOutput(req.GetHash())
+			ct, err := coin.TypeFromStr(req.GetCoinType())
+			if err != nil {
+				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
+				logger.Error(err.Error())
+				break
+			}
+
+			res, err := egn.GetOutput(ct, req.GetHash())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			res := pp.GetOutputRes{
-				Result: pp.MakeResultWithCode(pp.ErrCode_Success),
-				Output: output,
-			}
+			// res := pp.GetOutputRes{
+			// 	Result: pp.MakeResultWithCode(pp.ErrCode_Success),
+			// 	Output: output,
+			// }
 			return c.SendJSON(&res)
 		}
 		return c.Error(rlt)
