@@ -18,7 +18,7 @@ import (
 var (
 	HideSeckey = false
 	logger     = logging.MustGetLogger("exchange.bitcoin")
-	GatewayIns = Gateway{}
+	// GatewayIns = Gateway{}
 )
 
 // Utxo unspent output
@@ -35,12 +35,13 @@ type UtxoWithkey interface {
 	GetPrivKey() string
 }
 
+// TxOut bitcion transaction out struct
 type TxOut struct {
 	Addr  string
 	Value uint64
 }
 
-// GenerateAddresses, generate bitcoin addresses.
+// GenerateAddresses generates bitcoin addresses.
 func GenerateAddresses(seed []byte, num int) (string, []coin.AddressEntry) {
 	sd, seckeys := cipher.GenerateDeterministicKeyPairsSeed(seed, num)
 	entries := make([]coin.AddressEntry, num)
@@ -55,7 +56,7 @@ func GenerateAddresses(seed []byte, num int) (string, []coin.AddressEntry) {
 	return fmt.Sprintf("%2x", sd), entries
 }
 
-// GetBalance, query balance of address through the API of blockexplorer.com.
+// GetBalance query balance of address through the API of blockexplorer.com.
 func GetBalance(addr []string) (uint64, error) {
 	for _, a := range addr {
 		if !validateAddress(a) {
@@ -82,6 +83,7 @@ func GetUnspentOutputs(addrs []string) ([]Utxo, error) {
 	return getUtxosBlkExplr(addrs)
 }
 
+// NewUtxoWithKey create UtxoWithkey struct
 func NewUtxoWithKey(utxo Utxo, key string) UtxoWithkey {
 	return BlkExplrUtxoWithkey{
 		BlkExplrUtxo: utxo.(BlkExplrUtxo),
