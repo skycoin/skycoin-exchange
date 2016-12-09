@@ -296,7 +296,7 @@ func btcWithdraw(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	return &resp, nil
 }
 
-func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
+func skyWithdrawl(nodeAddr string, rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 	ee := rp.Values["engine"].(engine.Exchange)
 	acnt := rp.Values["account"].(account.Accounter)
 	amt := rp.Values["amt"].(uint64)
@@ -341,7 +341,7 @@ func skyWithdrawl(rp *ReqParams) (*pp.WithdrawalRes, *pp.EmptyRes) {
 		return nil, pp.MakeErrRes(errors.New("skycoin tx serialize failed"))
 	}
 
-	newTxid, err := skycoin.BroadcastTx(hex.EncodeToString(rawtx))
+	newTxid, err := skycoin.BroadcastTx(nodeAddr, hex.EncodeToString(rawtx))
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, pp.MakeErrResWithCode(pp.ErrCode_BroadcastTxFail)
