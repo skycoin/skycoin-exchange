@@ -99,7 +99,7 @@ func New(cfg Config) engine.Exchange {
 	if err != nil {
 		panic(err)
 	}
-	skyum := skycoin.NewUtxoManager(cfg.UtxoPoolSize, skyWatchAddrs)
+	skyum := skycoin.NewUtxoManager(cfg.SkycoinNodeAddr, cfg.UtxoPoolSize, skyWatchAddrs)
 
 	// load or create order books.
 	var orderManager *order.Manager
@@ -120,7 +120,7 @@ func New(cfg Config) engine.Exchange {
 		btcum:        btcum,
 		skyum:        skyum,
 		orderManager: orderManager,
-		coins:        []string{"BTC", "SKY"},
+		// coins:        []string{"BTC", "SKY"},
 		orderHandlers: map[string]chan order.Order{
 			"bitcoin/skycoin": make(chan order.Order, 100),
 		},
@@ -129,14 +129,26 @@ func New(cfg Config) engine.Exchange {
 	return s
 }
 
+// BindCoins registers coins
+func (serv *ExchangeServer) BindCoins(cs ...coin.Gateway) error {
+	for _, c := range cs {
+		if _, exist := serv.coins[c.Type()]; exist {
+			return fmt.Errorf("%s coin already registered", c.Type())
+		}
+		serv.coins[c.Type()] = c
+	}
+
+	return nil
+}
+
 // Run start the exchange server.
 func (self *ExchangeServer) Run() {
 	logger.Info("server started %s:%d", self.cfg.Server, self.cfg.Port)
 	// register coins
-	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
-	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
+	// coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
+	// coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
 	// init the skycoin node address.
-	skycoin.ServeAddr = self.cfg.SkycoinNodeAddr
+	// skycoin.ServeAddr = self.cfg.SkycoinNodeAddr
 
 	// register the order handlers
 	for cp, c := range self.orderHandlers {
@@ -331,6 +343,13 @@ func (self *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64
 	return self.orderManager.GetOrders(cp, tp, start, end)
 }
 
-func (self ExchangeServer) GetSupportCoins() []string {
-	return self.coins
+// GetSupportCoins returns all supported coin's symbol
+func (serv *ExchangeServer) GetSupportCoins() []string {
+	symbols := make([]string, len(serv.coins))
+	i := 0
+	for _, coin := range serv.coins {
+		symbols[i] = coin.Symbol()
+		i++
+	}
+	return symbols
 }
