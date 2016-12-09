@@ -4,6 +4,7 @@ import "pp.common.proto";
 
 message GetOutputReq {
 	optional string hash  = 1;
+	optional string coin_type = 2;
 }
 
 message GetOutputRes {
