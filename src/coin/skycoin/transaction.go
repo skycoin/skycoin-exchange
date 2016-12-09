@@ -37,7 +37,7 @@ func NewTransaction(utxos []Utxo, keys []cipher.SecKey, outs []TxOut) *Transacti
 }
 
 // BroadcastTx skycoin broadcast tx.
-func BroadcastTx(rawtx string) (string, error) {
+func BroadcastTx(nodeAddr, rawtx string) (string, error) {
 	v := struct {
 		Rawtx string `json:"rawtx"`
 	}{
@@ -48,7 +48,7 @@ func BroadcastTx(rawtx string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	url := fmt.Sprintf("http://%s/injectTransaction", ServeAddr)
+	url := fmt.Sprintf("http://%s/injectTransaction", nodeAddr)
 	rsp, err := http.Post(url, "application/json", bytes.NewBuffer(d))
 	if err != nil {
 		return "", fmt.Errorf("post rawtx to %s failed", url)
