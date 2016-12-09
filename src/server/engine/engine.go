@@ -37,6 +37,8 @@ type Order interface {
 type Utxor interface {
 	ChooseUtxos(ct coin.Type, amount uint64, tm time.Duration) (interface{}, error)
 	PutUtxos(ct coin.Type, utxos interface{})
+	GetUtxos(ct coin.Type, addrs []string) (interface{}, error)
+	GetOutput(ct coin.Type, hash string) (interface{}, error)
 }
 
 type Server interface {
