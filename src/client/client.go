@@ -38,15 +38,27 @@ func New(cfg Config) *Service {
 	}
 }
 
-// Service rpc client service.
-type Service struct {
-	cfg Config
+// BindCoins register coins.
+func (se *Service) BindCoins(cs ...coin.Gateway) error {
+	for _, c := range cs {
+		// check if the coin already registered
+		if _, exist := se.coins[c.Type()]; exist {
+			return fmt.Errorf("%s coin already registered", c.Type())
+		}
+		se.coins[c.Type()] = c
+	}
+	return nil
 }
 
-// GetServKey get server pubkey.
-// func (se Service) GetServKey() cipher.PubKey {
-// 	return se.cfg.ServPubkey
-// }
+// GetCoin gets coin gatway of specific type.
+func (se Service) GetCoin(coinType string) (coin.Gateway, error) {
+	c, ok := se.coins[coinType]
+	if !ok {
+		return nil, fmt.Errorf("%s coin is not supported", coinType)
+	}
+
+	return c, nil
+}
 
 // GetServAddr get exchange server addresse.
 func (se Service) GetServAddr() string {
@@ -62,9 +74,6 @@ func (se *Service) Run() {
 	account.InitDir(se.cfg.AccountDir)
 
 	// register coins
-	coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
-	coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
-
 	r := router.New(se)
 	addr := fmt.Sprintf("localhost:%d", se.cfg.Port)
 	if err := gui.LaunchWebInterface(addr, se.cfg.GuiDir, r); err != nil {
