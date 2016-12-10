@@ -45,11 +45,7 @@ func Init(cfg *Config) {
 
 // NewWallet create a new wallet base on the wallet type and seed
 func NewWallet(coinType string, seed string) (string, error) {
-	tp, err := coin.TypeFromStr(coinType)
-	if err != nil {
-		return "", err
-	}
-	wlt, err := wallet.New(tp, seed)
+	wlt, err := wallet.New(coinType, seed)
 	if err != nil {
 		return "", err
 	}
@@ -233,7 +229,8 @@ func GetSkyOutputByID(id string) (string, error) {
 	}
 
 	req := pp.GetOutputReq{
-		Hash: pp.PtrString(id),
+		CoinType: pp.PtrString("skycoin"),
+		Hash:     pp.PtrString(id),
 	}
 
 	res := pp.GetOutputRes{}

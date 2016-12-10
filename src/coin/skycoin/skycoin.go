@@ -28,6 +28,7 @@ var (
 	// ServeAddr  string = "127.0.0.1:6420"
 	logger = logging.MustGetLogger("exchange.skycoin")
 	// GatewayIns = Skycoin{}
+	Type = "skycoin"
 )
 
 // Skycoin skycoin gateway.
@@ -432,5 +433,5 @@ func (sky *Skycoin) Symbol() string {
 
 // Type returns skycoin type name
 func (sky *Skycoin) Type() string {
-	return "skycoin"
+	return Type
 }

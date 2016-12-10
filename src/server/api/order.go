@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
@@ -145,20 +144,14 @@ func GetOrders(egn engine.Exchange) sknet.HandlerFunc {
 	}
 }
 
-func needBalance(tp order.Type, req *pp.OrderReq) (coin.Type, uint64, error) {
+func needBalance(tp order.Type, req *pp.OrderReq) (string, uint64, error) {
 	pair := strings.Split(req.GetCoinPair(), "/")
 	if len(pair) != 2 {
-		return -1, 0, errors.New("error coin pair")
+		return "", 0, errors.New("error coin pair")
 	}
 
-	mainCt, err := coin.TypeFromStr(pair[0])
-	if err != nil {
-		return -1, 0, err
-	}
-	subCt, err := coin.TypeFromStr(pair[1])
-	if err != nil {
-		return -1, 0, err
-	}
+	mainCt := pair[0]
+	subCt := pair[1]
 
 	switch tp {
 	case order.Bid:
@@ -166,6 +159,6 @@ func needBalance(tp order.Type, req *pp.OrderReq) (coin.Type, uint64, error) {
 	case order.Ask:
 		return mainCt, req.GetAmount(), nil
 	default:
-		return -1, 0, errors.New("unknow order type")
+		return "", 0, errors.New("unknow order type")
 	}
 }

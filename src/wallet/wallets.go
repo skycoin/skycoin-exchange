@@ -68,11 +68,7 @@ func (wlts *wallets) mustLoad() {
 		}
 
 		// check coin type
-		tp, err := coin.TypeFromStr(typeSeed[0])
-		if err != nil {
-			panic(err)
-		}
-
+		tp := typeSeed[0]
 		newWlt, ok := gWalletCreators[tp]
 		if !ok {
 			panic(fmt.Sprintf("%s wallet not supported", tp))

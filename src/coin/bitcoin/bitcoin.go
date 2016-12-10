@@ -19,6 +19,7 @@ var (
 	HideSeckey = false
 	logger     = logging.MustGetLogger("exchange.bitcoin")
 	// GatewayIns = Gateway{}
+	Type = "bitcoin"
 )
 
 // Utxo unspent output

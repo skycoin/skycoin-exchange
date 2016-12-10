@@ -7,7 +7,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/skycoin/skycoin-exchange/src/client/account"
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
@@ -24,11 +23,7 @@ func CreateWallet(se Servicer) httprouter.Handle {
 		rlt := &pp.EmptyRes{}
 		for {
 			// get coin type
-			cp, err := coin.TypeFromStr(r.FormValue("type"))
-			if err != nil {
-				rlt = pp.MakeErrRes(err)
-				break
-			}
+			cp := r.FormValue("type")
 
 			// get seed
 			sd := r.FormValue("seed")

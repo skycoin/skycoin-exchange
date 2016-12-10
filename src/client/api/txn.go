@@ -162,12 +162,7 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 	loop:
 		for {
 			// get coin type
-			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
+			cp := r.FormValue("coin_type")
 
 			// get request body
 			params := rawTxParams{}
@@ -186,14 +181,14 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 
 			var rawtx string
 			switch cp {
-			case coin.Bitcoin:
+			case bitcoin.Type:
 				outs := make([]bitcoin.TxOut, len(params.TxOuts))
 				for i, o := range params.TxOuts {
 					outs[i].Addr = o.Addr
 					outs[i].Value = o.Value
 				}
-				rawtx, err = gw.CreateRawTx(params.TxIns, outs)
-			case coin.Skycoin:
+				rawtx, err = coin.CreateRawTx(params.TxIns, outs)
+			case skycoin.Type:
 				outs := make([]skycoin.TxOut, len(params.TxOuts))
 				for i, o := range params.TxOuts {
 					addr, err := cipher.DecodeBase58Address(o.Addr)
@@ -239,12 +234,7 @@ func SignRawTx(se Servicer) httprouter.Handle {
 		var rlt *pp.EmptyRes
 		for {
 			// check coin type
-			cp, err := coin.TypeFromStr(r.FormValue("coin_type"))
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
+			cp := r.FormValue("coin_type")
 
 			// get raw tx
 			rawtx := r.FormValue("rawtx")
@@ -282,7 +272,7 @@ func SignRawTx(se Servicer) httprouter.Handle {
 	}
 }
 
-func getPrivKey(cp coin.Type) coin.GetPrivKey {
+func getPrivKey(cp string) coin.GetPrivKey {
 	return func(addr string) (string, error) {
 		a, err := account.GetActive()
 		if err != nil {

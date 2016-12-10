@@ -84,7 +84,7 @@ func GetAccount(se Servicer) httprouter.Handle {
 			res.Accounts[0].Pubkey = a.Pubkey
 			res.Accounts[0].WalletID = make(map[string]string)
 			for cp, id := range a.WltIDs {
-				res.Accounts[0].WalletID[cp.String()] = id
+				res.Accounts[0].WalletID[cp] = id
 			}
 			sendJSON(w, &res)
 		case "":
@@ -96,7 +96,7 @@ func GetAccount(se Servicer) httprouter.Handle {
 					as[i].Pubkey = a.Pubkey
 					as[i].WalletID = make(map[string]string)
 					for cp, id := range a.WltIDs {
-						as[i].WalletID[cp.String()] = id
+						as[i].WalletID[cp] = id
 					}
 				}
 				return as

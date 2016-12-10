@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -33,18 +32,13 @@ func GetNewAddress(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			cp, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
+			ct := req.GetCoinType()
 			// get the new address for depositing
-			addr := ee.GetNewAddress(cp)
+			addr := ee.GetNewAddress(ct)
 
 			// add the new address to engin for watching it's utxos.
-			at.AddDepositAddress(cp, addr)
-			ee.WatchAddress(cp, addr)
+			at.AddDepositAddress(ct, addr)
+			ee.WatchAddress(ct, addr)
 
 			ds := pp.GetDepositAddrRes{
 				Result:   pp.MakeResultWithCode(pp.ErrCode_Success),

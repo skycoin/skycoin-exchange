@@ -3,7 +3,6 @@ package api
 import (
 	"strings"
 
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -35,13 +34,7 @@ func GetAccountBalance(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			ct, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			bal := a.GetBalance(ct)
+			bal := a.GetBalance(req.GetCoinType())
 			bres := pp.GetAccountBalanceRes{
 				Result:  pp.MakeResultWithCode(pp.ErrCode_Success),
 				Balance: &pp.Balance{Amount: pp.PtrUint64(bal)},
@@ -64,7 +57,7 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			cp, err := coin.TypeFromStr(req.GetCoinType())
+			coin, err := ee.GetCoin(req.GetCoinType())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)

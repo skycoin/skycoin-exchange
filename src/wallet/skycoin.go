@@ -20,8 +20,8 @@ func NewSkyWltCreator() Creator {
 }
 
 // GetType return the wallet coin type.
-func (sk SkyWallet) GetType() coin.Type {
-	return coin.Skycoin
+func (sk SkyWallet) GetType() string {
+	return "skycoin"
 }
 
 // Copy return the copy of self.

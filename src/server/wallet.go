@@ -10,12 +10,12 @@ import (
 
 // wallets wrap up the wallet package.
 type wallets struct {
-	ids map[coin.Type]string // key wallet type, value wallet id.
+	ids map[string]string // key wallet type, value wallet id.
 }
 
 type walletItem struct {
-	Type coin.Type // coin type
-	Seed string    // seed
+	Type string // coin type
+	Seed string // seed
 }
 
 var initWalletOnce sync.Once
@@ -26,7 +26,7 @@ func makeWallets(dir string, items []walletItem) (wallets, error) {
 		wallet.InitDir(dir)
 	}
 	initWalletOnce.Do(f)
-	wlts := wallets{ids: make(map[coin.Type]string)}
+	wlts := wallets{ids: make(map[string]string)}
 	// create wallets if not exist.
 	for _, item := range items {
 		id := wallet.MakeWltID(item.Type, item.Seed)
@@ -42,7 +42,7 @@ func makeWallets(dir string, items []walletItem) (wallets, error) {
 }
 
 // NewAddresses create specific coin addresses.
-func (wlts *wallets) NewAddresses(cp coin.Type, num int) ([]coin.AddressEntry, error) {
+func (wlts *wallets) NewAddresses(cp string, num int) ([]coin.AddressEntry, error) {
 	if id, ok := wlts.ids[cp]; ok {
 		return wallet.NewAddresses(id, num)
 	}
@@ -50,7 +50,7 @@ func (wlts *wallets) NewAddresses(cp coin.Type, num int) ([]coin.AddressEntry, e
 }
 
 // GetKeypair get pub/sec keys of specific address.
-func (wlts wallets) GetKeypair(cp coin.Type, addr string) (string, string, error) {
+func (wlts wallets) GetKeypair(cp string, addr string) (string, string, error) {
 	if id, ok := wlts.ids[cp]; ok {
 		return wallet.GetKeypair(id, addr)
 	}
@@ -58,7 +58,7 @@ func (wlts wallets) GetKeypair(cp coin.Type, addr string) (string, string, error
 }
 
 // GetAddresses get all addresses in one specific wallet.
-func (wlts wallets) GetAddresses(cp coin.Type) ([]string, error) {
+func (wlts wallets) GetAddresses(cp string) ([]string, error) {
 	if id, ok := wlts.ids[cp]; ok {
 		return wallet.GetAddresses(id)
 	}

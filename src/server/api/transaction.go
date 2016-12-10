@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -18,13 +17,6 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			if err := c.BindJSON(&req); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				break
-			}
-
-			cp, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
 				break
 			}
 

@@ -24,9 +24,9 @@ type Accounter interface {
 }
 
 type Addresser interface {
-	WatchAddress(ct coin.Type, addr string)
-	GetNewAddress(coinType coin.Type) string
-	GetAddrPrivKey(ct coin.Type, addr string) (string, error)
+	WatchAddress(ct, addr string)
+	GetNewAddress(coinType string) string
+	GetAddrPrivKey(ct, addr string) (string, error)
 }
 
 type Order interface {
@@ -35,8 +35,8 @@ type Order interface {
 }
 
 type Utxor interface {
-	ChooseUtxos(ct coin.Type, amount uint64, tm time.Duration) (interface{}, error)
-	PutUtxos(ct coin.Type, utxos interface{})
+	ChooseUtxos(ct string, amount uint64, tm time.Duration) (interface{}, error)
+	PutUtxos(ct string, utxos interface{})
 }
 
 type Server interface {
@@ -44,6 +44,6 @@ type Server interface {
 	GetSecKey() string
 	GetBtcFee() uint64
 	GetSupportCoins() []string
-	GetCoin(ct coin.Type) (coin.Gateway, error)
+	GetCoin(ct string) (coin.Gateway, error)
 	BindCoins(cs ...coin.Gateway) error
 }

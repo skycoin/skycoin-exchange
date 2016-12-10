@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	logging "github.com/op/go-logging"
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -21,7 +20,7 @@ var logger = logging.MustGetLogger("client.account")
 type Account struct {
 	Pubkey string
 	Seckey string
-	WltIDs map[coin.Type]string // key: wallet type, value: wallet id.
+	WltIDs map[string]string // key: wallet type, value: wallet id.
 }
 
 type accountJSON struct {
@@ -69,7 +68,7 @@ func New() Account {
 	return Account{
 		Pubkey: p.Hex(),
 		Seckey: s.Hex(),
-		WltIDs: make(map[coin.Type]string),
+		WltIDs: make(map[string]string),
 	}
 }
 
@@ -189,7 +188,7 @@ func (acts accounts) toJSON() []accountJSON {
 		}
 
 		for cp, id := range a.WltIDs {
-			aj.WltIDs[cp.String()] = id
+			aj.WltIDs[cp] = id
 		}
 		actsJSON[i] = aj
 	}
@@ -202,14 +201,10 @@ func makeAccountsFromJSON(actsJSON []accountJSON) ([]Account, error) {
 		act := Account{
 			Pubkey: aj.Pubkey,
 			Seckey: aj.Seckey,
-			WltIDs: make(map[coin.Type]string),
+			WltIDs: make(map[string]string),
 		}
 		for cp, id := range aj.WltIDs {
-			cpt, err := coin.TypeFromStr(cp)
-			if err != nil {
-				return accounts{}, err
-			}
-			act.WltIDs[cpt] = id
+			act.WltIDs[cp] = id
 		}
 		acts[i] = act
 	}

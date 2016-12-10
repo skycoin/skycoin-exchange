@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/client/account"
-	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/stretchr/testify/assert"
 )
@@ -94,8 +95,8 @@ func TestNewAndSet(t *testing.T) {
 	defer teardown()
 
 	a := account.New()
-	a.WltIDs[coin.Bitcoin] = "bitcoin_sd110"
-	a.WltIDs[coin.Skycoin] = "skycoin_sd110"
+	a.WltIDs[bitcoin.Type] = "bitcoin_sd110"
+	a.WltIDs[skycoin.Type] = "skycoin_sd110"
 	account.Set(a)
 
 	// get account
@@ -139,8 +140,8 @@ func TestGetAccount(t *testing.T) {
 	assert.Equal(t, act, a)
 
 	// add wallet id
-	act.WltIDs[coin.Bitcoin] = "bitcoin_sd19"
-	act.WltIDs[coin.Skycoin] = "skycoin_sd19"
+	act.WltIDs[bitcoin.Type] = "bitcoin_sd19"
+	act.WltIDs[skycoin.Type] = "skycoin_sd19"
 	account.Set(act)
 
 	newA, err := account.Get(act.Pubkey)

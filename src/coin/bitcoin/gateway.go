@@ -197,5 +197,5 @@ func (btc *Bitcoin) Symbol() string {
 
 // Type returns bitcoin type.
 func (btc *Bitcoin) Type() string {
-	return "bitcoin"
+	return Type
 }

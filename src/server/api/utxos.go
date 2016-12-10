@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -19,14 +18,7 @@ func GetUtxos(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			cp, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error(err.Error())
-				break
-			}
-
-			coin, err := egn.GetCoin(cp)
+			coin, err := egn.GetCoin(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				logger.Error(err.Error())
@@ -58,14 +50,7 @@ func GetOutput(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			ct, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
-				logger.Error(err.Error())
-				break
-			}
-
-			coin, err := egn.GetCoin(ct)
+			coin, err := egn.GetCoin(req.GetCoinType())
 			if err != nil {
 				rlt = pp.MakeErrRes(err)
 				logger.Error(err.Error())

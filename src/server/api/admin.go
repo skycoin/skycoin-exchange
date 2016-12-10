@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
@@ -59,14 +58,7 @@ func UpdateCredit(ee engine.Exchange) sknet.HandlerFunc {
 			}
 
 			// get coin type.
-			cp, err := coin.TypeFromStr(req.GetCoinType())
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrRes(err)
-				break
-			}
-
-			if err := a.SetBalance(cp, req.GetAmount()); err != nil {
+			if err := a.SetBalance(req.GetCoinType(), req.GetAmount()); err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break

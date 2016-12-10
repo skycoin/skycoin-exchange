@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -15,7 +17,7 @@ type Walleter interface {
 	GetID() string                                     // get wallet id.
 	SetID(id string)                                   // set wallet id.
 	SetSeed(seed string)                               // init the wallet seed.
-	GetType() coin.Type                                // get the wallet coin type.
+	GetType() string                                   // get the wallet coin type.
 	NewAddresses(num int) ([]coin.AddressEntry, error) // generate new addresses.
 	GetAddresses() []string                            // get all addresses in the wallet.
 	GetKeypair(addr string) (string, string, error)    // get pub/sec key pair of specific address
@@ -34,18 +36,18 @@ var Ext = "wlt"
 // Creator wallet creator.
 type Creator func() Walleter
 
-var gWalletCreators = make(map[coin.Type]Creator)
+var gWalletCreators = make(map[string]Creator)
 
 func init() {
 	// the default wallet creator are registered here, using the following RegisterCreator function
 	// to extend new wallet type.
-	gWalletCreators[coin.Bitcoin] = NewBtcWltCreator()
-	gWalletCreators[coin.Skycoin] = NewSkyWltCreator()
+	gWalletCreators[bitcoin.Type] = NewBtcWltCreator()
+	gWalletCreators[skycoin.Type] = NewSkyWltCreator()
 }
 
 // RegisterCreator when new type wallet need to be supported,
 // the wallet must provide Creator, and use this function to register the creator into system.
-func RegisterCreator(tp coin.Type, ctor Creator) error {
+func RegisterCreator(tp string, ctor Creator) error {
 	if _, ok := gWalletCreators[tp]; ok {
 		return fmt.Errorf("%s wallet already registered", tp)
 	}
@@ -79,7 +81,7 @@ func GetWalletDir() string {
 }
 
 // New create wallet base on seed and coin type.
-func New(tp coin.Type, seed string) (Walleter, error) {
+func New(tp, seed string) (Walleter, error) {
 	newWlt, ok := gWalletCreators[tp]
 	if !ok {
 		return nil, fmt.Errorf("%s wallet not regestered", tp)
@@ -103,7 +105,7 @@ func IsExist(id string) bool {
 }
 
 // MakeWltID make wallet id base on coin type and seed.
-func MakeWltID(cp coin.Type, seed string) string {
+func MakeWltID(cp, seed string) string {
 	return fmt.Sprintf("%s_%s", cp, seed)
 }
 
