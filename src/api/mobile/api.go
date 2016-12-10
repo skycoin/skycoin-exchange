@@ -112,7 +112,7 @@ func GetKeyPairOfAddr(walletID string, addr string) (string, error) {
 	return string(d), nil
 }
 
-// GetBalance return balance of specific address.
+// GetBalance return balance of a specific address.
 func GetBalance(coinType string, address string) (string, error) {
 	node, ok := nodeMap[coinType]
 	if !ok {
@@ -141,6 +141,7 @@ func GetBalance(coinType string, address string) (string, error) {
 	return string(d), nil
 }
 
+// SendSky sends skycoins to an address from a specific wallet
 func SendSky(walletID string, toAddr string, amount string) (string, error) {
 	// validate amount
 	amt, err := strconv.ParseUint(amount, 10, 64)
@@ -172,6 +173,7 @@ func SendSky(walletID string, toAddr string, amount string) (string, error) {
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
+// SendBtc sends bitcoins to an address from a specific wallet
 func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error) {
 	// validate amount
 	amt, err := strconv.ParseUint(amount, 10, 64)
@@ -212,6 +214,7 @@ func SendBtc(walletID string, toAddr string, amount string, fee string) (string,
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
+// GetTransactionByID gets transaction verbose info by id
 func GetTransactionByID(coinType, txid string) (string, error) {
 	node, ok := nodeMap[coinType]
 	if !ok {
@@ -221,9 +224,9 @@ func GetTransactionByID(coinType, txid string) (string, error) {
 	return node.GetTransactionByID(txid)
 }
 
-// GetSkyOutputByID get skycoin output info by id
-func GetSkyOutputByID(id string) (string, error) {
-	node, ok := nodeMap["skycoin"]
+// GetOutputByID gets output info by id, Note: bitcoin is not supported.
+func GetOutputByID(coinType, id string) (string, error) {
+	node, ok := nodeMap[coinType]
 	if !ok {
 		return "", fmt.Errorf("skycoin is not supported")
 	}
