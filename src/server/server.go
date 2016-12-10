@@ -25,16 +25,21 @@ var logger = logging.MustGetLogger("exchange.server")
 
 // Config store server's configuration.
 type Config struct {
-	Server          string // api server ip
-	Port            int    // api port
-	BtcFee          int    // btc transaction fee
-	DataDir         string // data directory
-	Seed            string // seed
-	Seckey          string // server's private key
-	UtxoPoolSize    int    // utxo pool size.
-	Admins          string // admins joined with `,`
-	SkycoinNodeAddr string
-	HttpProf        bool
+	Server        string            // api server ip
+	Port          int               // api port
+	BtcFee        int               // btc transaction fee
+	DataDir       string            // data directory
+	Seed          string            // seed
+	Seckey        string            // server's private key
+	UtxoPoolSize  int               // utxo pool size.
+	Admins        string            // admins joined with `,`
+	NodeAddresses map[string]string // node address map
+	HttpProf      bool
+}
+
+// NewConfig creates config instance and init nodeaddresses map.
+func NewConfig() *Config {
+	return &Config{NodeAddresses: make(map[string]string)}
 }
 
 // ExchangeServer provides services like account system, order book, api for differenct coins, etc.
@@ -51,7 +56,7 @@ type ExchangeServer struct {
 }
 
 // New create new server
-func New(cfg Config) engine.Exchange {
+func New(cfg *Config) engine.Exchange {
 	// init the data dir
 	path := initDataDir(cfg.DataDir)
 
@@ -100,7 +105,7 @@ func New(cfg Config) engine.Exchange {
 	if err != nil {
 		panic(err)
 	}
-	skyum := skycoin.NewUtxoManager(cfg.SkycoinNodeAddr, cfg.UtxoPoolSize, skyWatchAddrs)
+	skyum := skycoin.NewUtxoManager(cfg.NodeAddresses[skycoin.Type], cfg.UtxoPoolSize, skyWatchAddrs)
 
 	// load or create order books.
 	var orderManager *order.Manager
@@ -115,7 +120,7 @@ func New(cfg Config) engine.Exchange {
 	}
 
 	s := &ExchangeServer{
-		cfg:          cfg,
+		cfg:          *cfg,
 		wallets:      wlts,
 		Manager:      acntMgr,
 		btcum:        btcum,
