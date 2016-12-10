@@ -8,8 +8,6 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/client/account"
 	"github.com/skycoin/skycoin-exchange/src/client/router"
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
 	"github.com/skycoin/skycoin/src/util"
@@ -26,10 +24,17 @@ type Config struct {
 	WalletDir  string
 }
 
+// Service rpc client service.
+type Service struct {
+	cfg   Config
+	coins map[string]coin.Gateway
+}
+
 // New create client service
 func New(cfg Config) *Service {
 	return &Service{
-		cfg,
+		cfg:   cfg,
+		coins: make(map[string]coin.Gateway),
 	}
 }
 
