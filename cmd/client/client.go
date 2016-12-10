@@ -10,6 +10,8 @@ import (
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/client"
+	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -50,7 +52,9 @@ func main() {
 	// Watch for SIGUSR1
 	go catchDebug()
 
-	client.New(cfg).Run()
+	c := client.New(cfg)
+	c.BindCoins(&bitcoin.Bitcoin{}, &skycoin.Skycoin{NodeAddress: cfg.ServAddr})
+	c.Run()
 
 	<-quit
 
