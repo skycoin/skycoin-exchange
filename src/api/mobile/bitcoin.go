@@ -53,13 +53,13 @@ func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
 }
 
 func (bn btcNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
-	gw := bitcoin.Gateway{}
-	rawtx, err := gw.CreateRawTx(txIns, txOuts)
+	coin := bitcoin.Bitcoin{}
+	rawtx, err := coin.CreateRawTx(txIns, txOuts)
 	if err != nil {
 		return "", fmt.Errorf("create raw tx failed:%v", err)
 	}
 
-	return gw.SignRawTx(rawtx, getKey)
+	return coin.SignRawTx(rawtx, getKey)
 }
 
 func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
