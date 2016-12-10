@@ -59,19 +59,13 @@ func GetAddrBalance(ee engine.Exchange) sknet.HandlerFunc {
 
 			coin, err := ee.GetCoin(req.GetCoinType())
 			if err != nil {
-				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
+				logger.Error(err.Error())
 				break
 			}
 
-			gw, err := coin.GetGateway(cp)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
 			addrs := strings.Split(req.GetAddrs(), ",")
-			b, err := gw.GetBalance(addrs)
+			b, err := coin.GetBalance(addrs)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)

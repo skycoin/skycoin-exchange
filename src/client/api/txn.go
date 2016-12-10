@@ -172,7 +172,7 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 				break
 			}
 
-			gw, err := coin.GetGateway(cp)
+			coin, err := se.GetCoin(cp)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
@@ -201,7 +201,7 @@ func CreateRawTx(se Servicer) httprouter.Handle {
 					outs[i].Coins = o.Value
 					outs[i].Hours = o.Hours
 				}
-				rawtx, err = gw.CreateRawTx(params.TxIns, outs)
+				rawtx, err = coin.CreateRawTx(params.TxIns, outs)
 			}
 			if err != nil {
 				logger.Error(err.Error())
@@ -245,14 +245,14 @@ func SignRawTx(se Servicer) httprouter.Handle {
 				break
 			}
 
-			gw, err := coin.GetGateway(cp)
+			coin, err := se.GetCoin(cp)
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			tx, err := gw.SignRawTx(rawtx, getPrivKey(cp))
+			tx, err := coin.SignRawTx(rawtx, getPrivKey(cp))
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)

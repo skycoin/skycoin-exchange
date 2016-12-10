@@ -21,15 +21,15 @@ func InjectTx(egn engine.Exchange) sknet.HandlerFunc {
 			}
 
 			// get coin gateway
-			gateway, err := coin.GetGateway(cp)
+			coin, err := egn.GetCoin(req.GetCoinType())
 			if err != nil {
 				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
+				rlt = pp.MakeErrRes(err)
 				break
 			}
 
 			// inject tx.
-			txid, err := gateway.InjectTx(req.GetTx())
+			txid, err := coin.InjectTx(req.GetTx())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
@@ -58,27 +58,20 @@ func GetTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			cp, err := coin.TypeFromStr(req.GetCoinType())
+			coin, err := egn.GetCoin(req.GetCoinType())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
 
-			gateway, err := coin.GetGateway(cp)
-			if err != nil {
-				logger.Error(err.Error())
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-
 			// brief validate transaction id
-			if !gateway.ValidateTxid(req.GetTxid()) {
+			if !coin.ValidateTxid(req.GetTxid()) {
 				rlt = pp.MakeErrRes(errors.New("invalid transaction id"))
 				break
 			}
 
-			tx, err := gateway.GetTx(req.GetTxid())
+			tx, err := coin.GetTx(req.GetTxid())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
@@ -107,18 +100,13 @@ func GetRawTx(egn engine.Exchange) sknet.HandlerFunc {
 				break
 			}
 
-			cp, err := coin.TypeFromStr(req.GetCoinType())
+			coin, err := egn.GetCoin(req.GetCoinType())
 			if err != nil {
+				logger.Error(err.Error())
 				rlt = pp.MakeErrRes(err)
 				break
 			}
-
-			gateway, err := coin.GetGateway(cp)
-			if err != nil {
-				rlt = pp.MakeErrResWithCode(pp.ErrCode_ServerError)
-				break
-			}
-			rawtx, err := gateway.GetRawTx(req.GetTxid())
+			rawtx, err := coin.GetRawTx(req.GetTxid())
 			if err != nil {
 				logger.Error(err.Error())
 				rlt = pp.MakeErrResWithCode(pp.ErrCode_WrongRequest)
