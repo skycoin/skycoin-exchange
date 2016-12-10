@@ -9,7 +9,8 @@ var Type = "mzcoin"
 
 // Mzcoin will implement coin.Gateway interface
 type Mzcoin struct {
-	skycoin.Skycoin // embeded from skycoin , as all apis are the same as skycoin
+	skycoin.Skycoin        // embeded from skycoin , as all apis are the same as skycoin
+	NodeAddress     string // mzcoin's node address
 }
 
 // Symbol returns the mzcoin symbol
