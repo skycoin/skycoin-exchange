@@ -57,8 +57,9 @@ func TestGetBalance(t *testing.T) {
 		address  string
 		expect   uint64
 	}{
-		{"skycoin", "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", 4000000},
+		{"skycoin", "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", 6000000},
 		{"bitcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 938000},
+		{"mzcoin", "2BMHv3PEyat9K9snsnDyRv7UBuRuycMPyWH", 1000000000},
 	}
 	for _, td := range testData {
 		b, err := api.GetBalance(td.coinType, td.address)
@@ -110,6 +111,16 @@ func TestGetAddresses(t *testing.T) {
 				"Ays2XnjRKFxLR5Z5cN4VFwUoctAiftLuwB": true,
 			},
 		},
+		{
+			"mzcoin",
+			"2345",
+			2,
+			2,
+			map[string]bool{
+				"5v6aHMp7dxwFzZmnF1c2XjcJSKnaMixXmr":  true,
+				"2CiP9MXLy6KpUyUzU3Y8nTRTuffYwreqgqa": true,
+			},
+		},
 	}
 
 	for _, td := range testData {
@@ -150,7 +161,7 @@ func TestSendBtc(t *testing.T) {
 	}
 	defer teardown()
 
-	id, err := api.NewWallet("bitcoin", "adfasda")
+	id, err := api.NewWallet("bitcoin", "asdfasdf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +189,7 @@ func TestSendSky(t *testing.T) {
 	}
 	defer teardown()
 
-	id, err := api.NewWallet("skycoin", "adfasda")
+	id, err := api.NewWallet("skycoin", "myf1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +199,35 @@ func TestSendSky(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	txid, err := api.SendSky(id, "fyqX5YuwXMUs4GEUE3LjLyhrqvNztFHQ4B", "1000000")
+	txid, err := api.SendSky(id, "UsS43vk2yRqjXvgbwq12Dkjr8cHVTBxYoj", "1000000")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	// if !strings.Contains(err.Error(), "insufficient balance") {
+	// 	t.Fatal(err)
+	// }
+	fmt.Println(txid)
+}
+
+func TestSendMzc(t *testing.T) {
+	_, teardown, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+
+	id, err := api.NewWallet("mzcoin", "99999")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = api.NewAddress(id, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txid, err := api.SendMzc(id, "ntXEnuc6JoDie9eV4jEFFvALiRMpadhyGS", "1000000")
 	// if err != nil {
 	// 	t.Fatal(err)
 	// 	return
@@ -280,6 +319,33 @@ func TestGetTransactionByID(t *testing.T) {
 			"",
 			errors.New("unknow is not supported"),
 		},
+		{
+			"mzcoin normal",
+			args{
+				"mzcoin",
+				"ae27da319436e0397dbfc1d596b7dccb71238dec77120137f9347426afd668a2",
+			},
+			"16d2e0a200ecdb7a363debfe5883b1e8f0c902aabb831f7e5e8908ccbd037388",
+			nil,
+		},
+		{
+			"mzcoin invalid txid len",
+			args{
+				"mzcoin",
+				"b1481d",
+			},
+			"",
+			errors.New("invalid transaction id"),
+		},
+		{
+			"mzcoin invalid txid",
+			args{
+				"mzcoin",
+				"b1481d614ffcc27408fe2131198d9d2821c78601a0aa23d8e9965b2a5196edc1",
+			},
+			"",
+			errors.New("not found\n"),
+		},
 	}
 	for _, tt := range tests {
 		got, err := api.GetTransactionByID(tt.args.coinType, tt.args.txid)
@@ -293,7 +359,7 @@ func TestGetTransactionByID(t *testing.T) {
 	}
 }
 
-func TestGetSkyOutputByID(t *testing.T) {
+func TestGetOutputByID(t *testing.T) {
 	_, teardown, err := setup()
 	if err != nil {
 		t.Fatal(err)
@@ -304,39 +370,50 @@ func TestGetSkyOutputByID(t *testing.T) {
 		hash string
 	}
 	tests := []struct {
-		name    string
-		hash    string
-		contain string
-		wantErr error
+		name     string
+		coinType string
+		hash     string
+		contain  string
+		wantErr  error
 	}{
 		// TODO: Add test cases.
 		{
-			"normal",
+			"skycin normal",
+			"skycoin",
 			"a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c5",
 			"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW",
 			nil,
 		},
 		{
 			"invalid hash len",
+			"skycoin",
 			"a57c038",
 			"",
 			errors.New("invalid output hash, encoding/hex: odd length hex string"),
 		},
 		{
 			"invalid hash",
+			"skycoin",
 			"a57c038591f862b8fada57e496ef948183b153348d7932921f865a8541a477c9",
 			"",
 			errors.New("not found\n"),
 		},
+		{
+			"mzcoin normal",
+			"mzcoin",
+			"0c22889e2d76512aea33063eae9e1a05891e4e6f55514c72ceabee0f813cca0b",
+			"2BMHv3PEyat9K9snsnDyRv7UBuRuycMPyWH",
+			nil,
+		},
 	}
 	for _, tt := range tests {
-		got, err := api.GetSkyOutputByID(tt.hash)
+		got, err := api.GetOutputByID(tt.coinType, tt.hash)
 		if !reflect.DeepEqual(err, tt.wantErr) {
-			t.Errorf("%q. GetSkyOutputByHash() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			t.Errorf("%q. GetOutputByHash() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
 		if !strings.Contains(got, tt.contain) {
-			t.Errorf("%q. GetSkyOutputByHash() = %v, want contains %v", tt.name, got, tt.contain)
+			t.Errorf("%q. GetOutputByHash() = %v, want contains %v", tt.name, got, tt.contain)
 		}
 	}
 }
