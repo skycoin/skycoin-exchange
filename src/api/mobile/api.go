@@ -148,22 +148,17 @@ func SendSky(walletID string, toAddr string, amount string) (string, error) {
 		return "", errors.New("skycoin is not supported")
 	}
 
-	txIns, txOut, err := node.PrepareTx(params)
-	if err != nil {
-		return "", err
+	return coin.Send(walletID, toAddr, amount)
+}
+
+// SendMzc sends mzcoin to an address from specific wallet.
+func SendMzc(walletID string, toAddr string, amount string) (string, error) {
+	coin, ok := coinMap["mzcoin"]
+	if !ok {
+		return "", errors.New("mzcoin is not supported")
 	}
 
-	// prepare keys
-	rawtx, err := node.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
-	if err != nil {
-		return "", fmt.Errorf("create raw transaction failed:%v", err)
-	}
-
-	txid, err := node.BroadcastTx(rawtx)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
+	return coin.Send(walletID, toAddr, amount)
 }
 
 // SendBtc sends bitcoins to an address from a specific wallet
@@ -173,21 +168,7 @@ func SendBtc(walletID string, toAddr string, amount string, fee string) (string,
 		return "", errors.New("bitcoin is not supported")
 	}
 
-	txIns, txOut, err := node.PrepareTx(params)
-	if err != nil {
-		return "", err
-	}
-
-	rawtx, err := node.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
-	if err != nil {
-		return "", fmt.Errorf("create raw transaction failed:%v", err)
-	}
-
-	txid, err := node.BroadcastTx(rawtx)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
+	return coin.Send(walletID, toAddr, amount, Fee(fee))
 }
 
 // GetTransactionByID gets transaction verbose info by id
