@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
@@ -13,7 +12,7 @@ import (
 )
 
 var config Config
-var nodeMap map[string]noder
+var coinMap map[string]Coin
 
 // Config used for init the api env, includes wallet dir path, skycoin node and bitcoin node address.
 // the node address is consisted of ip and port, eg: 127.0.0.1:6420
@@ -37,9 +36,10 @@ func Init(cfg *Config) {
 	wallet.InitDir(cfg.WalletDirPath)
 	config = *cfg
 
-	nodeMap = map[string]noder{
-		"skycoin": &skyNode{NodeAddr: config.ServerAddr},
-		"bitcoin": &btcNode{NodeAddr: config.ServerAddr},
+	coinMap = map[string]Coin{
+		"skycoin": newCoin("skycoin", config.ServerAddr),
+		"mzcoin":  newCoin("mzcoin", config.ServerAddr),
+		"bitcoin": newBitcoin(config.ServerAddr),
 	}
 }
 
@@ -114,16 +114,16 @@ func GetKeyPairOfAddr(walletID string, addr string) (string, error) {
 
 // GetBalance return balance of a specific address.
 func GetBalance(coinType string, address string) (string, error) {
-	node, ok := nodeMap[coinType]
+	coin, ok := coinMap[coinType]
 	if !ok {
 		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
-	if err := node.ValidateAddr(address); err != nil {
+	if err := coin.ValidateAddr(address); err != nil {
 		return "", err
 	}
 
-	bal, err := node.GetBalance([]string{address})
+	bal, err := coin.GetBalance([]string{address})
 	if err != nil {
 		return "", err
 	}
@@ -143,14 +143,7 @@ func GetBalance(coinType string, address string) (string, error) {
 
 // SendSky sends skycoins to an address from a specific wallet
 func SendSky(walletID string, toAddr string, amount string) (string, error) {
-	// validate amount
-	amt, err := strconv.ParseUint(amount, 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
-	}
-
-	params := skySendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt}
-	node, ok := nodeMap["skycoin"]
+	coin, ok := coinMap["skycoin"]
 	if !ok {
 		return "", errors.New("skycoin is not supported")
 	}
@@ -175,24 +168,7 @@ func SendSky(walletID string, toAddr string, amount string) (string, error) {
 
 // SendBtc sends bitcoins to an address from a specific wallet
 func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error) {
-	// validate amount
-	amt, err := strconv.ParseUint(amount, 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
-	}
-
-	// validate fee
-	fe, err := strconv.ParseUint(fee, 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("parse fee string to uint64 failed: %v", err)
-	}
-
-	if fe < 1000 {
-		return "", fmt.Errorf("insufficient fee")
-	}
-
-	params := btcSendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt, Fee: fe}
-	node, ok := nodeMap["bitcoin"]
+	coin, ok := coinMap["bitcoin"]
 	if !ok {
 		return "", errors.New("bitcoin is not supported")
 	}
@@ -216,28 +192,28 @@ func SendBtc(walletID string, toAddr string, amount string, fee string) (string,
 
 // GetTransactionByID gets transaction verbose info by id
 func GetTransactionByID(coinType, txid string) (string, error) {
-	node, ok := nodeMap[coinType]
+	coin, ok := coinMap[coinType]
 	if !ok {
 		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
-	return node.GetTransactionByID(txid)
+	return coin.GetTransactionByID(txid)
 }
 
 // GetOutputByID gets output info by id, Note: bitcoin is not supported.
 func GetOutputByID(coinType, id string) (string, error) {
-	node, ok := nodeMap[coinType]
+	coin, ok := coinMap[coinType]
 	if !ok {
-		return "", fmt.Errorf("skycoin is not supported")
+		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
 	req := pp.GetOutputReq{
-		CoinType: pp.PtrString("skycoin"),
+		CoinType: pp.PtrString(coinType),
 		Hash:     pp.PtrString(id),
 	}
 
 	res := pp.GetOutputRes{}
-	if err := sknet.EncryGet(node.GetNodeAddr(), "/get/output", req, &res); err != nil {
+	if err := sknet.EncryGet(coin.GetNodeAddr(), "/get/output", req, &res); err != nil {
 		return "", err
 	}
 
