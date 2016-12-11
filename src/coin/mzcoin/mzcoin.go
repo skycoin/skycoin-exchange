@@ -9,8 +9,12 @@ var Type = "mzcoin"
 
 // Mzcoin will implement coin.Gateway interface
 type Mzcoin struct {
-	skycoin.Skycoin        // embeded from skycoin , as all apis are the same as skycoin
-	NodeAddress     string // mzcoin's node address
+	skycoin.Skycoin // embeded from skycoin , as all apis are the same as skycoin
+}
+
+// New creates a mzcoin instance.
+func New(nodeAddr string) *Mzcoin {
+	return &Mzcoin{Skycoin: skycoin.Skycoin{NodeAddress: nodeAddr}}
 }
 
 // Symbol returns the mzcoin symbol
