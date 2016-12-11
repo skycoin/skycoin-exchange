@@ -36,6 +36,11 @@ type Skycoin struct {
 	NodeAddress string // skycoin node address
 }
 
+// New creates a skycoin instance.
+func New(nodeAddr string) *Skycoin {
+	return &Skycoin{NodeAddress: nodeAddr}
+}
+
 // GetTx get skycoin verbose transaction.
 func (sky *Skycoin) GetTx(txid string) (*pp.Tx, error) {
 	url := fmt.Sprintf("http://%s/transaction?txid=%s", sky.NodeAddress, txid)
