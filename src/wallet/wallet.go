@@ -8,6 +8,7 @@ import (
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -43,6 +44,7 @@ func init() {
 	// to extend new wallet type.
 	gWalletCreators[bitcoin.Type] = NewBtcWltCreator()
 	gWalletCreators[skycoin.Type] = NewSkyWltCreator()
+	gWalletCreators[mzcoin.Type] = NewSkyWltCreator()
 }
 
 // RegisterCreator when new type wallet need to be supported,
