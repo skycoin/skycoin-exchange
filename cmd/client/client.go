@@ -11,6 +11,7 @@ import (
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/client"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/util"
@@ -53,7 +54,9 @@ func main() {
 	go catchDebug()
 
 	c := client.New(cfg)
-	c.BindCoins(&bitcoin.Bitcoin{}, &skycoin.Skycoin{NodeAddress: cfg.ServAddr})
+	c.BindCoins(&bitcoin.Bitcoin{},
+		skycoin.New(cfg.ServAddr),
+		mzcoin.New(cfg.ServAddr))
 	c.Run()
 
 	<-quit

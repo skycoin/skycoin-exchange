@@ -67,8 +67,8 @@ func main() {
 	// Bind supported coins
 	s.BindCoins(
 		&bitcoin.Bitcoin{},
-		&skycoin.Skycoin{NodeAddress: cfg.NodeAddresses[skycoin.Type]},
-		&mzcoin.Mzcoin{NodeAddress: cfg.NodeAddresses[mzcoin.Type]})
+		skycoin.New(cfg.NodeAddresses[skycoin.Type]),
+		mzcoin.New(cfg.NodeAddresses[mzcoin.Type]))
 	s.Run()
 }
 
