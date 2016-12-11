@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 type btcNode struct {
 	NodeAddr string
+	fee      string // bitcoin fee
 }
 
 type btcSendParams struct {
@@ -24,6 +26,10 @@ type btcSendParams struct {
 	ToAddr   string
 	Amount   uint64
 	Fee      uint64
+}
+
+func newBitcoin(nodeAddr string) *btcNode {
+	return &btcNode{NodeAddr: nodeAddr, fee: "2000"} // default transaction fee is 2000
 }
 
 func (bn btcNode) GetNodeAddr() string {
@@ -98,6 +104,55 @@ func (bn btcNode) GetTransactionByID(txid string) (string, error) {
 		return "", err
 	}
 	return string(d), nil
+}
+
+// Fee option for setting transaction fee.
+func Fee(n string) Option {
+	return func(v interface{}) {
+		btc := v.(*btcNode)
+		btc.fee = n
+	}
+}
+
+// Send amount bitcoins to address from specific wallet, Note: should not be used concurrently.
+func (bc *btcNode) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
+	for _, op := range ops {
+		op(bc)
+	}
+
+	// validate amount
+	amt, err := strconv.ParseUint(amount, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
+	}
+
+	// validate fee
+	fe, err := strconv.ParseUint(bc.fee, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse fee string to uint64 failed: %v", err)
+	}
+
+	if fe < 1000 {
+		return "", fmt.Errorf("insufficient fee")
+	}
+
+	params := btcSendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt, Fee: fe}
+
+	txIns, txOut, err := bc.PrepareTx(params)
+	if err != nil {
+		return "", err
+	}
+
+	rawtx, err := bc.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
+	if err != nil {
+		return "", fmt.Errorf("create raw transaction failed:%v", err)
+	}
+
+	txid, err := bc.BroadcastTx(rawtx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
 func (bn btcNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
