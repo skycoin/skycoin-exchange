@@ -179,6 +179,7 @@ func (btc *Bitcoin) GetUtxos(addrs []string) (interface{}, error) {
 	}
 
 	var res = pp.GetUtxoRes{
+		Result:   pp.MakeResultWithCode(pp.ErrCode_Success),
 		BtcUtxos: btcUxs,
 	}
 
