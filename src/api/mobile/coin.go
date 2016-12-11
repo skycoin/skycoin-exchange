@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"strings"
 
@@ -17,29 +18,48 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-// var privateKey cipher.SecKey
+type Option func(c interface{})
 
-type skyNode struct {
+// Coin coin client interface
+type Coin interface {
+	GetBalance(addrs []string) (uint64, error)
+	ValidateAddr(addr string) error
+	PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error)
+	CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error)
+	BroadcastTx(rawtx string) (string, error)
+	GetTransactionByID(txid string) (string, error)
+	GetNodeAddr() string
+	Send(walletID string, toAddr string, amount string, ops ...Option) (string, error)
+}
+
+// CoinEx implements the Coin interface.
+type CoinEx struct {
+	Name     string
 	NodeAddr string
 }
 
-type skySendParams struct {
+type sendParams struct {
 	WalletID string
 	ToAddr   string
 	Amount   uint64
 }
 
-func (sn skyNode) GetNodeAddr() string {
-	return sn.NodeAddr
+func newCoin(name, nodeAddr string) *CoinEx {
+	return &CoinEx{Name: name, NodeAddr: nodeAddr}
 }
 
-func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
+// GetNodeAddr returns the coin's node address
+func (cn CoinEx) GetNodeAddr() string {
+	return cn.NodeAddr
+}
+
+func (cn CoinEx) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 	req := pp.GetUtxoReq{
-		CoinType:  pp.PtrString("skycoin"),
+		CoinType:  pp.PtrString(cn.Name),
 		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/get/utxos", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.NodeAddr, "/get/utxos", req, &res); err != nil {
 		return nil, err
 	}
 
@@ -50,8 +70,9 @@ func (sn skyNode) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 	return res.SkyUtxos, nil
 }
 
-func (sn skyNode) GetBalance(addrs []string) (uint64, error) {
-	utxos, err := sn.getOutputs(addrs)
+// GetBalance gets balance of specific addresses
+func (cn CoinEx) GetBalance(addrs []string) (uint64, error) {
+	utxos, err := cn.getOutputs(addrs)
 	if err != nil {
 		return 0, err
 	}
@@ -64,12 +85,14 @@ func (sn skyNode) GetBalance(addrs []string) (uint64, error) {
 	return bal, nil
 }
 
-func (sn skyNode) ValidateAddr(address string) error {
+// ValidateAddr check if the address is validated
+func (cn CoinEx) ValidateAddr(address string) error {
 	_, err := cipher.DecodeBase58Address(address)
 	return err
 }
 
-func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
+// CreateRawTx creates raw transaction
+func (cn CoinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
 	tx := skycoin.Transaction{}
 	for _, in := range txIns {
 		tx.PushInput(cipher.MustSHA256FromHex(in.Txid))
@@ -91,7 +114,7 @@ func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 	for _, o := range outs {
 		out := o.(skycoin.TxOut)
 		if (out.Coins % 1e6) != 0 {
-			return "", errors.New("skycoin coins must be multiple of 1e6")
+			return "", fmt.Errorf("%s coins must be multiple of 1e6", cn.Name)
 		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
@@ -119,13 +142,14 @@ func (sn skyNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 	return hex.EncodeToString(d), nil
 }
 
-func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
+// BroadcastTx injects transaction
+func (cn CoinEx) BroadcastTx(rawtx string) (string, error) {
 	req := pp.InjectTxnReq{
-		CoinType: pp.PtrString("skycoin"),
+		CoinType: pp.PtrString(cn.Name),
 		Tx:       pp.PtrString(rawtx),
 	}
 	res := pp.InjectTxnRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/inject/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.NodeAddr, "/inject/tx", req, &res); err != nil {
 		return "", err
 	}
 
@@ -136,18 +160,19 @@ func (sn skyNode) BroadcastTx(rawtx string) (string, error) {
 	return res.GetTxid(), nil
 }
 
-func (sn skyNode) GetTransactionByID(txid string) (string, error) {
+// GetTransactionByID gets transaction verbose info by id
+func (cn CoinEx) GetTransactionByID(txid string) (string, error) {
 	req := pp.GetTxReq{
-		CoinType: pp.PtrString("skycoin"),
+		CoinType: pp.PtrString(cn.Name),
 		Txid:     pp.PtrString(txid),
 	}
 	res := pp.GetTxRes{}
-	if err := sknet.EncryGet(sn.NodeAddr, "/get/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.NodeAddr, "/get/tx", req, &res); err != nil {
 		return "", err
 	}
 
 	if !res.Result.GetSuccess() {
-		return "", fmt.Errorf("get skycoin transaction by id failed: %v", res.Result.GetReason())
+		return "", fmt.Errorf("get %s transaction by id failed: %v", cn.Name, res.Result.GetReason())
 	}
 	d, err := json.Marshal(res.GetTx())
 	if err != nil {
@@ -156,16 +181,17 @@ func (sn skyNode) GetTransactionByID(txid string) (string, error) {
 	return string(d), nil
 }
 
-func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
-	p := params.(skySendParams)
+// PrepareTx prepares the transaction info
+func (cn CoinEx) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
+	p := params.(sendParams)
 
 	tp := strings.Split(p.WalletID, "_")[0]
-	if tp != "skycoin" {
+	if tp != cn.Name {
 		return nil, nil, fmt.Errorf("invalid wallet %v", tp)
 	}
 
 	// validate address
-	if err := sn.ValidateAddr(p.ToAddr); err != nil {
+	if err := cn.ValidateAddr(p.ToAddr); err != nil {
 		return nil, nil, err
 	}
 
@@ -175,12 +201,12 @@ func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error
 	}
 
 	// outMap := make(map[string][]*pp.SkyUtxo)
-	totalUtxos, err := sn.getOutputs(addrs)
+	totalUtxos, err := cn.getOutputs(addrs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	utxos, err := sn.getSufficientOutputs(totalUtxos, p.Amount)
+	utxos, err := cn.getSufficientOutputs(totalUtxos, p.Amount)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -208,15 +234,47 @@ func (sn skyNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error
 	chgAddr := addrs[0]
 	if chgAmt > 0 {
 		txOut = append(txOut,
-			sn.makeTxOut(p.ToAddr, p.Amount, chgHours/2),
-			sn.makeTxOut(chgAddr, chgAmt, chgHours/2))
+			cn.makeTxOut(p.ToAddr, p.Amount, chgHours/2),
+			cn.makeTxOut(chgAddr, chgAmt, chgHours/2))
 	} else {
-		txOut = append(txOut, sn.makeTxOut(p.ToAddr, p.Amount, chgHours/2))
+		txOut = append(txOut, cn.makeTxOut(p.ToAddr, p.Amount, chgHours/2))
 	}
 	return txIns, txOut, nil
 }
 
-func (sn skyNode) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {
+// Send sends numbers of coins to toAddr from specific wallet
+func (cn *CoinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
+	for _, op := range ops {
+		op(cn)
+	}
+
+	// validate amount
+	amt, err := strconv.ParseUint(amount, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("parse amount string to uint64 failed: %v", err)
+	}
+
+	params := sendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt}
+
+	txIns, txOut, err := cn.PrepareTx(params)
+	if err != nil {
+		return "", err
+	}
+
+	// prepare keys
+	rawtx, err := cn.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
+	if err != nil {
+		return "", fmt.Errorf("create raw transaction failed:%v", err)
+	}
+
+	txid, err := cn.BroadcastTx(rawtx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
+}
+
+func (cn CoinEx) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {
 	outMap := make(map[string][]*pp.SkyUtxo)
 	for _, u := range utxos {
 		outMap[u.GetAddress()] = append(outMap[u.GetAddress()], u)
@@ -245,7 +303,7 @@ func (sn skyNode) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.S
 	return nil, errors.New("insufficient balance")
 }
 
-func (sn skyNode) makeTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
+func (cn CoinEx) makeTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
 	out := skycoin.TxOut{}
 	out.Address = cipher.MustDecodeBase58Address(addr)
 	out.Coins = coins
