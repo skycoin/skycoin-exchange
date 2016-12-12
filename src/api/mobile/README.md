@@ -181,6 +181,13 @@ Return:
 
 * second: error info
 
+### Send mzcoin
+
+```go
+func SendMzc(walletID string, toAddr string, amount string) (string, error)
+```
+
+
 ### Send bitcoin
 
 This api can be used to send bitcoin to one recipient address.
@@ -252,13 +259,15 @@ Return:
 
 * second: error info
 
-### Get skycoin output by hash
+### Get output by hash
 
 ```go
-func GetSkyOutputByHash(hash string) (string, error)
+func GetOutputByHash(coinType string, hash string) (string, error)
 ```
 
 Param:
+
+* coinType: can be skycoin or mzcoin, Note: bitcoin is not supported.
 
 * hash: the output hash string
 
