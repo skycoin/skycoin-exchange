@@ -16,7 +16,7 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-type btcNode struct {
+type bitcoinCli struct {
 	NodeAddr string
 	fee      string // bitcoin fee
 }
@@ -28,20 +28,20 @@ type btcSendParams struct {
 	Fee      uint64
 }
 
-func newBitcoin(nodeAddr string) *btcNode {
-	return &btcNode{NodeAddr: nodeAddr, fee: "2000"} // default transaction fee is 2000
+func newBitcoin(nodeAddr string) *bitcoinCli {
+	return &bitcoinCli{NodeAddr: nodeAddr, fee: "2000"} // default transaction fee is 2000
 }
 
-func (bn btcNode) GetNodeAddr() string {
+func (bn bitcoinCli) GetNodeAddr() string {
 	return bn.NodeAddr
 }
 
-func (bn btcNode) ValidateAddr(address string) error {
+func (bn bitcoinCli) ValidateAddr(address string) error {
 	_, err := cipher.BitcoinDecodeBase58Address(address)
 	return err
 }
 
-func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
+func (bn bitcoinCli) GetBalance(addrs []string) (uint64, error) {
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("bitcoin"),
 		Addresses: addrs,
@@ -58,7 +58,7 @@ func (bn btcNode) GetBalance(addrs []string) (uint64, error) {
 	return bal, nil
 }
 
-func (bn btcNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
+func (bn bitcoinCli) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
 	coin := bitcoin.Bitcoin{}
 	rawtx, err := coin.CreateRawTx(txIns, txOuts)
 	if err != nil {
@@ -68,7 +68,7 @@ func (bn btcNode) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts 
 	return coin.SignRawTx(rawtx, getKey)
 }
 
-func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
+func (bn bitcoinCli) BroadcastTx(rawtx string) (string, error) {
 	req := pp.InjectTxnReq{
 		CoinType: pp.PtrString("bitcoin"),
 		Tx:       pp.PtrString(rawtx),
@@ -85,7 +85,7 @@ func (bn btcNode) BroadcastTx(rawtx string) (string, error) {
 	return res.GetTxid(), nil
 }
 
-func (bn btcNode) GetTransactionByID(txid string) (string, error) {
+func (bn bitcoinCli) GetTransactionByID(txid string) (string, error) {
 	req := pp.GetTxReq{
 		CoinType: pp.PtrString("bitcoin"),
 		Txid:     pp.PtrString(txid),
@@ -109,15 +109,16 @@ func (bn btcNode) GetTransactionByID(txid string) (string, error) {
 // Fee option for setting transaction fee.
 func Fee(n string) Option {
 	return func(v interface{}) {
-		btc := v.(*btcNode)
+		btc := v.(*bitcoinCli)
 		btc.fee = n
 	}
 }
 
-// Send amount bitcoins to address from specific wallet, Note: should not be used concurrently.
-func (bc *btcNode) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
+// Send amount bitcoins to address from specific wallet
+func (bn bitcoinCli) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
+	btc := newBitcoin(bn.NodeAddr)
 	for _, op := range ops {
-		op(bc)
+		op(btc)
 	}
 
 	// validate amount
@@ -127,7 +128,7 @@ func (bc *btcNode) Send(walletID, toAddr, amount string, ops ...Option) (string,
 	}
 
 	// validate fee
-	fe, err := strconv.ParseUint(bc.fee, 10, 64)
+	fe, err := strconv.ParseUint(btc.fee, 10, 64)
 	if err != nil {
 		return "", fmt.Errorf("parse fee string to uint64 failed: %v", err)
 	}
@@ -138,24 +139,24 @@ func (bc *btcNode) Send(walletID, toAddr, amount string, ops ...Option) (string,
 
 	params := btcSendParams{WalletID: walletID, ToAddr: toAddr, Amount: amt, Fee: fe}
 
-	txIns, txOut, err := bc.PrepareTx(params)
+	txIns, txOut, err := bn.PrepareTx(params)
 	if err != nil {
 		return "", err
 	}
 
-	rawtx, err := bc.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
+	rawtx, err := bn.CreateRawTx(txIns, getPrivateKey(walletID), txOut)
 	if err != nil {
 		return "", fmt.Errorf("create raw transaction failed:%v", err)
 	}
 
-	txid, err := bc.BroadcastTx(rawtx)
+	txid, err := bn.BroadcastTx(rawtx)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
-func (bn btcNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
+func (bn bitcoinCli) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
 	p := params.(btcSendParams)
 
 	tp := strings.Split(p.WalletID, "_")[0]
@@ -206,14 +207,14 @@ func (bn btcNode) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error
 	return txIns, txOut, nil
 }
 
-func (bn btcNode) makeTxOut(addr string, value uint64) bitcoin.TxOut {
+func (bn bitcoinCli) makeTxOut(addr string, value uint64) bitcoin.TxOut {
 	return bitcoin.TxOut{
 		Addr:  addr,
 		Value: value,
 	}
 }
 
-func (bn btcNode) getSufficientOutputs(utxos []*pp.BtcUtxo, amt uint64) ([]*pp.BtcUtxo, uint64, error) {
+func (bn bitcoinCli) getSufficientOutputs(utxos []*pp.BtcUtxo, amt uint64) ([]*pp.BtcUtxo, uint64, error) {
 	outMap := make(map[string][]*pp.BtcUtxo)
 	for _, u := range utxos {
 		outMap[u.GetAddress()] = append(outMap[u.GetAddress()], u)
@@ -241,7 +242,7 @@ func (bn btcNode) getSufficientOutputs(utxos []*pp.BtcUtxo, amt uint64) ([]*pp.B
 	return nil, 0, errors.New("insufficient balance")
 }
 
-func (bn btcNode) getOutputs(addrs []string) ([]*pp.BtcUtxo, error) {
+func (bn bitcoinCli) getOutputs(addrs []string) ([]*pp.BtcUtxo, error) {
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString("bitcoin"),
 		Addresses: addrs,
