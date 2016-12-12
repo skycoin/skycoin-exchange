@@ -18,6 +18,7 @@ import (
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
+// Option used as option argument in coin.Send method.
 type Option func(c interface{})
 
 // Coin coin client interface
@@ -33,7 +34,7 @@ type Coin interface {
 }
 
 // CoinEx implements the Coin interface.
-type CoinEx struct {
+type coinEx struct {
 	Name     string
 	NodeAddr string
 }
@@ -44,16 +45,16 @@ type sendParams struct {
 	Amount   uint64
 }
 
-func newCoin(name, nodeAddr string) *CoinEx {
-	return &CoinEx{Name: name, NodeAddr: nodeAddr}
+func newCoin(name, nodeAddr string) *coinEx {
+	return &coinEx{Name: name, NodeAddr: nodeAddr}
 }
 
 // GetNodeAddr returns the coin's node address
-func (cn CoinEx) GetNodeAddr() string {
+func (cn coinEx) GetNodeAddr() string {
 	return cn.NodeAddr
 }
 
-func (cn CoinEx) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
+func (cn coinEx) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 	req := pp.GetUtxoReq{
 		CoinType:  pp.PtrString(cn.Name),
 		Addresses: addrs,
@@ -71,7 +72,7 @@ func (cn CoinEx) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 }
 
 // GetBalance gets balance of specific addresses
-func (cn CoinEx) GetBalance(addrs []string) (uint64, error) {
+func (cn coinEx) GetBalance(addrs []string) (uint64, error) {
 	utxos, err := cn.getOutputs(addrs)
 	if err != nil {
 		return 0, err
@@ -86,13 +87,13 @@ func (cn CoinEx) GetBalance(addrs []string) (uint64, error) {
 }
 
 // ValidateAddr check if the address is validated
-func (cn CoinEx) ValidateAddr(address string) error {
+func (cn coinEx) ValidateAddr(address string) error {
 	_, err := cipher.DecodeBase58Address(address)
 	return err
 }
 
 // CreateRawTx creates raw transaction
-func (cn CoinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
+func (cn coinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error) {
 	tx := skycoin.Transaction{}
 	for _, in := range txIns {
 		tx.PushInput(cipher.MustSHA256FromHex(in.Txid))
@@ -143,7 +144,7 @@ func (cn CoinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts i
 }
 
 // BroadcastTx injects transaction
-func (cn CoinEx) BroadcastTx(rawtx string) (string, error) {
+func (cn coinEx) BroadcastTx(rawtx string) (string, error) {
 	req := pp.InjectTxnReq{
 		CoinType: pp.PtrString(cn.Name),
 		Tx:       pp.PtrString(rawtx),
@@ -161,7 +162,7 @@ func (cn CoinEx) BroadcastTx(rawtx string) (string, error) {
 }
 
 // GetTransactionByID gets transaction verbose info by id
-func (cn CoinEx) GetTransactionByID(txid string) (string, error) {
+func (cn coinEx) GetTransactionByID(txid string) (string, error) {
 	req := pp.GetTxReq{
 		CoinType: pp.PtrString(cn.Name),
 		Txid:     pp.PtrString(txid),
@@ -182,7 +183,7 @@ func (cn CoinEx) GetTransactionByID(txid string) (string, error) {
 }
 
 // PrepareTx prepares the transaction info
-func (cn CoinEx) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
+func (cn coinEx) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
 	p := params.(sendParams)
 
 	tp := strings.Split(p.WalletID, "_")[0]
@@ -243,7 +244,7 @@ func (cn CoinEx) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error)
 }
 
 // Send sends numbers of coins to toAddr from specific wallet
-func (cn *CoinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
+func (cn *coinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, error) {
 	for _, op := range ops {
 		op(cn)
 	}
@@ -274,7 +275,7 @@ func (cn *CoinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, 
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
-func (cn CoinEx) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {
+func (cn coinEx) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {
 	outMap := make(map[string][]*pp.SkyUtxo)
 	for _, u := range utxos {
 		outMap[u.GetAddress()] = append(outMap[u.GetAddress()], u)
@@ -303,7 +304,7 @@ func (cn CoinEx) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.Sk
 	return nil, errors.New("insufficient balance")
 }
 
-func (cn CoinEx) makeTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
+func (cn coinEx) makeTxOut(addr string, coins uint64, hours uint64) skycoin.TxOut {
 	out := skycoin.TxOut{}
 	out.Address = cipher.MustDecodeBase58Address(addr)
 	out.Coins = coins
