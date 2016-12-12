@@ -58,8 +58,8 @@ func TestGetBalance(t *testing.T) {
 		expect   uint64
 	}{
 		{"skycoin", "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", 6000000},
-		{"bitcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 938000},
-		{"mzcoin", "2BMHv3PEyat9K9snsnDyRv7UBuRuycMPyWH", 1000000000},
+		{"bitcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 936000},
+		{"mzcoin", "2BMHv3PEyat9K9snsnDyRv7UBuRuycMPyWH", 998000000},
 	}
 	for _, td := range testData {
 		b, err := api.GetBalance(td.coinType, td.address)
@@ -189,7 +189,7 @@ func TestSendSky(t *testing.T) {
 	}
 	defer teardown()
 
-	id, err := api.NewWallet("skycoin", "myf1")
+	id, err := api.NewWallet("skycoin", "qwerqer")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,13 +200,13 @@ func TestSendSky(t *testing.T) {
 	}
 
 	txid, err := api.SendSky(id, "UsS43vk2yRqjXvgbwq12Dkjr8cHVTBxYoj", "1000000")
-	if err != nil {
-		t.Fatal(err)
-		return
-	}
-	// if !strings.Contains(err.Error(), "insufficient balance") {
+	// if err != nil {
 	// 	t.Fatal(err)
+	// 	return
 	// }
+	if !strings.Contains(err.Error(), "insufficient balance") {
+		t.Fatal(err)
+	}
 	fmt.Println(txid)
 }
 
