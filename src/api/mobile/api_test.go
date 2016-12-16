@@ -7,11 +7,10 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
-
-	"reflect"
 
 	api "github.com/skycoin/skycoin-exchange/src/api/mobile"
 	"github.com/stretchr/testify/assert"
@@ -470,3 +469,88 @@ func TestGetOutputByID(t *testing.T) {
 // 		}()
 // 	}
 // }
+
+func TestValidateAddress(t *testing.T) {
+	_, teardown, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+	type args struct {
+		coinType string
+		addr     string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			"normal bitcoin",
+			args{
+				"bitcoin",
+				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+			},
+			true,
+			false,
+		},
+		{
+			"invalid bitcoin address length",
+			args{
+				"bitcoin",
+				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz980",
+			},
+			false,
+			true,
+		},
+		{
+			"invalid bitcoin address",
+			args{
+				"bitcoin",
+				"24NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+			},
+			false,
+			true,
+		},
+		{
+			"normal skycoin address",
+			args{
+				"skycoin",
+				"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW",
+			},
+			true,
+			false,
+		},
+		{
+			"invalid skycoin address length",
+			args{
+				"skycoin",
+				"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW100",
+			},
+			false,
+			true,
+		},
+		{
+			"invalid skycoin address",
+			args{
+				"skycoin",
+				"BBbbbbbvv12dovBmjQKTtfE4rbjMmf3fzW100",
+			},
+			false,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		got, err := api.ValidateAddress(tt.args.coinType, tt.args.addr)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%q. ValidateAddress() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("%q. ValidateAddress() = %v, want %v", tt.name, got, tt.want)
+		}
+	}
+}
