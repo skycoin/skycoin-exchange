@@ -1,0 +1,225 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/btcsuite/btcd",
+			"repository": "https://github.com/btcsuite/btcd",
+			"vcs": "git",
+			"revision": "d0a9c03844a4a7f4c27e24fdc856333d17ec2f6f",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/btclog",
+			"repository": "https://github.com/btcsuite/btclog",
+			"vcs": "git",
+			"revision": "73889fb79bd687870312b6e40effcecffbd57d30",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/btcrpcclient",
+			"repository": "https://github.com/btcsuite/btcrpcclient",
+			"vcs": "git",
+			"revision": "7903290fd9956021ed7b65463f8667df345b365e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/btcutil",
+			"repository": "https://github.com/btcsuite/btcutil",
+			"vcs": "git",
+			"revision": "96e858f48ed95f9245e765d98be0ee01176409c7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/fastsha256",
+			"repository": "https://github.com/btcsuite/fastsha256",
+			"vcs": "git",
+			"revision": "637e656429416087660c84436a2a035d69d54e2e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/go-flags",
+			"repository": "https://github.com/btcsuite/go-flags",
+			"vcs": "git",
+			"revision": "6c288d648c1cc1befcb90cb5511dcacf64ae8e61",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/go-socks/socks",
+			"repository": "https://github.com/btcsuite/go-socks",
+			"vcs": "git",
+			"revision": "cfe8b59e565c1a5bd4e2005d77cd9aa8b2e14524",
+			"branch": "master",
+			"path": "/socks",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/golangcrypto/ripemd160",
+			"repository": "https://github.com/btcsuite/golangcrypto",
+			"vcs": "git",
+			"revision": "53f62d9b43e87a6c56975cf862af7edf33a8d0df",
+			"branch": "master",
+			"path": "/ripemd160",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/goleveldb/leveldb",
+			"repository": "https://github.com/btcsuite/goleveldb",
+			"vcs": "git",
+			"revision": "7834afc9e8cd15233b6c3d97e12674a31ca24602",
+			"branch": "master",
+			"path": "/leveldb",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/seelog",
+			"repository": "https://github.com/btcsuite/seelog",
+			"vcs": "git",
+			"revision": "313961b101eb55f65ae0f03ddd4e322731763b6c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/snappy-go",
+			"repository": "https://github.com/btcsuite/snappy-go",
+			"vcs": "git",
+			"revision": "0bdef8d067237991ddaa1bb6072a740bc40601ba",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/websocket",
+			"repository": "https://github.com/btcsuite/websocket",
+			"vcs": "git",
+			"revision": "31079b6807923eb23992c421b114992b95131b55",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/winsvc/eventlog",
+			"repository": "https://github.com/btcsuite/winsvc",
+			"vcs": "git",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"branch": "master",
+			"path": "/eventlog",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/winsvc/mgr",
+			"repository": "https://github.com/btcsuite/winsvc",
+			"vcs": "git",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"branch": "master",
+			"path": "mgr",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/winsvc/registry",
+			"repository": "https://github.com/btcsuite/winsvc",
+			"vcs": "git",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"branch": "master",
+			"path": "registry",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/winsvc/svc",
+			"repository": "https://github.com/btcsuite/winsvc",
+			"vcs": "git",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"branch": "master",
+			"path": "svc",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/btcsuite/winsvc/winapi",
+			"repository": "https://github.com/btcsuite/winsvc",
+			"vcs": "git",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"branch": "master",
+			"path": "winapi",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/codahale/chacha20",
+			"repository": "https://github.com/codahale/chacha20",
+			"vcs": "git",
+			"revision": "ec07b4f69a3f70b1dd2a8ad77230deb1ba5d6953",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"vcs": "git",
+			"revision": "346938d642f2ec3594ed81d874461961cd0faa76",
+			"branch": "master",
+			"path": "/spew",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
+			"branch": "master",
+			"path": "/proto",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/ptypes/any",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
+			"branch": "master",
+			"path": "ptypes/any",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/onsi/ginkgo",
+			"repository": "https://github.com/onsi/ginkgo",
+			"vcs": "git",
+			"revision": "00054c0bb96fc880d4e0be1b90937fad438c5290",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/onsi/gomega",
+			"repository": "https://github.com/onsi/gomega",
+			"vcs": "git",
+			"revision": "f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/op/go-logging",
+			"repository": "https://github.com/op/go-logging",
+			"vcs": "git",
+			"revision": "b2cb9fa56473e98db8caba80237377e83fe44db5",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/unix",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"branch": "master",
+			"path": "/unix",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
+			"branch": "v2",
+			"notests": true
+		}
+	]
+}
