@@ -485,7 +485,7 @@ func TestValidateAddress(t *testing.T) {
 		name    string
 		args    args
 		want    bool
-		wantErr bool
+		wantErr error
 	}{
 		// TODO: Add test cases.
 		{
@@ -495,7 +495,7 @@ func TestValidateAddress(t *testing.T) {
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 			},
 			true,
-			false,
+			nil,
 		},
 		{
 			"invalid bitcoin address length",
@@ -504,16 +504,16 @@ func TestValidateAddress(t *testing.T) {
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz980",
 			},
 			false,
-			true,
+			errors.New("Invalid address length"),
 		},
 		{
-			"invalid bitcoin address",
+			"invalid bitcoin address version",
 			args{
 				"bitcoin",
 				"24NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 			},
 			false,
-			true,
+			errors.New("Invalid version"),
 		},
 		{
 			"normal skycoin address",
@@ -522,7 +522,7 @@ func TestValidateAddress(t *testing.T) {
 				"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW",
 			},
 			true,
-			false,
+			nil,
 		},
 		{
 			"invalid skycoin address length",
@@ -531,21 +531,21 @@ func TestValidateAddress(t *testing.T) {
 				"cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW100",
 			},
 			false,
-			true,
+			errors.New("Invalid address length"),
 		},
 		{
-			"invalid skycoin address",
+			"invalid skycoin address version",
 			args{
 				"skycoin",
-				"BBbbbbbvv12dovBmjQKTtfE4rbjMmf3fzW100",
+				"BBbbbbbvv12dovBmjQKTtfE4rbjMmf3fzW",
 			},
 			false,
-			true,
+			errors.New("Invalid version"),
 		},
 	}
 	for _, tt := range tests {
 		got, err := api.ValidateAddress(tt.args.coinType, tt.args.addr)
-		if (err != nil) != tt.wantErr {
+		if !reflect.DeepEqual(err, tt.wantErr) {
 			t.Errorf("%q. ValidateAddress() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
