@@ -11,6 +11,8 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 )
 
+// gobind doc: https://godoc.org/golang.org/x/mobile/cmd/gobind
+
 var config Config
 var coinMap map[string]Coin
 
@@ -208,6 +210,20 @@ func GetOutputByID(coinType, id string) (string, error) {
 	}
 
 	return string(d), nil
+}
+
+// ValidateAddress validate the address
+func ValidateAddress(coinType, addr string) (bool, error) {
+	coin, ok := coinMap[coinType]
+	if !ok {
+		return false, fmt.Errorf("%s is not supported", coinType)
+	}
+
+	if err := coin.ValidateAddr(addr); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func getPrivateKey(walletID string) coin.GetPrivKey {
