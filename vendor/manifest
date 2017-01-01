@@ -181,6 +181,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/julienschmidt/httprouter",
+			"repository": "https://github.com/julienschmidt/httprouter",
+			"vcs": "git",
+			"revision": "5dd70ee059943e81987a817fa1a755b11dd119c1",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/onsi/ginkgo",
 			"repository": "https://github.com/onsi/ginkgo",
 			"vcs": "git",
@@ -210,6 +218,23 @@
 			"vcs": "git",
 			"revision": "18a02ba4a312f95da08ff4cfc0055750ce50ae9e",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/tyler-smith/go-bip39",
+			"repository": "https://github.com/tyler-smith/go-bip39",
+			"vcs": "git",
+			"revision": "8e7a99b3e716f36d3b080a9a70f9eb45abe4edcc",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/pbkdf2",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f6b343c37ca80bfa8ea539da67a0b621f84fab1d",
+			"branch": "master",
+			"path": "/pbkdf2",
 			"notests": true
 		},
 		{
