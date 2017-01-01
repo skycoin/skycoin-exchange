@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
+	bip39 "github.com/tyler-smith/go-bip39"
 )
 
 // gobind doc: https://godoc.org/golang.org/x/mobile/cmd/gobind
@@ -224,6 +225,20 @@ func ValidateAddress(coinType, addr string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// NewSeed generates mnemonic seed
+func NewSeed() string {
+	entropy, err := bip39.NewEntropy(128)
+	if err != nil {
+		panic(err)
+	}
+
+	sd, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		panic(err)
+	}
+	return sd
 }
 
 func getPrivateKey(walletID string) coin.GetPrivKey {
