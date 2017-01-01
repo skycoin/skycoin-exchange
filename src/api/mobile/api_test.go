@@ -554,3 +554,11 @@ func TestValidateAddress(t *testing.T) {
 		}
 	}
 }
+
+func TestNewSeed(t *testing.T) {
+	sd := api.NewSeed()
+	ss := strings.Split(sd, " ")
+	if len(ss) != 12 {
+		t.Fatal("error seed")
+	}
+}
