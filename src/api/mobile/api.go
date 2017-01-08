@@ -6,16 +6,14 @@ import (
 	"fmt"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	bip39 "github.com/tyler-smith/go-bip39"
 )
 
 // gobind doc: https://godoc.org/golang.org/x/mobile/cmd/gobind
-
 var config Config
-var coinMap map[string]Coin
+var coinMap map[string]Coiner
 
 // Config used for init the api env, includes wallet dir path, skycoin node and bitcoin node address.
 // the node address is consisted of ip and port, eg: 127.0.0.1:6420
@@ -32,6 +30,13 @@ func NewConfig() *Config {
 
 // Init initialize wallet dir and node instance.
 func Init(cfg *Config) {
+	initConfig(cfg,
+		newCoin("skycoin", config.ServerAddr),
+		newCoin("mzcoin", config.ServerAddr),
+		newBitcoin(config.ServerAddr))
+}
+
+func initConfig(cfg *Config, coins ...Coiner) {
 	if cfg.ServerPubkey != "" {
 		sknet.SetPubkey(cfg.ServerPubkey)
 	}
@@ -39,10 +44,9 @@ func Init(cfg *Config) {
 	wallet.InitDir(cfg.WalletDirPath)
 	config = *cfg
 
-	coinMap = map[string]Coin{
-		"skycoin": newCoin("skycoin", config.ServerAddr),
-		"mzcoin":  newCoin("mzcoin", config.ServerAddr),
-		"bitcoin": newBitcoin(config.ServerAddr),
+	coinMap = make(map[string]Coiner)
+	for i := range coins {
+		coinMap[coins[i].Name()] = coins[i]
 	}
 }
 
@@ -144,6 +148,35 @@ func GetBalance(coinType string, address string) (string, error) {
 	return string(d), nil
 }
 
+// GetWalletBalance return balance of wallet.
+func GetWalletBalance(coinType string, wltID string) (string, error) {
+	coin, ok := coinMap[coinType]
+	if !ok {
+		return "", fmt.Errorf("%s is not supported", coinType)
+	}
+
+	addrs, err := wallet.GetAddresses(wltID)
+	if err != nil {
+		return "", err
+	}
+
+	bal, err := coin.GetBalance(addrs)
+	if err != nil {
+		return "", err
+	}
+	var res = struct {
+		Balance uint64 `json:"balance"`
+	}{
+		bal,
+	}
+
+	d, err := json.Marshal(res)
+	if err != nil {
+		return "", err
+	}
+	return string(d), nil
+}
+
 // SendSky sends skycoins to an address from a specific wallet
 func SendSky(walletID string, toAddr string, amount string) (string, error) {
 	coin, ok := coinMap["skycoin"]
@@ -191,26 +224,7 @@ func GetOutputByID(coinType, id string) (string, error) {
 		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
-	req := pp.GetOutputReq{
-		CoinType: pp.PtrString(coinType),
-		Hash:     pp.PtrString(id),
-	}
-
-	res := pp.GetOutputRes{}
-	if err := sknet.EncryGet(coin.GetNodeAddr(), "/get/output", req, &res); err != nil {
-		return "", err
-	}
-
-	if !res.Result.GetSuccess() {
-		return "", fmt.Errorf("get output failed: %v", res.Result.GetReason())
-	}
-
-	d, err := json.Marshal(res.GetOutput())
-	if err != nil {
-		return "", fmt.Errorf("unmarshal result failed, %v", err)
-	}
-
-	return string(d), nil
+	return coin.GetOutputByID(id)
 }
 
 // ValidateAddress validate the address
