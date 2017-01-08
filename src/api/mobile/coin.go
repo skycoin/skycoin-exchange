@@ -21,22 +21,24 @@ import (
 // Option used as option argument in coin.Send method.
 type Option func(c interface{})
 
-// Coin coin client interface
-type Coin interface {
+// Coiner coin client interface
+type Coiner interface {
+	Name() string
 	GetBalance(addrs []string) (uint64, error)
 	ValidateAddr(addr string) error
 	PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error)
 	CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error)
 	BroadcastTx(rawtx string) (string, error)
 	GetTransactionByID(txid string) (string, error)
+	GetOutputByID(id string) (string, error)
 	GetNodeAddr() string
 	Send(walletID string, toAddr string, amount string, ops ...Option) (string, error)
 }
 
 // CoinEx implements the Coin interface.
 type coinEx struct {
-	Name     string
-	NodeAddr string
+	name     string
+	nodeAddr string
 }
 
 type sendParams struct {
@@ -46,21 +48,25 @@ type sendParams struct {
 }
 
 func newCoin(name, nodeAddr string) *coinEx {
-	return &coinEx{Name: name, NodeAddr: nodeAddr}
+	return &coinEx{name: name, nodeAddr: nodeAddr}
+}
+
+func (cn coinEx) Name() string {
+	return cn.name
 }
 
 // GetNodeAddr returns the coin's node address
 func (cn coinEx) GetNodeAddr() string {
-	return cn.NodeAddr
+	return cn.nodeAddr
 }
 
 func (cn coinEx) getOutputs(addrs []string) ([]*pp.SkyUtxo, error) {
 	req := pp.GetUtxoReq{
-		CoinType:  pp.PtrString(cn.Name),
+		CoinType:  pp.PtrString(cn.name),
 		Addresses: addrs,
 	}
 	res := pp.GetUtxoRes{}
-	if err := sknet.EncryGet(cn.NodeAddr, "/get/utxos", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.nodeAddr, "/get/utxos", req, &res); err != nil {
 		return nil, err
 	}
 
@@ -115,7 +121,7 @@ func (cn coinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts i
 	for _, o := range outs {
 		out := o.(skycoin.TxOut)
 		if (out.Coins % 1e6) != 0 {
-			return "", fmt.Errorf("%s coins must be multiple of 1e6", cn.Name)
+			return "", fmt.Errorf("%s coins must be multiple of 1e6", cn.Name())
 		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
@@ -146,11 +152,11 @@ func (cn coinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts i
 // BroadcastTx injects transaction
 func (cn coinEx) BroadcastTx(rawtx string) (string, error) {
 	req := pp.InjectTxnReq{
-		CoinType: pp.PtrString(cn.Name),
+		CoinType: pp.PtrString(cn.name),
 		Tx:       pp.PtrString(rawtx),
 	}
 	res := pp.InjectTxnRes{}
-	if err := sknet.EncryGet(cn.NodeAddr, "/inject/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.nodeAddr, "/inject/tx", req, &res); err != nil {
 		return "", err
 	}
 
@@ -164,16 +170,16 @@ func (cn coinEx) BroadcastTx(rawtx string) (string, error) {
 // GetTransactionByID gets transaction verbose info by id
 func (cn coinEx) GetTransactionByID(txid string) (string, error) {
 	req := pp.GetTxReq{
-		CoinType: pp.PtrString(cn.Name),
+		CoinType: pp.PtrString(cn.name),
 		Txid:     pp.PtrString(txid),
 	}
 	res := pp.GetTxRes{}
-	if err := sknet.EncryGet(cn.NodeAddr, "/get/tx", req, &res); err != nil {
+	if err := sknet.EncryGet(cn.nodeAddr, "/get/tx", req, &res); err != nil {
 		return "", err
 	}
 
 	if !res.Result.GetSuccess() {
-		return "", fmt.Errorf("get %s transaction by id failed: %v", cn.Name, res.Result.GetReason())
+		return "", fmt.Errorf("get %s transaction by id failed: %v", cn.Name(), res.Result.GetReason())
 	}
 	d, err := json.Marshal(res.GetTx())
 	if err != nil {
@@ -187,7 +193,7 @@ func (cn coinEx) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error)
 	p := params.(sendParams)
 
 	tp := strings.Split(p.WalletID, "_")[0]
-	if tp != cn.Name {
+	if tp != cn.name {
 		return nil, nil, fmt.Errorf("invalid wallet %v", tp)
 	}
 
@@ -273,6 +279,29 @@ func (cn *coinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, 
 		return "", err
 	}
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
+}
+
+func (cn coinEx) GetOutputByID(id string) (string, error) {
+	req := pp.GetOutputReq{
+		CoinType: pp.PtrString(cn.Name()),
+		Hash:     pp.PtrString(id),
+	}
+
+	res := pp.GetOutputRes{}
+	if err := sknet.EncryGet(cn.GetNodeAddr(), "/get/output", req, &res); err != nil {
+		return "", err
+	}
+
+	if !res.Result.GetSuccess() {
+		return "", fmt.Errorf("get output failed: %v", res.Result.GetReason())
+	}
+
+	d, err := json.Marshal(res.GetOutput())
+	if err != nil {
+		return "", fmt.Errorf("unmarshal result failed, %v", err)
+	}
+
+	return string(d), nil
 }
 
 func (cn coinEx) getSufficientOutputs(utxos []*pp.SkyUtxo, amt uint64) ([]*pp.SkyUtxo, error) {

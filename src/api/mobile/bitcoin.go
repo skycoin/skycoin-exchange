@@ -32,6 +32,10 @@ func newBitcoin(nodeAddr string) *bitcoinCli {
 	return &bitcoinCli{NodeAddr: nodeAddr, fee: "2000"} // default transaction fee is 2000
 }
 
+func (bn bitcoinCli) Name() string {
+	return "bitcoin"
+}
+
 func (bn bitcoinCli) GetNodeAddr() string {
 	return bn.NodeAddr
 }
@@ -154,6 +158,10 @@ func (bn bitcoinCli) Send(walletID, toAddr, amount string, ops ...Option) (strin
 		return "", err
 	}
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
+}
+
+func (bn bitcoinCli) GetOutputByID(id string) (string, error) {
+	return "", errors.New("bitcion does not support GetOutputByID method")
 }
 
 func (bn bitcoinCli) PrepareTx(params interface{}) ([]coin.TxIn, interface{}, error) {
