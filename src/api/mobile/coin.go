@@ -30,7 +30,7 @@ type Coiner interface {
 	CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts interface{}) (string, error)
 	BroadcastTx(rawtx string) (string, error)
 	GetTransactionByID(txid string) (string, error)
-	GetOutputByID(id string) (string, error)
+	GetOutputByID(outid string) (string, error)
 	GetNodeAddr() string
 	Send(walletID string, toAddr string, amount string, ops ...Option) (string, error)
 }
@@ -281,10 +281,10 @@ func (cn *coinEx) Send(walletID, toAddr, amount string, ops ...Option) (string, 
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
-func (cn coinEx) GetOutputByID(id string) (string, error) {
+func (cn coinEx) GetOutputByID(outid string) (string, error) {
 	req := pp.GetOutputReq{
 		CoinType: pp.PtrString(cn.Name()),
-		Hash:     pp.PtrString(id),
+		Hash:     pp.PtrString(outid),
 	}
 
 	res := pp.GetOutputRes{}

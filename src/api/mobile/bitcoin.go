@@ -160,7 +160,7 @@ func (bn bitcoinCli) Send(walletID, toAddr, amount string, ops ...Option) (strin
 	return fmt.Sprintf(`{"txid":"%s"}`, txid), nil
 }
 
-func (bn bitcoinCli) GetOutputByID(id string) (string, error) {
+func (bn bitcoinCli) GetOutputByID(outid string) (string, error) {
 	return "", errors.New("bitcion does not support GetOutputByID method")
 }
 
