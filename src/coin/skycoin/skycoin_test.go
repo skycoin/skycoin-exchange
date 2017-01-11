@@ -13,6 +13,7 @@ import (
 
 func TestGetUnspentOutpts(t *testing.T) {
 	addrs := []string{
+		"fyqX5YuwXMUs4GEUE3LjLyhrqvNztFHQ4B",
 		"Kb9SqqTVA3XyQjZYb4wYrBVUeZWRKEQyzZ",
 		"24VUoHirWUpwJTjLxfMRkKjZZBsqESsagU9",
 	}

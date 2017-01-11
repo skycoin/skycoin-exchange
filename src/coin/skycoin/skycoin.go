@@ -367,13 +367,15 @@ func GetUnspentOutputs(nodeAddr string, addrs []string) ([]Utxo, error) {
 		return []Utxo{}, errors.New("get outputs failed")
 	}
 	defer rsp.Body.Close()
-	outputs := []SkyUtxo{}
-	if err := json.NewDecoder(rsp.Body).Decode(&outputs); err != nil {
+	outputSet := visor.ReadableOutputSet{}
+	if err := json.NewDecoder(rsp.Body).Decode(&outputSet); err != nil {
 		return []Utxo{}, err
 	}
-	ux := make([]Utxo, len(outputs))
-	for i, u := range outputs {
-		ux[i] = u
+
+	spendableOuts := outputSet.SpendableOutputs()
+	ux := make([]Utxo, len(spendableOuts))
+	for i, u := range spendableOuts {
+		ux[i] = SkyUtxo{u}
 	}
 	return ux, nil
 }
@@ -389,13 +391,14 @@ func getUnspentOutputsByHashes(nodeAddr string, hashes []string) ([]Utxo, error)
 		return []Utxo{}, err
 	}
 	defer rsp.Body.Close()
-	outputs := []SkyUtxo{}
-	if err := json.NewDecoder(rsp.Body).Decode(&outputs); err != nil {
+	outSet := visor.ReadableOutputSet{}
+	if err := json.NewDecoder(rsp.Body).Decode(&outSet); err != nil {
 		return []Utxo{}, err
 	}
-	ux := make([]Utxo, len(outputs))
-	for i, u := range outputs {
-		ux[i] = u
+
+	ux := make([]Utxo, len(outSet.HeadOutputs))
+	for i, u := range outSet.HeadOutputs {
+		ux[i] = SkyUtxo{u}
 	}
 	return ux, nil
 }
