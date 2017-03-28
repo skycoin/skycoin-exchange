@@ -31,9 +31,9 @@ func NewConfig() *Config {
 // Init initialize wallet dir and node instance.
 func Init(cfg *Config) {
 	initConfig(cfg,
-		newCoin("skycoin", config.ServerAddr),
-		newCoin("mzcoin", config.ServerAddr),
-		newBitcoin(config.ServerAddr))
+		newCoin("skycoin", cfg.ServerAddr),
+		newCoin("mzcoin", cfg.ServerAddr),
+		newBitcoin(cfg.ServerAddr))
 }
 
 func initConfig(cfg *Config, coins ...Coiner) {
