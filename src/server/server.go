@@ -34,7 +34,7 @@ type Config struct {
 	UtxoPoolSize  int               // utxo pool size.
 	Admins        string            // admins joined with `,`
 	NodeAddresses map[string]string // node address map
-	HttpProf      bool
+	HTTPProf      bool
 }
 
 // NewConfig creates config instance and init nodeaddresses map.
@@ -148,45 +148,40 @@ func (serv *ExchangeServer) BindCoins(cs ...coin.Gateway) error {
 }
 
 // Run start the exchange server.
-func (self *ExchangeServer) Run() {
-	logger.Info("server started %s:%d", self.cfg.Server, self.cfg.Port)
-	// register coins
-	// coin.RegisterGateway(coin.Bitcoin, &bitcoin.GatewayIns)
-	// coin.RegisterGateway(coin.Skycoin, &skycoin.GatewayIns)
-	// init the skycoin node address.
-	// skycoin.ServeAddr = self.cfg.SkycoinNodeAddr
+func (serv *ExchangeServer) Run() {
+	logger.Info("server started %s:%d", serv.cfg.Server, serv.cfg.Port)
 
 	// register the order handlers
-	for cp, c := range self.orderHandlers {
-		self.orderManager.RegisterOrderChan(cp, c)
+	for cp, c := range serv.orderHandlers {
+		serv.orderManager.RegisterOrderChan(cp, c)
 	}
 
 	// start the utxo manager
 	c := make(chan bool)
-	go self.btcum.Start(c)
-	go self.skyum.Start(c)
+	go serv.btcum.Start(c)
+	go serv.skyum.Start(c)
 
-	go self.orderManager.Start(1*time.Second, c)
-	self.handleOrders(c)
+	go serv.orderManager.Start(1*time.Second, c)
+	serv.handleOrders(c)
 
 	// start the api server.
-	// r := NewRouter(self)
-	r := router.New(self, c)
-	r.Run(self.cfg.Server, self.cfg.Port)
+	r := router.New(serv, c)
+	r.Run(serv.cfg.Server, serv.cfg.Port)
 }
 
 // GetBtcFee get transaction fee of bitcoin.
-func (self ExchangeServer) GetBtcFee() uint64 {
-	return uint64(self.cfg.BtcFee)
+func (serv *ExchangeServer) GetBtcFee() uint64 {
+	return uint64(serv.cfg.BtcFee)
 }
 
-func (self ExchangeServer) GetSecKey() string {
-	return self.cfg.Seckey
+// GetSecKey get secret key
+func (serv *ExchangeServer) GetSecKey() string {
+	return serv.cfg.Seckey
 }
 
-// GetPrivKey get the private key of specific address.
-func (self ExchangeServer) GetAddrPrivKey(cp, addr string) (string, error) {
-	_, key, err := self.wallets.GetKeypair(cp, addr)
+// GetAddrPrivKey get the private key of specific address.
+func (serv *ExchangeServer) GetAddrPrivKey(cp, addr string) (string, error) {
+	_, key, err := serv.wallets.GetKeypair(cp, addr)
 	if err != nil {
 		return "", err
 	}
@@ -195,10 +190,10 @@ func (self ExchangeServer) GetAddrPrivKey(cp, addr string) (string, error) {
 }
 
 // GetNewAddress create new address of specific coin type.
-func (self *ExchangeServer) GetNewAddress(cp string) string {
-	self.wltMtx.Lock()
-	defer self.wltMtx.Unlock()
-	addrEntry, err := self.wallets.NewAddresses(cp, 1)
+func (serv *ExchangeServer) GetNewAddress(cp string) string {
+	serv.wltMtx.Lock()
+	defer serv.wltMtx.Unlock()
+	addrEntry, err := serv.wallets.NewAddresses(cp, 1)
 	if err != nil {
 		panic("server get new address failed")
 	}
@@ -215,54 +210,57 @@ func (serv *ExchangeServer) GetCoin(ct string) (coin.Gateway, error) {
 }
 
 // ChooseUtxos choose appropriate bitcoin utxos,
-func (self *ExchangeServer) ChooseUtxos(cp string, amount uint64, tm time.Duration) (interface{}, error) {
+func (serv *ExchangeServer) ChooseUtxos(cp string, amount uint64, tm time.Duration) (interface{}, error) {
 	switch cp {
 	case bitcoin.Type:
-		return self.btcum.ChooseUtxos(amount, tm)
+		return serv.btcum.ChooseUtxos(amount, tm)
 	case skycoin.Type:
-		return self.skyum.ChooseUtxos(amount, tm)
+		return serv.skyum.ChooseUtxos(amount, tm)
 	default:
 		return nil, errors.New("unknow coin type")
 	}
 }
 
 // PutUtxos set back the utxos of specific coin type.
-func (self *ExchangeServer) PutUtxos(cp string, utxos interface{}) {
+func (serv *ExchangeServer) PutUtxos(cp string, utxos interface{}) {
 	switch cp {
 	case bitcoin.Type:
 		btcUtxos := utxos.([]bitcoin.Utxo)
 		for _, u := range btcUtxos {
-			self.btcum.PutUtxo(u)
+			serv.btcum.PutUtxo(u)
 		}
 	case skycoin.Type:
 		skyUtxos := utxos.([]skycoin.Utxo)
 		for _, u := range skyUtxos {
-			self.skyum.PutUtxo(u)
+			serv.skyum.PutUtxo(u)
 		}
 	}
 }
 
-// AddWatchAddress add watch address to utxo manager.
-func (self *ExchangeServer) WatchAddress(cp, addr string) {
+// WatchAddress add watch address to utxo manager.
+func (serv *ExchangeServer) WatchAddress(cp, addr string) {
 	switch cp {
 	case bitcoin.Type:
-		self.btcum.WatchAddresses([]string{addr})
+		serv.btcum.WatchAddresses([]string{addr})
 	case skycoin.Type:
-		self.skyum.WatchAddresses([]string{addr})
+		serv.skyum.WatchAddresses([]string{addr})
 	}
 }
 
-func (self *ExchangeServer) SaveAccount() error {
-	return self.Save()
+// SaveAccount saves account
+func (serv *ExchangeServer) SaveAccount() error {
+	return serv.Save()
 }
 
-func (self *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error) {
-	return self.orderManager.AddOrder(cp, odr)
+// AddOrder adds order
+func (serv *ExchangeServer) AddOrder(cp string, odr order.Order) (uint64, error) {
+	return serv.orderManager.AddOrder(cp, odr)
 }
 
-func (self ExchangeServer) IsAdmin(pubkey string) bool {
-	logger.Debug("admins:%s, pubkey:%s", self.cfg.Admins, pubkey)
-	return strings.Contains(self.cfg.Admins, pubkey)
+// IsAdmin checks if the given pubkey is admin
+func (serv *ExchangeServer) IsAdmin(pubkey string) bool {
+	logger.Debug("admins:%s, pubkey:%s", serv.cfg.Admins, pubkey)
+	return strings.Contains(serv.cfg.Admins, pubkey)
 }
 
 // initDataDir init the data dir of skycoin exchange.
@@ -285,8 +283,8 @@ func initDataDir(dir string) string {
 	return dir
 }
 
-func (self *ExchangeServer) handleOrders(c chan bool) {
-	for cp, ch := range self.orderHandlers {
+func (serv *ExchangeServer) handleOrders(c chan bool) {
+	for cp, ch := range serv.orderHandlers {
 		go func(cp string, ch chan order.Order, closing chan bool) {
 			for {
 				select {
@@ -294,16 +292,16 @@ func (self *ExchangeServer) handleOrders(c chan bool) {
 					return
 				case order := <-ch:
 					// handle the order
-					self.settleOrder(cp, order)
+					serv.settleOrder(cp, order)
 				}
 			}
 		}(cp, ch, c)
 	}
 }
 
-func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
+func (serv *ExchangeServer) settleOrder(cp string, od order.Order) {
 	logger.Info("match order=== type:%s, price:%d, amount:%d", od.Type, od.Price, od.Amount)
-	acnt, err := self.GetAccount(od.AccountID)
+	acnt, err := serv.GetAccount(od.AccountID)
 	if err != nil {
 		panic("error account id")
 	}
@@ -323,7 +321,7 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 			panic(err)
 		}
 
-		self.SaveAccount()
+		serv.SaveAccount()
 	case order.Ask:
 		// increase sub coin balance.
 		logger.Info("account:%s increase %s:%d", od.AccountID, subCt, od.Price*od.Amount)
@@ -335,12 +333,13 @@ func (self *ExchangeServer) settleOrder(cp string, od order.Order) {
 		if err := acnt.DecreaseBalance(mainCt, od.Amount); err != nil {
 			panic(err)
 		}
-		self.SaveAccount()
+		serv.SaveAccount()
 	}
 }
 
-func (self *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error) {
-	return self.orderManager.GetOrders(cp, tp, start, end)
+// GetOrders gets orders
+func (serv *ExchangeServer) GetOrders(cp string, tp order.Type, start, end int64) ([]order.Order, error) {
+	return serv.orderManager.GetOrders(cp, tp, start, end)
 }
 
 // GetSupportCoins returns all supported coin's symbol

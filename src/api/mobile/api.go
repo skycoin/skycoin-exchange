@@ -33,6 +33,7 @@ func Init(cfg *Config) {
 	initConfig(cfg,
 		newCoin("skycoin", cfg.ServerAddr),
 		newCoin("mzcoin", cfg.ServerAddr),
+		newCoin("shellcoin", cfg.ServerAddr),
 		newBitcoin(cfg.ServerAddr))
 }
 

@@ -45,7 +45,7 @@ func registerFlags(cfg *server.Config) {
 	)
 	flag.StringVar(&skyNodeAddr, "skycoin-node-addr", "127.0.0.1:6420", "skycoin node address")
 	flag.StringVar(&mzNodeAddr, "mzcoin-node-addr", "127.0.0.1:7420", "mzcoin node address")
-	flag.BoolVar(&cfg.HttpProf, "http-prof", false, "enable http profiling")
+	flag.BoolVar(&cfg.HTTPProf, "http-prof", false, "enable http profiling")
 	flag.StringVar(&cfg.Seckey, "seckey", "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257", "private key used for encrypting and decryping messages")
 
 	flag.Set("logtostderr", "true")
@@ -57,7 +57,7 @@ func registerFlags(cfg *server.Config) {
 func main() {
 	initLogging(logging.DEBUG, true)
 	cfg := initConfig()
-	initProfiling(cfg.HttpProf)
+	initProfiling(cfg.HTTPProf)
 
 	// print pubkey so that client can use that to communicate with server
 	sk := cipher.MustSecKeyFromHex(cfg.Seckey)
