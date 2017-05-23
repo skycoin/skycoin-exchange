@@ -63,7 +63,12 @@ func TestGetBalance(t *testing.T) {
 	btcM.On("ValidateAddr", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6").Return(nil)
 	btcM.On("GetBalance", []string{"1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6"}).Return(uint64(936000), nil)
 
-	initConfig(&Config{}, skyM, mzM, btcM)
+	shellM := NewCoinerMock()
+	shellM.On("Name").Return("shellcoin")
+	shellM.On("ValidateAddr", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6").Return(nil)
+	shellM.On("GetBalance", []string{"1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6"}).Return(uint64(10e6), nil)
+
+	initConfig(&Config{}, skyM, mzM, btcM, shellM)
 
 	var testData = []struct {
 		coinType string
@@ -73,6 +78,7 @@ func TestGetBalance(t *testing.T) {
 		{"skycoin", "cBnu9sUvv12dovBmjQKTtfE4rbjMmf3fzW", 6000000},
 		{"bitcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 936000},
 		{"mzcoin", "2BMHv3PEyat9K9snsnDyRv7UBuRuycMPyWH", 998000000},
+		{"shellcoin", "1EknG7EauSW4zxFtSrCQSHe5PJenkn55s6", 10e6},
 	}
 	for _, td := range testData {
 		b, err := GetBalance(td.coinType, td.address)
@@ -106,6 +112,81 @@ func TestGetBalance(t *testing.T) {
 // 	api.GetWalletBalance("skycoin")
 // }
 
+func TestNewWallet(t *testing.T) {
+	testCases := []struct {
+		name        string
+		coinType    string
+		seed        string
+		expectWltID string
+		expectErr   error
+	}{
+		{
+			"create skycoin wallet",
+			"skycoin",
+			"abc",
+			"skycoin_abc",
+			nil,
+		},
+		{
+			"create mzcoin wallet",
+			"mzcoin",
+			"abcd",
+			"mzcoin_abcd",
+			nil,
+		},
+		{
+			"create shellcoin wallet",
+			"shellcoin",
+			"abcde",
+			"shellcoin_abcde",
+			nil,
+		},
+		{
+			"create suncoin wallet",
+			"suncoin",
+			"abcde",
+			"suncoin_abcde",
+			nil,
+		},
+		{
+			"create aynrandcoin wallet",
+			"aynrandcoin",
+			"abcde",
+			"aynrandcoin_abcde",
+			nil,
+		},
+		{
+			"create bitcoin wallet",
+			"bitcoin",
+			"abcde",
+			"bitcoin_abcde",
+			nil,
+		},
+		{
+			"create unknow wallet",
+			"unknow",
+			"abcde",
+			"",
+			errors.New("unknow wallet not regestered"),
+		},
+	}
+
+	_, teardown, err := setup()
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	defer teardown()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			id, err := NewWallet(tc.coinType, tc.seed)
+			assert.Equal(t, tc.expectErr, err)
+			assert.Equal(t, tc.expectWltID, id)
+		})
+	}
+}
+
 func TestGetAddresses(t *testing.T) {
 	_, teardown, err := setup()
 	if err != nil {
@@ -114,6 +195,7 @@ func TestGetAddresses(t *testing.T) {
 	defer teardown()
 
 	var testData = []struct {
+		name       string
 		coinType   string
 		seed       string
 		num        int
@@ -121,6 +203,7 @@ func TestGetAddresses(t *testing.T) {
 		expectAddr map[string]bool
 	}{
 		{
+			"get from bitcoin wallet",
 			"bitcoin",
 			"12345",
 			2,
@@ -131,6 +214,7 @@ func TestGetAddresses(t *testing.T) {
 			},
 		},
 		{
+			"get from skycoin wallet",
 			"skycoin",
 			"12345",
 			2,
@@ -141,7 +225,41 @@ func TestGetAddresses(t *testing.T) {
 			},
 		},
 		{
+			"get from mzcoin wallet",
 			"mzcoin",
+			"2345",
+			2,
+			2,
+			map[string]bool{
+				"5v6aHMp7dxwFzZmnF1c2XjcJSKnaMixXmr":  true,
+				"2CiP9MXLy6KpUyUzU3Y8nTRTuffYwreqgqa": true,
+			},
+		},
+		{
+			"get from shellcoin wallet",
+			"shellcoin",
+			"2345",
+			2,
+			2,
+			map[string]bool{
+				"5v6aHMp7dxwFzZmnF1c2XjcJSKnaMixXmr":  true,
+				"2CiP9MXLy6KpUyUzU3Y8nTRTuffYwreqgqa": true,
+			},
+		},
+		{
+			"get from suncoin wallet",
+			"suncoin",
+			"2345",
+			2,
+			2,
+			map[string]bool{
+				"5v6aHMp7dxwFzZmnF1c2XjcJSKnaMixXmr":  true,
+				"2CiP9MXLy6KpUyUzU3Y8nTRTuffYwreqgqa": true,
+			},
+		},
+		{
+			"get from aynrandcoin wallet",
+			"aynrandcoin",
 			"2345",
 			2,
 			2,
@@ -153,142 +271,123 @@ func TestGetAddresses(t *testing.T) {
 	}
 
 	for _, td := range testData {
-		id, err := NewWallet(td.coinType, td.seed)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = NewAddress(id, td.num)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		addrJSON, err := GetAddresses(id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var addrs struct {
-			Addresses []string `json:"addresses"`
-		}
-
-		if err := json.Unmarshal([]byte(addrJSON), &addrs); err != nil {
-			t.Fatal(err)
-		}
-		assert.Equal(t, len(addrs.Addresses), td.expectNum)
-		for _, addr := range addrs.Addresses {
-			if _, ok := td.expectAddr[addr]; !ok {
-				t.Fatalf("addr: %s not expected", addr)
+		t.Run(td.name, func(t *testing.T) {
+			id, err := NewWallet(td.coinType, td.seed)
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
+
+			_, err = NewAddress(id, td.num)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			addrJSON, err := GetAddresses(id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var addrs struct {
+				Addresses []string `json:"addresses"`
+			}
+
+			if err := json.Unmarshal([]byte(addrJSON), &addrs); err != nil {
+				t.Fatal(err)
+			}
+			assert.Equal(t, len(addrs.Addresses), td.expectNum)
+			for _, addr := range addrs.Addresses {
+				if _, ok := td.expectAddr[addr]; !ok {
+					t.Fatalf("addr: %s not expected", addr)
+				}
+			}
+		})
 	}
 }
 
-func TestSendBtc(t *testing.T) {
+func TestSend(t *testing.T) {
 	txid := "32444c08568cf03f4be5bb1110124d6a00bb94bc5338abddc9fb2497f3825a91"
-	m := NewCoinerMock()
-	m.On("Name").Return("bitcoin")
-	m.On("Send", "bitcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "10000", mock.AnythingOfType("[]mobile.Option")).
+	btc := NewCoinerMock()
+	btc.On("Name").Return("bitcoin")
+	btc.On("Send", "bitcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "10000", mock.AnythingOfType("[]mobile.Option")).
 		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
-	m.On("Send", "bitcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", mock.AnythingOfType("[]mobile.Option")).
-		Return("", fmt.Errorf(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
+	btc.On("Send", "bitcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", mock.AnythingOfType("[]mobile.Option")).
+		Return("",
+			fmt.Errorf(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
 
-	initConfig(&Config{}, m)
+	sky := NewCoinerMock()
+	sky.On("Name").Return("skycoin")
+
+	sky.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1e6", []Option(nil)).
+		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
+	sky.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", []Option(nil)).
+		Return("", errors.New(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
+
+	initConfig(&Config{}, btc, sky)
 
 	type args struct {
 		walletID string
 		toAddr   string
 		amount   string
-		fee      string
+		opt      *SendOption
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
+		name     string
+		coinType string
+		args     args
+		want     string
+		wantErr  bool
 	}{
 		// TODO: Add test cases.
 		{
-			"normal",
+			"bitcoin send normal",
+			"bitcoin",
 			args{
 				"bitcoin_abc",
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 				"10000",
-				"1000",
+				&SendOption{Fee: "1000"},
 			},
 			fmt.Sprintf(`{"txid":"%s"}`, txid),
 			false,
 		},
 		{
-			"invalid amount",
+			"bitcoin invalid amount",
+			"bitcoin",
 			args{
 				"bitcoin_abc",
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 				"100ss",
-				"1000",
+				&SendOption{Fee: "1000"},
 			},
 			"",
 			true,
 		},
-	}
-	for _, tt := range tests {
-		got, err := SendBtc(tt.args.walletID, tt.args.toAddr, tt.args.amount, tt.args.fee)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("%q. SendBtc() error = %v, wantErr %v", tt.name, err, tt.wantErr)
-			continue
-		}
-		if got != tt.want {
-			t.Errorf("%q. SendBtc() = %v, want %v", tt.name, got, tt.want)
-		}
-	}
-}
-
-func TestSendSky(t *testing.T) {
-	txid := "32444c08568cf03f4be5bb1110124d6a00bb94bc5338abddc9fb2497f3825a91"
-	m := NewCoinerMock()
-	m.On("Name").Return("skycoin")
-
-	m.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1e6", []Option(nil)).
-		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
-	m.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", []Option(nil)).
-		Return("", errors.New(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
-
-	initConfig(&Config{}, m)
-
-	type args struct {
-		walletID string
-		toAddr   string
-		amount   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
 		{
-			"normal",
+			"skycoin normal",
+			"skycoin",
 			args{
 				"skycoin_abc",
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 				"1e6",
+				nil,
 			},
 			fmt.Sprintf(`{"txid":"%s"}`, txid),
 			false,
 		},
 		{
 			"invalid amount",
+			"skycoin",
 			args{
 				"skycoin_abc",
 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
 				"100ss",
+				nil,
 			},
 			"",
 			true,
 		},
 	}
 	for _, tt := range tests {
-		got, err := SendSky(tt.args.walletID, tt.args.toAddr, tt.args.amount)
+		got, err := Send(tt.coinType, tt.args.walletID, tt.args.toAddr, tt.args.amount, tt.args.opt)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. SendBtc() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
@@ -299,62 +398,119 @@ func TestSendSky(t *testing.T) {
 	}
 }
 
-func TestSendMzc(t *testing.T) {
-	txid := "32444c08568cf03f4be5bb1110124d6a00bb94bc5338abddc9fb2497f3825a91"
-	m := NewCoinerMock()
-	m.On("Name").Return("mzcoin")
+// func TestSendSky(t *testing.T) {
+// 	txid := "32444c08568cf03f4be5bb1110124d6a00bb94bc5338abddc9fb2497f3825a91"
+// 	m := NewCoinerMock()
+// 	m.On("Name").Return("skycoin")
 
-	m.On("Send", "mzcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1e6", []Option(nil)).
-		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
-	m.On("Send", "mzcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", []Option(nil)).
-		Return("", errors.New(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
+// 	m.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1e6", []Option(nil)).
+// 		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
+// 	m.On("Send", "skycoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", []Option(nil)).
+// 		Return("", errors.New(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
 
-	initConfig(&Config{}, m)
+// 	initConfig(&Config{}, m)
 
-	type args struct {
-		walletID string
-		toAddr   string
-		amount   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-		{
-			"normal",
-			args{
-				"mzcoin_abc",
-				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
-				"1e6",
-			},
-			fmt.Sprintf(`{"txid":"%s"}`, txid),
-			false,
-		},
-		{
-			"invalid amount",
-			args{
-				"mzcoin_abc",
-				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
-				"100ss",
-			},
-			"",
-			true,
-		},
-	}
-	for _, tt := range tests {
-		got, err := SendMzc(tt.args.walletID, tt.args.toAddr, tt.args.amount)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("%q. SendBtc() error = %v, wantErr %v", tt.name, err, tt.wantErr)
-			continue
-		}
-		if got != tt.want {
-			t.Errorf("%q. SendBtc() = %v, want %v", tt.name, got, tt.want)
-		}
-	}
-}
+// 	type args struct {
+// 		walletID string
+// 		toAddr   string
+// 		amount   string
+// 	}
+// 	tests := []struct {
+// 		name    string
+// 		args    args
+// 		want    string
+// 		wantErr bool
+// 	}{
+// 		// TODO: Add test cases.
+// 		{
+// 			"normal",
+// 			args{
+// 				"skycoin_abc",
+// 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+// 				"1e6",
+// 			},
+// 			fmt.Sprintf(`{"txid":"%s"}`, txid),
+// 			false,
+// 		},
+// 		{
+// 			"invalid amount",
+// 			args{
+// 				"skycoin_abc",
+// 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+// 				"100ss",
+// 			},
+// 			"",
+// 			true,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		got, err := SendSky(tt.args.walletID, tt.args.toAddr, tt.args.amount)
+// 		if (err != nil) != tt.wantErr {
+// 			t.Errorf("%q. SendBtc() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+// 			continue
+// 		}
+// 		if got != tt.want {
+// 			t.Errorf("%q. SendBtc() = %v, want %v", tt.name, got, tt.want)
+// 		}
+// 	}
+// }
+
+// func TestSendMzc(t *testing.T) {
+// 	txid := "32444c08568cf03f4be5bb1110124d6a00bb94bc5338abddc9fb2497f3825a91"
+// 	m := NewCoinerMock()
+// 	m.On("Name").Return("mzcoin")
+
+// 	m.On("Send", "mzcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "1e6", []Option(nil)).
+// 		Return(fmt.Sprintf(`{"txid":"%s"}`, txid), nil)
+// 	m.On("Send", "mzcoin_abc", "14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz", "100ss", []Option(nil)).
+// 		Return("", errors.New(`parse amount string to uint64 failed: strconv.ParseUint: parsing "100ss": invalid syntax"`))
+
+// 	initConfig(&Config{}, m)
+
+// 	type args struct {
+// 		walletID string
+// 		toAddr   string
+// 		amount   string
+// 	}
+// 	tests := []struct {
+// 		name    string
+// 		args    args
+// 		want    string
+// 		wantErr bool
+// 	}{
+// 		// TODO: Add test cases.
+// 		{
+// 			"normal",
+// 			args{
+// 				"mzcoin_abc",
+// 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+// 				"1e6",
+// 			},
+// 			fmt.Sprintf(`{"txid":"%s"}`, txid),
+// 			false,
+// 		},
+// 		{
+// 			"invalid amount",
+// 			args{
+// 				"mzcoin_abc",
+// 				"14NAt8DhxMYKUwP5ZyH1yu7m1psYsn9Wqz",
+// 				"100ss",
+// 			},
+// 			"",
+// 			true,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		got, err := SendMzc(tt.args.walletID, tt.args.toAddr, tt.args.amount)
+// 		if (err != nil) != tt.wantErr {
+// 			t.Errorf("%q. SendBtc() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+// 			continue
+// 		}
+// 		if got != tt.want {
+// 			t.Errorf("%q. SendBtc() = %v, want %v", tt.name, got, tt.want)
+// 		}
+// 	}
+// }
 
 var skyTxStr = `{
     "status": {
