@@ -2,14 +2,22 @@ package mobile
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	bip39 "github.com/tyler-smith/go-bip39"
+
+	// register coins
+	_ "github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/suncoin"
 )
+
+//go:generate gomobile bind -target=ios github.com/skycoin/skycoin-exchange/src/api/mobile
 
 // gobind doc: https://godoc.org/golang.org/x/mobile/cmd/gobind
 var config Config
@@ -34,6 +42,8 @@ func Init(cfg *Config) {
 		newCoin("skycoin", cfg.ServerAddr),
 		newCoin("mzcoin", cfg.ServerAddr),
 		newCoin("shellcoin", cfg.ServerAddr),
+		newCoin("suncoin", cfg.ServerAddr),
+		newCoin("aynrandcoin", cfg.ServerAddr),
 		newBitcoin(cfg.ServerAddr))
 }
 
@@ -178,34 +188,25 @@ func GetWalletBalance(coinType string, wltID string) (string, error) {
 	return string(d), nil
 }
 
-// SendSky sends skycoins to an address from a specific wallet
-func SendSky(walletID string, toAddr string, amount string) (string, error) {
-	coin, ok := coinMap["skycoin"]
-	if !ok {
-		return "", errors.New("skycoin is not supported")
-	}
-
-	return coin.Send(walletID, toAddr, amount)
+// SendOption optional arguments when sending coins
+type SendOption struct {
+	Fee string
 }
 
-// SendMzc sends mzcoin to an address from specific wallet.
-func SendMzc(walletID string, toAddr string, amount string) (string, error) {
-	coin, ok := coinMap["mzcoin"]
+// Send send coins, support bitcoin and all coins in skycoin ledger
+func Send(coinType, wid, toAddr, amount string, opt *SendOption) (string, error) {
+	coin, ok := coinMap[coinType]
 	if !ok {
-		return "", errors.New("mzcoin is not supported")
+		return "", fmt.Errorf("%s is not supported", coinType)
 	}
 
-	return coin.Send(walletID, toAddr, amount)
-}
-
-// SendBtc sends bitcoins to an address from a specific wallet
-func SendBtc(walletID string, toAddr string, amount string, fee string) (string, error) {
-	coin, ok := coinMap["bitcoin"]
-	if !ok {
-		return "", errors.New("bitcoin is not supported")
+	if coinType == "bitcoin" {
+		if opt != nil {
+			return coin.Send(wid, toAddr, amount, Fee(opt.Fee))
+		}
 	}
 
-	return coin.Send(walletID, toAddr, amount, Fee(fee))
+	return coin.Send(wid, toAddr, amount)
 }
 
 // GetTransactionByID gets transaction verbose info by id
