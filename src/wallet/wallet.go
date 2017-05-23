@@ -7,9 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
-	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin/src/util"
 )
 
@@ -38,14 +35,6 @@ var Ext = "wlt"
 type Creator func() Walleter
 
 var gWalletCreators = make(map[string]Creator)
-
-func init() {
-	// the default wallet creator are registered here, using the following RegisterCreator function
-	// to extend new wallet type.
-	gWalletCreators[bitcoin.Type] = NewBtcWltCreator()
-	gWalletCreators[skycoin.Type] = NewSkyWltCreator()
-	gWalletCreators[mzcoin.Type] = NewSkyWltCreator()
-}
 
 // RegisterCreator when new type wallet need to be supported,
 // the wallet must provide Creator, and use this function to register the creator into system.
@@ -97,7 +86,6 @@ func New(tp, seed string) (Walleter, error) {
 	if err := gWallets.add(wlt); err != nil {
 		return nil, err
 	}
-
 	return wlt.Copy(), nil
 }
 
