@@ -2,10 +2,22 @@ package mzcoin
 
 import (
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/wallet"
 )
 
 // Type represents mzcoin coin type
 var Type = "mzcoin"
+
+func init() {
+	// Register wallet creator
+	wallet.RegisterCreator(Type, func() wallet.Walleter {
+		return &skycoin.Wallet{
+			Wallet: wallet.Wallet{
+				Type: Type,
+			},
+		}
+	})
+}
 
 // Mzcoin will implement coin.Gateway interface
 type Mzcoin struct {
