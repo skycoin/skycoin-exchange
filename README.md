@@ -604,3 +604,33 @@ gvt vendors all dependencies into the repo.
 If you change the dependencies, you should update them as needed with `gvt fetch`, `gvt update`, `gvt delete`, etc.
 
 Refer to the [gvt documentation](https://github.com/FiloSottile/gvt) or `gvt help` for further instructions.
+
+
+## Register New Coin
+
+* Create new coin package in src/coin folder and create coin by example of mzcoin
+
+* In src/api/mobile/api.go, add new coin support in Init function:
+
+```go
+func Init(cfg *Config) {
+  initConfig(cfg,
+    newCoin("skycoin", cfg.ServerAddr),
+    newCoin("mzcoin", cfg.ServerAddr),
+    newCoin("suncoin", cfg.ServerAddr),
+    newBitcoin(cfg.ServerAddr))
+}
+```
+
+* In cmd/client/client.go main function, register coins:
+
+```go
+  c.BindCoins(&bitcoin.Bitcoin{},
+    skycoin.New(cfg.ServAddr),
+    mzcoin.New(cfg.ServAddr),
+    suncoin.New(cfg.ServAddr))
+```
+
+* In cmd/server/server.go add coin's node address in registerFlags function
+
+* In cmd/server/serer.go register coins in main function
