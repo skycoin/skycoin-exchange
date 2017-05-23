@@ -65,14 +65,14 @@ func TestNewWallet(t *testing.T) {
 	defer teardown()
 
 	testData := []struct {
-		Type coin.Type
+		Type string
 		Seed string
 		Path string
 	}{
-		{coin.Bitcoin, "sd123", filepath.Join(wltDir, "bitcoin_sd123.wlt")},
-		{coin.Bitcoin, "sd234", filepath.Join(wltDir, "bitcoin_sd234.wlt")},
-		{coin.Skycoin, "sd123", filepath.Join(wltDir, "skycoin_sd123.wlt")},
-		{coin.Skycoin, "sd234", filepath.Join(wltDir, "skycoin_sd234.wlt")},
+		{"bitcoin", "sd123", filepath.Join(wltDir, "bitcoin_sd123.wlt")},
+		{"bitcoin", "sd234", filepath.Join(wltDir, "bitcoin_sd234.wlt")},
+		{"skycoin", "sd123", filepath.Join(wltDir, "skycoin_sd123.wlt")},
+		{"skycoin", "sd234", filepath.Join(wltDir, "skycoin_sd234.wlt")},
 	}
 
 	for _, d := range testData {
@@ -95,13 +95,13 @@ func TestNewAddresses(t *testing.T) {
 	assert.Nil(t, err)
 	defer teardown()
 	testData := []struct {
-		Type    coin.Type
+		Type    string
 		Seed    string
 		Num     int
 		Entries []coin.AddressEntry
 	}{
 		{
-			Type: coin.Bitcoin,
+			Type: "bitcoin",
 			Seed: "sd999",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -118,7 +118,7 @@ func TestNewAddresses(t *testing.T) {
 			},
 		},
 		{
-			Type: coin.Skycoin,
+			Type: "skycoin",
 			Seed: "sd888",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -171,13 +171,13 @@ func TestGetAddresses(t *testing.T) {
 	assert.Nil(t, err)
 	defer teardown()
 	testData := []struct {
-		Type    coin.Type
+		Type    string
 		Seed    string
 		Num     int
 		Entries []coin.AddressEntry
 	}{
 		{
-			Type: coin.Bitcoin,
+			Type: "bitcoin",
 			Seed: "sd999",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -194,7 +194,7 @@ func TestGetAddresses(t *testing.T) {
 			},
 		},
 		{
-			Type: coin.Skycoin,
+			Type: "skycoin",
 			Seed: "sd888",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -249,13 +249,13 @@ func TestGetKeypair(t *testing.T) {
 	assert.Nil(t, err)
 	defer teardown()
 	testData := []struct {
-		Type    coin.Type
+		Type    string
 		Seed    string
 		Num     int
 		Entries []coin.AddressEntry
 	}{
 		{
-			Type: coin.Bitcoin,
+			Type: "bitcoin",
 			Seed: "sd999",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -272,7 +272,7 @@ func TestGetKeypair(t *testing.T) {
 			},
 		},
 		{
-			Type: coin.Skycoin,
+			Type: "skycoin",
 			Seed: "sd888",
 			Num:  2,
 			Entries: []coin.AddressEntry{
@@ -322,12 +322,12 @@ func TestRemove(t *testing.T) {
 
 	// create wallet
 	testData := []struct {
-		Type coin.Type
+		Type string
 		Seed string
 		ID   string
 	}{
-		{coin.Bitcoin, "sd777", "bitcoin_sd777"},
-		{coin.Skycoin, "sd777", "skycoin_sd777"},
+		{"bitcoin", "sd777", "bitcoin_sd777"},
+		{"skycoin", "sd777", "skycoin_sd777"},
 	}
 
 	for _, d := range testData {
@@ -358,13 +358,13 @@ func TestIsExist(t *testing.T) {
 	defer teardown()
 
 	testData := []struct {
-		Type coin.Type
+		Type string
 		Seed string
 	}{
-		{coin.Bitcoin, "sd666"},
-		{coin.Bitcoin, "sd667"},
-		{coin.Skycoin, "sd666"},
-		{coin.Skycoin, "sd667"},
+		{"bitcoin", "sd666"},
+		{"bitcoin", "sd667"},
+		{"skycoin", "sd666"},
+		{"skycoin", "sd667"},
 	}
 
 	for _, d := range testData {

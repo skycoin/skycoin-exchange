@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,21 +20,21 @@ func TestMustLoad(t *testing.T) {
 	// create wallets.
 	testData := []struct {
 		ID   string
-		Type coin.Type
+		Type string
 		Seed string
 	}{
-		{"bitcoin_seed1", coin.Bitcoin, "seed1"},
-		{"bitcoin_seed2", coin.Bitcoin, "seed2"},
-		{"bitcoin_seed3", coin.Bitcoin, "seed3"},
-		{"bitcoin_seed4", coin.Bitcoin, "seed4"},
-		{"skycoin_seed1", coin.Skycoin, "seed1"},
-		{"skycoin_seed2", coin.Skycoin, "seed2"},
-		{"skycoin_seed3", coin.Skycoin, "seed3"},
+		{"bitcoin_seed1", "bitcoin", "seed1"},
+		{"bitcoin_seed2", "bitcoin", "seed2"},
+		{"bitcoin_seed3", "bitcoin", "seed3"},
+		{"bitcoin_seed4", "bitcoin", "seed4"},
+		{"skycoin_seed1", "skycoin", "seed1"},
+		{"skycoin_seed2", "skycoin", "seed2"},
+		{"skycoin_seed3", "skycoin", "seed3"},
 	}
 
 	for _, d := range testData {
 		if _, err := New(d.Type, d.Seed); err != nil {
-			fmt.Println(d.Type.String(), " ", d.Seed)
+			fmt.Println(d.Type, " ", d.Seed)
 			t.Error(err)
 			return
 		}
