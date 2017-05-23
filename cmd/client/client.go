@@ -10,9 +10,12 @@ import (
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/client"
+	"github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
 	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
 	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/suncoin"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin/src/util"
 )
@@ -56,7 +59,10 @@ func main() {
 	c := client.New(cfg)
 	c.BindCoins(&bitcoin.Bitcoin{},
 		skycoin.New(cfg.ServAddr),
-		mzcoin.New(cfg.ServAddr))
+		mzcoin.New(cfg.ServAddr),
+		shellcoin.New(cfg.ServAddr),
+		aynrandcoin.New(cfg.ServAddr),
+		suncoin.New(cfg.ServAddr))
 	c.Run()
 
 	<-quit
