@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"

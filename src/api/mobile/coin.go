@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
 	"github.com/skycoin/skycoin-exchange/src/wallet"

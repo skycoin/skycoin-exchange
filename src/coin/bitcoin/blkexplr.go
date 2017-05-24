@@ -1,5 +1,5 @@
 // get unspent output from blockexplorer.com
-package bitcoin_interface
+package bitcoin
 
 import (
 	"encoding/json"

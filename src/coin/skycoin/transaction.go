@@ -1,4 +1,4 @@
-package skycoin_interface
+package skycoin
 
 import (
 	"bytes"
@@ -11,11 +11,11 @@ import (
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/cipher/encoder"
-	skycoin "github.com/skycoin/skycoin/src/coin"
+	sky "github.com/skycoin/skycoin/src/coin"
 )
 
 type Transaction struct {
-	skycoin.Transaction
+	sky.Transaction
 }
 
 // NewTransaction create skycoin transaction.

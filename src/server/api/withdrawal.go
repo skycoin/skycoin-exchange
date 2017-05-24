@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin-exchange/src/server/account"
 	"github.com/skycoin/skycoin-exchange/src/server/engine"

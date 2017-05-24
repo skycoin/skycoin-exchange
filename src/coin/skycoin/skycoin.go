@@ -1,4 +1,4 @@
-package skycoin_interface
+package skycoin
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
-	skycoin "github.com/skycoin/skycoin/src/coin"
+	sky "github.com/skycoin/skycoin/src/coin"
 	"github.com/skycoin/skycoin/src/visor"
 	"github.com/skycoin/skycoin/src/wallet"
 )
@@ -27,7 +27,7 @@ var (
 	HideSeckey = false
 	// ServeAddr  string = "127.0.0.1:6420"
 	logger = logging.MustGetLogger("exchange.skycoin")
-	// GatewayIns = Skycoin{}
+	// Type returns the coin type
 	Type = "skycoin"
 )
 
@@ -288,7 +288,7 @@ type SkyUtxo struct {
 
 // TxOut transaction output filed
 type TxOut struct {
-	skycoin.TransactionOutput
+	sky.TransactionOutput
 }
 
 // GetHash returns utxo hash

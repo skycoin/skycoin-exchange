@@ -1,4 +1,4 @@
-package bitcoin_interface
+package bitcoin
 
 import (
 	"encoding/hex"
@@ -24,21 +24,28 @@ func init() {
 }
 
 // NewAddresses generate bitcoin addresses.
-func (bt *Wallet) NewAddresses(num int) ([]coin.AddressEntry, error) {
+func (wlt *Wallet) NewAddresses(num int) ([]coin.AddressEntry, error) {
 	entries := []coin.AddressEntry{}
 	defer func() {
-		bt.AddressEntries = append(bt.AddressEntries, entries...)
+		wlt.AddressEntries = append(wlt.AddressEntries, entries...)
 	}()
 
-	if bt.Seed == bt.InitSeed {
-		bt.Seed, entries = GenerateAddresses([]byte(bt.Seed), num)
+	if wlt.Seed == wlt.InitSeed {
+		wlt.Seed, entries = GenerateAddresses([]byte(wlt.Seed), num)
 		return entries, nil
 	}
 
-	s, err := hex.DecodeString(bt.Seed)
+	s, err := hex.DecodeString(wlt.Seed)
 	if err != nil {
 		return entries, err
 	}
-	bt.Seed, entries = GenerateAddresses(s, num)
+	wlt.Seed, entries = GenerateAddresses(s, num)
 	return entries, nil
+}
+
+// Copy returns copy of self
+func (wlt *Wallet) Copy() wallet.Walleter {
+	return &Wallet{
+		Wallet: wlt.Wallet.Copy(),
+	}
 }

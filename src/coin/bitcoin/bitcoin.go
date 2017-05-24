@@ -1,8 +1,6 @@
-package bitcoin_interface
+package bitcoin
 
 import (
-	//"errors"
-
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -18,8 +16,7 @@ import (
 var (
 	HideSeckey = false
 	logger     = logging.MustGetLogger("exchange.bitcoin")
-	// GatewayIns = Gateway{}
-	Type = "bitcoin"
+	Type       = "bitcoin"
 )
 
 // Utxo unspent output

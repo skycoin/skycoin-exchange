@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-exchange/src/client/account"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/stretchr/testify/assert"
 )

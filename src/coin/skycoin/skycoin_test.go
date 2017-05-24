@@ -1,4 +1,4 @@
-package skycoin_interface
+package skycoin
 
 import (
 	"encoding/json"

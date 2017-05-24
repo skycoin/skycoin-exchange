@@ -10,10 +10,10 @@ import (
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
-	bitcoin "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
-	skycoin "github.com/skycoin/skycoin-exchange/src/coin/skycoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/suncoin"
 	"github.com/skycoin/skycoin-exchange/src/server"
 	"github.com/skycoin/skycoin/src/cipher"

@@ -1,4 +1,4 @@
-package bitcoin_interface
+package bitcoin
 
 import (
 	"encoding/json"

@@ -1,4 +1,4 @@
-package skycoin_interface
+package skycoin
 
 import (
 	"encoding/hex"
@@ -10,17 +10,6 @@ import (
 // Wallet skycoin wallet struct
 type Wallet struct {
 	wallet.Wallet
-}
-
-// newWalletCtor creates coin creator in skycoin ledger
-func newWalletCtor() wallet.Creator {
-	return func() wallet.Walleter {
-		return &Wallet{
-			Wallet: wallet.Wallet{
-				Type: "skycoin",
-			},
-		}
-	}
 }
 
 // NewAddresses generate skycoin addresses.
@@ -39,6 +28,13 @@ func (wlt *Wallet) NewAddresses(num int) ([]coin.AddressEntry, error) {
 	wlt.Seed, entries = GenerateAddresses(s, num)
 	wlt.AddressEntries = append(wlt.AddressEntries, entries...)
 	return entries, nil
+}
+
+// Copy returns copy of self
+func (wlt *Wallet) Copy() wallet.Walleter {
+	return &Wallet{
+		Wallet: wlt.Wallet.Copy(),
+	}
 }
 
 func init() {

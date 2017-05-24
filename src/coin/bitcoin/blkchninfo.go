@@ -1,5 +1,5 @@
 // using the api and data struct of blockchain.info to handle the unspent output.
-package bitcoin_interface
+package bitcoin
 
 import (
 	"encoding/json"
