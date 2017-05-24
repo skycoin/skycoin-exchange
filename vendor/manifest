@@ -154,6 +154,78 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/corpusc/viscript/hypervisor/dbus",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "hypervisor/dbus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/msg",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "/msg",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/src/cipher",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/src/cipher",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/src/util",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/src/util",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/vendor/github.com/op/go-logging",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/vendor/github.com/op/go-logging",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/vendor/github.com/tang0th/go-chacha20/chacha",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/vendor/github.com/tang0th/go-chacha20/chacha",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/vendor/github.com/toqueteos/webbrowser",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/vendor/github.com/toqueteos/webbrowser",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/corpusc/viscript/vendor/github.com/skycoin/skycoin/vendor/golang.org/x/crypto/pbkdf2",
+			"repository": "https://github.com/corpusc/viscript",
+			"vcs": "git",
+			"revision": "ac690a8b1d95702fcc700fda00afb23b5cd0995a",
+			"branch": "master",
+			"path": "vendor/github.com/skycoin/skycoin/vendor/golang.org/x/crypto/pbkdf2",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/davecgh/go-spew/spew",
 			"repository": "https://github.com/davecgh/go-spew",
 			"vcs": "git",
@@ -213,6 +285,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/skycoin/skycoin",
+			"repository": "https://github.com/skycoin/skycoin",
+			"vcs": "git",
+			"revision": "5c043d69af847707c7d451803fde05421ed56bfa",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/stretchr/testify",
 			"repository": "https://github.com/stretchr/testify",
 			"vcs": "git",
@@ -226,6 +306,15 @@
 			"vcs": "git",
 			"revision": "8e7a99b3e716f36d3b080a9a70f9eb45abe4edcc",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/youtube/vitess/go/cache",
+			"repository": "https://github.com/youtube/vitess",
+			"vcs": "git",
+			"revision": "c31fd6a7a5413a0f5b64d7617156d7749113662b",
+			"branch": "master",
+			"path": "/go/cache",
 			"notests": true
 		},
 		{
