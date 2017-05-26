@@ -12,6 +12,36 @@ Use the following cmd to build an ios framework file; for android just replace t
 $ gomobile bind -target=ios github.com/skycoin/skycoin-exchange/src/api/mobile
 ```
 
+## Build android lib in osx
+
+Install android sdk and ndk
+
+```bash
+brew tap caskroom/cask
+brew cask install android-sdk
+brew cask install android-ndk
+export ANDROID_HOME=/usr/local/cask/android-sdk/$version
+export ANDROID_NDK=/usr/local/cask/android-ndk/$version
+export PATH=$ANDROID_HOME/tools:$PATH
+export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+ln -s $ANDROID_NDK $ANDROID_HOME/ndk-bundle
+```
+
+Download platforms which contains android.jar file into $ANDROID_NDK/platforms/
+
+```bash
+cd $ANDROID_NDK/platforms
+git clone https://github.com/Sable/android-platforms
+// then copy the android.jar files from the android-platforms/android-* to corresponding folders
+```
+
+Init the gomobile
+
+```bash
+gomobile init
+```
+
 ## APIs
 
 ### Initialization
