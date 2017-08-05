@@ -193,6 +193,11 @@ type SendOption struct {
 	Fee string
 }
 
+// NewSendOption creates SendOption instance
+func NewSendOption() *SendOption {
+	return &SendOption{}
+}
+
 // Send send coins, support bitcoin and all coins in skycoin ledger
 func Send(coinType, wid, toAddr, amount string, opt *SendOption) (string, error) {
 	coin, ok := coinMap[coinType]
