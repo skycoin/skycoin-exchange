@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"io/ioutil"
@@ -18,6 +17,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/pp"
 	"github.com/skycoin/skycoin/src/cipher"
 	sky "github.com/skycoin/skycoin/src/coin"
+	"github.com/skycoin/skycoin/src/util/droplet"
 	"github.com/skycoin/skycoin/src/visor"
 	"github.com/skycoin/skycoin/src/wallet"
 )
@@ -308,11 +308,12 @@ func (su SkyUtxo) GetAddress() string {
 
 // GetCoins returns coins in output
 func (su SkyUtxo) GetCoins() uint64 {
-	i, err := strconv.ParseUint(su.Coins, 10, 64)
+	i, err := droplet.FromString(su.Coins)
 	if err != nil {
 		panic(err)
 	}
-	return i * 1e6
+
+	return i
 }
 
 // GetHours returns coin hours
