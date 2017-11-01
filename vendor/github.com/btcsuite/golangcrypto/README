@@ -1,0 +1,5 @@
+**NOTE:** This is a fork/vendoring of http://github.com/golang/crypto
+
+This repository holds supplementary Go cryptography libraries.
+
+To submit changes to this repository, see http://golang.org/doc/contribute.html.

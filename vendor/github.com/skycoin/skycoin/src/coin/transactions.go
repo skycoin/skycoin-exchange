@@ -3,7 +3,6 @@ package coin
 import (
 	"bytes"
 	"errors"
-	"log"
 	"math"
 	"sort"
 
@@ -83,9 +82,9 @@ func (txn *Transaction) Verify() error {
 	}
 
 	// Check duplicate inputs
-	uxOuts := make(map[cipher.SHA256]int, len(txn.In))
+	uxOuts := make(map[cipher.SHA256]struct{}, len(txn.In))
 	for i := range txn.In {
-		uxOuts[txn.In[i]] = 1
+		uxOuts[txn.In[i]] = struct{}{}
 	}
 	if len(uxOuts) != len(txn.In) {
 		return errors.New("Duplicate spend")
@@ -99,7 +98,7 @@ func (txn *Transaction) Verify() error {
 	}
 
 	// Check for duplicate potential outputs
-	outputs := make(map[cipher.SHA256]int, len(txn.Out))
+	outputs := make(map[cipher.SHA256]struct{}, len(txn.Out))
 	uxb := UxBody{
 		SrcTransaction: txn.Hash(),
 	}
@@ -107,7 +106,7 @@ func (txn *Transaction) Verify() error {
 		uxb.Coins = to.Coins
 		uxb.Hours = to.Hours
 		uxb.Address = to.Address
-		outputs[uxb.Hash()] = 1
+		outputs[uxb.Hash()] = struct{}{}
 	}
 	if len(outputs) != len(txn.Out) {
 		return errors.New("Duplicate output in transaction")
@@ -122,14 +121,9 @@ func (txn *Transaction) Verify() error {
 	}
 
 	// Artificial restriction to prevent spam
-	// Must spend only multiples of 1e6
 	for _, txo := range txn.Out {
 		if txo.Coins == 0 {
 			return errors.New("Zero coin output")
-		}
-		if txo.Coins%1e6 != 0 {
-			return errors.New("Transaction outputs must be multiple of 1e6 " +
-				"base units")
 		}
 	}
 
@@ -140,10 +134,10 @@ func (txn *Transaction) Verify() error {
 func (txn Transaction) VerifyInput(uxIn UxArray) error {
 	if DebugLevel2 {
 		if len(txn.In) != len(txn.Sigs) || len(txn.In) != len(uxIn) {
-			log.Panic("tx.In != tx.Sigs != uxIn")
+			logger.Panic("tx.In != tx.Sigs != uxIn")
 		}
 		if txn.InnerHash != txn.HashInner() {
-			log.Panic("Invalid Tx Header Hash")
+			logger.Panic("Invalid Tx Header Hash")
 		}
 	}
 
@@ -159,11 +153,11 @@ func (txn Transaction) VerifyInput(uxIn UxArray) error {
 		// Check that hashes match.
 		// This would imply a bug with UnspentPool.GetMultiple
 		if len(txn.In) != len(uxIn) {
-			log.Panic("tx.In does not match uxIn")
+			logger.Panic("tx.In does not match uxIn")
 		}
 		for i := range txn.In {
 			if txn.In[i] != uxIn[i].Hash() {
-				log.Panic("impossible error: Ux hash mismatch")
+				logger.Panic("impossible error: Ux hash mismatch")
 			}
 		}
 	}
@@ -174,7 +168,7 @@ func (txn Transaction) VerifyInput(uxIn UxArray) error {
 // Returns the signature index for later signing
 func (txn *Transaction) PushInput(uxOut cipher.SHA256) uint16 {
 	if len(txn.In) >= math.MaxUint16 {
-		log.Panic("Max transaction inputs reached")
+		logger.Panic("Max transaction inputs reached")
 	}
 	txn.In = append(txn.In, uxOut)
 	return uint16(len(txn.In) - 1)
@@ -205,21 +199,21 @@ func (txn *Transaction) SignInputs(keys []cipher.SecKey) {
 	txn.InnerHash = txn.HashInner() //update hash
 
 	if len(txn.Sigs) != 0 {
-		log.Panic("Transaction has been signed")
+		logger.Panic("Transaction has been signed")
 	}
 	if len(keys) != len(txn.In) {
-		log.Panic("Invalid number of keys")
+		logger.Panic("Invalid number of keys")
 	}
 	if len(keys) > math.MaxUint16 {
-		log.Panic("Too many key")
+		logger.Panic("Too many key")
 	}
 	if len(keys) == 0 {
-		log.Panic("No keys")
+		logger.Panic("No keys")
 	}
 	sigs := make([]cipher.Sig, len(txn.In))
 	innerHash := txn.HashInner()
 	for i, k := range keys {
-		h := cipher.AddSHA256(innerHash, txn.In[i]) //hash to sign
+		h := cipher.AddSHA256(innerHash, txn.In[i]) // hash to sign
 		sigs[i] = cipher.SignHash(h, k)
 	}
 	txn.Sigs = sigs
@@ -279,7 +273,7 @@ func (txn *Transaction) Serialize() []byte {
 func TransactionDeserialize(b []byte) Transaction {
 	t := Transaction{}
 	if err := encoder.DeserializeRaw(b, &t); err != nil {
-		log.Panic("Failed to deserialize transaction")
+		logger.Panic("Failed to deserialize transaction")
 	}
 	return t
 }

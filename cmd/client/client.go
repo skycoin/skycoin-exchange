@@ -17,7 +17,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/suncoin"
 	"github.com/skycoin/skycoin-exchange/src/sknet"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 
 func main() {
 	var cfg client.Config
-	home := util.UserHome()
+	home := file.UserHome()
 
 	var servPubkey string
 	flag.StringVar(&cfg.ServAddr, "s", "localhost:8080", "server address")
@@ -42,7 +42,7 @@ func main() {
 
 	flag.Parse()
 
-	cfg.GuiDir = util.ResolveResourceDirectory(cfg.GuiDir)
+	cfg.GuiDir = file.ResolveResourceDirectory(cfg.GuiDir)
 
 	// init sknet server pubkey
 	sknet.SetPubkey(servPubkey)

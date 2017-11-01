@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -50,27 +50,18 @@ func setWorkDir() {
 }
 
 // Represents runtime caller context
-type LogContextInterface interface {
-	// Caller func name
+type logContextInterface interface {
 	Func() string
-	// Caller line num
 	Line() int
-	// Caller file short path
 	ShortPath() string
-	// Caller file full path
 	FullPath() string
-	// Caller file name (without path)
 	FileName() string
-	// True if the context is correct and may be used.
-	// If false, then an error in context evaluation occurred and
-	// all its other data may be corrupted.
 	IsValid() bool
-	// Time when log func was called
 	CallTime() time.Time
 }
 
 // Returns context of the caller
-func currentContext() (LogContextInterface, error) {
+func currentContext() (logContextInterface, error) {
 	return specificContext(1)
 }
 
@@ -78,7 +69,7 @@ func extractCallerInfo(skip int) (fullPath string, shortPath string, funcName st
 	pc, fullPath, line, ok := runtime.Caller(skip)
 
 	if !ok {
-		return "", "", "", 0, errors.New("error during runtime.Caller")
+		return "", "", "", 0, errors.New("Error during runtime.Caller")
 	}
 
 	//TODO:Currently fixes bug in weekly.2012-03-13+: Caller returns incorrect separators
@@ -96,7 +87,7 @@ func extractCallerInfo(skip int) (fullPath string, shortPath string, funcName st
 	funName := runtime.FuncForPC(pc).Name()
 	var functionName string
 	if strings.HasPrefix(funName, workingDir) {
-		functionName = funName[len(workingDir):]
+		functionName = funName[len(workingDir):len(funName)]
 	} else {
 		functionName = funName
 	}
@@ -106,14 +97,14 @@ func extractCallerInfo(skip int) (fullPath string, shortPath string, funcName st
 
 // Returns context of the function with placed "skip" stack frames of the caller
 // If skip == 0 then behaves like currentContext
-// Context is returned in any situation, even if error occurs. But, if an error
+// Context is returned in any situation, even if error occurs. But, if an error 
 // occurs, the returned context is an error context, which contains no paths
 // or names, but states that they can't be extracted.
-func specificContext(skip int) (LogContextInterface, error) {
+func specificContext(skip int) (logContextInterface, error) {
 	callTime := time.Now()
 
 	if skip < 0 {
-		negativeStackFrameErr := errors.New("can not skip negative stack frames")
+		negativeStackFrameErr := errors.New("Can not skip negative stack frames")
 		return &errorContext{callTime, negativeStackFrameErr}, negativeStackFrameErr
 	}
 

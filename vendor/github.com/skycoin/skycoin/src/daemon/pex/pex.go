@@ -18,7 +18,9 @@ import (
 
 	"sync"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
+	"github.com/skycoin/skycoin/src/util/logging"
+	"github.com/skycoin/skycoin/src/util/utc"
 )
 
 //TODO:
@@ -43,7 +45,7 @@ var (
 	RefreshBlacklistRate = time.Second * 30
 	// Logging. See http://godoc.org/github.com/op/go-logging for
 	// instructions on how to include this log's output
-	logger = util.MustGetLogger("pex")
+	logger = logging.MustGetLogger("pex")
 	// Default rng
 	rnum = rand.New(rand.NewSource(time.Now().Unix()))
 	// For removing inadvertent whitespace from addresses
@@ -100,16 +102,16 @@ func (peer *Peer) Seen() {
 // IncreaseRetryTimes adds the retry times
 func (peer *Peer) IncreaseRetryTimes() {
 	peer.RetryTimes++
-	logger.Info("Increase retry times of %v to %v", peer.Addr, peer.RetryTimes)
+	logger.Debug("Increase retry times of %v to %v", peer.Addr, peer.RetryTimes)
 }
 
 // ResetRetryTimes resets the retry time
 func (peer *Peer) ResetRetryTimes() {
 	peer.RetryTimes = 0
-	logger.Info("Reset retry times of %v", peer.Addr)
+	logger.Debug("Reset retry times of %v", peer.Addr)
 }
 
-// CanTry returns whether this peer tryable base on the exponential backoff algorithm
+// CanTry returns whether this peer is tryable base on the exponential backoff algorithm
 func (peer *Peer) CanTry() (rlt bool) {
 	now := Now()
 	mod := (math.Exp2(float64(peer.RetryTimes)) - 1) * 5
@@ -280,7 +282,7 @@ func (pl *Peerlist) getAddresses(private bool) []string {
 // Returns n random peers, or all of the peers, whichever is lower.
 // If count is 0, all of the peers are returned, shuffled.
 func (pl *Peerlist) random(count int, includePrivate bool) []*Peer {
-	keys := []string(nil)
+	keys := []string{}
 	if includePrivate {
 		keys = append(pl.getAddresses(true), pl.getAddresses(false)...)
 	} else {
@@ -386,7 +388,6 @@ func (pl *Peerlist) RandomAll(count int) []*Peer {
 // Save saves known peers to disk as a newline delimited list of addresses to
 // <dir><PeerDatabaseFilename>
 func (pl *Peerlist) Save(dir string) (err error) {
-	logger.Debug("PEX: SavingPeerList")
 	filename := PeerDatabaseFilename
 	fn := filepath.Join(dir, filename)
 	pl.strand(func() {
@@ -397,7 +398,7 @@ func (pl *Peerlist) Save(dir string) (err error) {
 				peers[k] = p
 			}
 		}
-		err = util.SaveJSON(fn, peers, 0600)
+		err = file.SaveJSON(fn, peers, 0600)
 		if err != nil {
 			logger.Notice("SavePeerList Failed: %s", err)
 		}
@@ -427,6 +428,7 @@ func (pl *Peerlist) ResetRetryTimes(addr string) {
 
 // ResetAllRetryTimes reset all peers' retry times
 func (pl *Peerlist) ResetAllRetryTimes() {
+	logger.Info("Reset all peer's retry times")
 	pl.strand(func() {
 		for _, p := range pl.peers {
 			p.ResetRetryTimes()
@@ -439,12 +441,9 @@ func (pl *Peerlist) ResetAllRetryTimes() {
 func LoadPeerlist(dir string) (*Peerlist, error) {
 	peerlist := Peerlist{peers: make(map[string]*Peer)}
 	fn := filepath.Join(dir, PeerDatabaseFilename)
-	if err := util.LoadJSON(fn, &peerlist.peers); err != nil {
+	if err := file.LoadJSON(fn, &peerlist.peers); err != nil {
 		return nil, err
 	}
-	// if err != nil {
-	// 	logger.Notice("LoadPeerList Failed: %s", err)
-	// }
 	return &peerlist, nil
 
 }
@@ -453,8 +452,6 @@ func LoadPeerlist(dir string) (*Peerlist, error) {
 type Pex struct {
 	// All known peers
 	*Peerlist
-	// Ignored peers
-	// Blacklist Blacklist
 	// If false, localhost peers will be rejected from the peerlist
 	AllowLocalhost bool
 	maxPeers       int
@@ -463,8 +460,7 @@ type Pex struct {
 // NewPex creates pex
 func NewPex(maxPeers int) *Pex {
 	return &Pex{
-		Peerlist: &Peerlist{peers: make(map[string]*Peer, maxPeers)},
-		// Blacklist:      make(Blacklist, 0),
+		Peerlist:       &Peerlist{peers: make(map[string]*Peer, maxPeers)},
 		maxPeers:       maxPeers,
 		AllowLocalhost: false,
 	}
@@ -493,6 +489,20 @@ func (px *Pex) AddPeer(ip string) (*Peer, error) {
 		}
 	}, "AddPeer")
 	return &p, err
+}
+
+// SetPrivate updates the private value of given ip in peerlist
+func (px *Pex) SetPrivate(ip string, private bool) error {
+	var err error
+	px.Peerlist.strand(func() {
+		if p, ok := px.peers[ip]; ok {
+			p.Private = private
+			return
+		}
+
+		err = fmt.Errorf("Set peer.Private failed: %v does not exist in peerlist", ip)
+	})
+	return err
 }
 
 // SetTrustState updates the peer's Trusted statue
@@ -563,9 +573,14 @@ func (px *Pex) AddPeers(peers []string) int {
 }
 
 // Load loads peers
-func (px *Pex) Load(dir string) (err error) {
-	px.Peerlist, err = LoadPeerlist(dir)
-	return
+func (px *Pex) Load(dir string) error {
+	pl, err := LoadPeerlist(dir)
+	if err != nil {
+		return err
+	}
+
+	px.Peerlist = pl
+	return nil
 }
 
 /* Common utilities */
@@ -591,5 +606,5 @@ func readLines(filename string) ([]string, error) {
 
 // Now returns UTC time
 func Now() time.Time {
-	return time.Now().UTC()
+	return utc.Now()
 }

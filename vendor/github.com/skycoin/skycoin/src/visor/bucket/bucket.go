@@ -1,6 +1,7 @@
 package bucket
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	"github.com/boltdb/bolt"
@@ -27,6 +28,18 @@ func New(name []byte, db *bolt.DB) (*Bucket, error) {
 	return &Bucket{name, db}, nil
 }
 
+// Reset resets the bucket
+func (b *Bucket) Reset() error {
+	return b.db.Update(func(tx *bolt.Tx) error {
+		if err := tx.DeleteBucket(b.Name); err != nil {
+			return err
+		}
+
+		_, err := tx.CreateBucketIfNotExists(b.Name)
+		return err
+	})
+}
+
 // Get value of specific key in the bucket.
 func (b Bucket) Get(key []byte) []byte {
 	var value []byte
@@ -35,6 +48,11 @@ func (b Bucket) Get(key []byte) []byte {
 		return nil
 	})
 	return value
+}
+
+// GetWithTx gets value
+func (b Bucket) GetWithTx(tx *bolt.Tx, key []byte) []byte {
+	return tx.Bucket(b.Name).Get(key)
 }
 
 // GetAll returns all values
@@ -74,6 +92,16 @@ func (b Bucket) Put(key []byte, value []byte) error {
 	})
 }
 
+// PutWithTx put key value with bolt.Tx
+func (b Bucket) PutWithTx(tx *bolt.Tx, key []byte, value []byte) error {
+	bkt := tx.Bucket(b.Name)
+	if bkt == nil {
+		return fmt.Errorf("bucket %s does not exist", b.Name)
+	}
+
+	return bkt.Put(key, value)
+}
+
 // Find find value that match the filter in the bucket.
 func (b Bucket) Find(filter func(key, value []byte) bool) []byte {
 	var value []byte
@@ -97,15 +125,11 @@ func (b *Bucket) Update(key []byte, f func([]byte) ([]byte, error)) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		// get the value of given key
 		bkt := tx.Bucket(b.Name)
-		if v := bkt.Get(key); v != nil {
-			var err error
-			v, err = f(v)
-			if err != nil {
-				return err
-			}
-			return bkt.Put(key, v)
+		v, err := f(bkt.Get(key))
+		if err != nil {
+			return err
 		}
-		return fmt.Errorf("%s not exist in bucket %s", string(key), string(b.Name))
+		return bkt.Put(key, v)
 	})
 }
 
@@ -114,6 +138,16 @@ func (b *Bucket) Delete(key []byte) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		return tx.Bucket(b.Name).Delete(key)
 	})
+}
+
+// DeleteWithTx remove from bucket with tx
+func (b *Bucket) DeleteWithTx(tx *bolt.Tx, key []byte) error {
+	bkt := tx.Bucket(b.Name)
+	if bkt == nil {
+		return fmt.Errorf("bucket %s doesn't exist", b.Name)
+	}
+
+	return bkt.Delete(key)
 }
 
 // RangeUpdate updates range of the values
@@ -148,6 +182,21 @@ func (b *Bucket) IsExist(k []byte) bool {
 	return exist
 }
 
+// IsEmpty check if the bucket is empty
+func (b *Bucket) IsEmpty() bool {
+	var empty = true
+	b.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(b.Name).Cursor()
+		k, _ := c.First()
+		if k != nil {
+			empty = false
+		}
+
+		return nil
+	})
+	return empty
+}
+
 // ForEach iterate the whole bucket
 func (b *Bucket) ForEach(f func(k, v []byte) error) error {
 	return b.db.View(func(tx *bolt.Tx) error {
@@ -166,3 +215,21 @@ func (b *Bucket) Len() (len int) {
 	})
 	return
 }
+
+// Itob converts uint64 to bytes
+func Itob(v uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
+
+// Btoi converts bytes to uint64
+func Btoi(v []byte) uint64 {
+	return binary.BigEndian.Uint64(v)
+}
+
+// Rollback callback function type
+type Rollback func()
+
+// TxHandler function type for processing bolt transaction
+type TxHandler func(tx *bolt.Tx) (Rollback, error)

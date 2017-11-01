@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 type Manager interface {
@@ -103,7 +103,7 @@ func (self *ExchangeAccountManager) save() error {
 	logger.Debug("save accounts")
 	a := self.ToMarshalable()
 	// for self.Accounts
-	return util.SaveJSON(filepath.Join(acntDir, acntName), a, 0600)
+	return file.SaveJSON(filepath.Join(acntDir, acntName), a, 0600)
 }
 
 func (self exchgAcntMgrJson) ToExchgAcntMgr() *ExchangeAccountManager {

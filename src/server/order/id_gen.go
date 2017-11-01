@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 // id generator
@@ -27,7 +27,7 @@ func (ig IDGenerator) Run(closing chan bool) {
 		ID uint64 `json:"id"`
 	}{}
 	if _, err := os.Stat(ig.Path); !os.IsNotExist(err) {
-		if err := util.LoadJSON(ig.Path, &id); err != nil {
+		if err := file.LoadJSON(ig.Path, &id); err != nil {
 			panic(err)
 		}
 	}
@@ -39,7 +39,7 @@ func (ig IDGenerator) Run(closing chan bool) {
 			id.ID += 1
 			ig.IDC <- id.ID
 
-			if err := util.SaveJSON(ig.Path, id, 0600); err != nil {
+			if err := file.SaveJSON(ig.Path, id, 0600); err != nil {
 				panic(err)
 			}
 		}

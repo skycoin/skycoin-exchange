@@ -18,7 +18,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/server/engine"
 	"github.com/skycoin/skycoin-exchange/src/server/order"
 	"github.com/skycoin/skycoin-exchange/src/server/router"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 var logger = logging.MustGetLogger("exchange.server")
@@ -269,7 +269,7 @@ func initDataDir(dir string) string {
 		logger.Error("data directory is nil")
 	}
 
-	home := util.UserHome()
+	home := file.UserHome()
 	if home == "" {
 		logger.Warning("Failed to get home directory")
 		dir = filepath.Join("./", dir)

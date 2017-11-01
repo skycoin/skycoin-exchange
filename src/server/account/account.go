@@ -8,11 +8,11 @@ import (
 	"sync"
 
 	logging "github.com/op/go-logging"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 var (
-	acntDir  = filepath.Join(util.UserHome(), ".skycoin-exchange/account")
+	acntDir  = filepath.Join(file.UserHome(), ".skycoin-exchange/account")
 	acntName = "account.data"
 	logger   = logging.MustGetLogger("exchange.account")
 )

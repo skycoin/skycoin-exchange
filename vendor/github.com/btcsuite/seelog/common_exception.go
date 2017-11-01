@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -49,10 +49,10 @@ type logLevelException struct {
 	constraints logLevelConstraints
 }
 
-// newLogLevelException creates a new exception.
+// newLogLevelException creates a new exception. 
 func newLogLevelException(funcPattern string, filePattern string, constraints logLevelConstraints) (*logLevelException, error) {
 	if constraints == nil {
-		return nil, errors.New("constraints can not be nil")
+		return nil, errors.New("Constraints can not be nil")
 	}
 
 	exception := new(logLevelException)
@@ -75,7 +75,7 @@ func newLogLevelException(funcPattern string, filePattern string, constraints lo
 }
 
 // MatchesContext returns true if context matches the patterns of this logLevelException
-func (logLevelEx *logLevelException) MatchesContext(context LogContextInterface) bool {
+func (logLevelEx *logLevelException) MatchesContext(context logContextInterface) bool {
 	return logLevelEx.match(context.Func(), context.FullPath())
 }
 
@@ -98,7 +98,7 @@ func (logLevelEx *logLevelException) FilePattern() string {
 func (logLevelEx *logLevelException) initFuncPatternParts(funcPattern string) (err error) {
 
 	if funcFormatValidator.FindString(funcPattern) != funcPattern {
-		return errors.New("func path \"" + funcPattern + "\" contains incorrect symbols. Only a-z A-Z 0-9 _ * . allowed)")
+		return errors.New("Func path \"" + funcPattern + "\" contains incorrect symbols. Only a-z A-Z 0-9 _ * . allowed)")
 	}
 
 	logLevelEx.funcPatternParts = splitPattern(funcPattern)
@@ -109,7 +109,7 @@ func (logLevelEx *logLevelException) initFuncPatternParts(funcPattern string) (e
 func (logLevelEx *logLevelException) initFilePatternParts(filePattern string) (err error) {
 
 	if fileFormatValidator.FindString(filePattern) != filePattern {
-		return errors.New("file path \"" + filePattern + "\" contains incorrect symbols. Only a-z A-Z 0-9 \\ / _ * . allowed)")
+		return errors.New("File path \"" + filePattern + "\" contains incorrect symbols. Only a-z A-Z 0-9 \\ / _ * . allowed)")
 	}
 
 	logLevelEx.filePatternParts = splitPattern(filePattern)
@@ -137,7 +137,7 @@ func (logLevelEx *logLevelException) String() string {
 
 // splitPattern splits pattern into strings and asterisks. Example: "ab*cde**f" -> ["ab", "*", "cde", "*", "f"]
 func splitPattern(pattern string) []string {
-	var patternParts []string
+	patternParts := make([]string, 0)
 	var lastChar rune
 	for _, char := range pattern {
 		if char == '*' {

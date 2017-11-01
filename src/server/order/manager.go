@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 type Manager struct {
@@ -167,7 +167,7 @@ func (m *Manager) Start(tm time.Duration, closing chan bool) {
 						panic("error coin pair name")
 					}
 					filename := strings.Join(pairs, "_")
-					if err := util.SaveJSON(filepath.Join(orderDir, filename+"."+orderExt), b.Copy().ToMarshalable(), 0600); err != nil {
+					if err := file.SaveJSON(filepath.Join(orderDir, filename+"."+orderExt), b.Copy().ToMarshalable(), 0600); err != nil {
 						panic(err)
 					}
 				}

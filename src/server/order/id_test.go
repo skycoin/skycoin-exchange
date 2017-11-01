@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestIdGeneratorNoneEmpty(t *testing.T) {
 	}{4}
 	// save the id into local disk
 	path := filepath.Join(orderDir, "test1_sky."+idExt)
-	err := util.SaveJSON(path, id, 0600)
+	err := file.SaveJSON(path, id, 0600)
 	assert.Nil(t, err)
 
 	// remove file
@@ -52,7 +52,7 @@ func TestIdGeneratorNoneEmpty(t *testing.T) {
 	close(closing)
 	// check the file value.
 	time.Sleep(500 * time.Millisecond)
-	err = util.LoadJSON(path, &id)
+	err = file.LoadJSON(path, &id)
 	assert.Nil(t, err)
 	if id.ID != 13 {
 		t.Fatal("sync file failed")

@@ -2,14 +2,14 @@ package coin
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/cipher/encoder"
-	"github.com/skycoin/skycoin/src/util"
+
+	"github.com/skycoin/skycoin/src/util/logging"
 )
 
-var logger = util.MustGetLogger("coin")
+var logger = logging.MustGetLogger("coin")
 
 // Block represents the block struct
 type Block struct {
@@ -45,8 +45,8 @@ type BlockBody struct {
 
 // SignedBlock signed block
 type SignedBlock struct {
-	Block Block
-	Sig   cipher.Sig
+	Block
+	Sig cipher.Sig
 }
 
 //TODO: merge header/body and cleanup top level interface
@@ -67,21 +67,45 @@ type Block struct {
 */
 
 // NewBlock creates new block.
-func NewBlock(prev Block, currentTime uint64, unspent UnspentPool,
-	txns Transactions, calc FeeCalculator) Block {
+func NewBlock(prev Block, currentTime uint64, uxHash cipher.SHA256, txns Transactions, calc FeeCalculator) (*Block, error) {
 	if len(txns) == 0 {
-		log.Panic("Refusing to create block with no transactions")
+		return nil, fmt.Errorf("Refusing to create block with no transactions")
 	}
+
 	fee, err := txns.Fees(calc)
 	if err != nil {
 		// This should have been caught earlier
-		log.Panicf("Invalid transaction fees: %v", err)
+		return nil, fmt.Errorf("Invalid transaction fees: %v", err)
 	}
+
 	body := BlockBody{txns}
-	return Block{
-		Head: NewBlockHeader(prev.Head, unspent, currentTime, fee, body),
+	return &Block{
+		Head: NewBlockHeader(prev.Head, uxHash, currentTime, fee, body),
+		Body: body,
+	}, nil
+}
+
+// NewGenesisBlock creates genesis block
+func NewGenesisBlock(genesisAddr cipher.Address, genesisCoins, timestamp uint64) (*Block, error) {
+	txn := Transaction{}
+	txn.PushOutput(genesisAddr, genesisCoins, genesisCoins)
+	body := BlockBody{Transactions: Transactions{txn}}
+	prevHash := cipher.SHA256{}
+	head := BlockHeader{
+		Time:     timestamp,
+		BodyHash: body.Hash(),
+		PrevHash: prevHash,
+		BkSeq:    0,
+		Version:  0,
+		Fee:      0,
+		UxHash:   cipher.SHA256{},
+	}
+	b := &Block{
+		Head: head,
 		Body: body,
 	}
+
+	return b, nil
 }
 
 // HashHeader return hash of block head.
@@ -135,10 +159,9 @@ func (b Block) GetTransaction(txHash cipher.SHA256) (Transaction, bool) {
 }
 
 // NewBlockHeader creates block header
-func NewBlockHeader(prev BlockHeader, unspent UnspentPool, currentTime,
-	fee uint64, body BlockBody) BlockHeader {
+func NewBlockHeader(prev BlockHeader, uxHash cipher.SHA256, currentTime, fee uint64, body BlockBody) BlockHeader {
 	if currentTime <= prev.Time {
-		log.Panic("Time can only move forward")
+		logger.Panic("Time can only move forward")
 	}
 	prevHash := prev.Hash()
 	return BlockHeader{
@@ -148,7 +171,7 @@ func NewBlockHeader(prev BlockHeader, unspent UnspentPool, currentTime,
 		Time:     currentTime,
 		BkSeq:    prev.BkSeq + 1,
 		Fee:      fee,
-		UxHash:   unspent.GetUxHash(),
+		UxHash:   uxHash,
 	}
 }
 
@@ -215,4 +238,29 @@ func CreateUnspents(bh BlockHeader, tx Transaction) UxArray {
 		}
 	}
 	return uxo
+}
+
+// CreateUnspent creates single unspent output
+func CreateUnspent(bh BlockHeader, tx Transaction, outIndex int) (UxOut, error) {
+	if len(tx.Out) <= outIndex {
+		return UxOut{}, fmt.Errorf("Transaction out index is overflow")
+	}
+
+	var h cipher.SHA256
+	if bh.BkSeq != 0 {
+		h = tx.Hash()
+	}
+
+	return UxOut{
+		Head: UxHead{
+			Time:  bh.Time,
+			BkSeq: bh.BkSeq,
+		},
+		Body: UxBody{
+			SrcTransaction: h,
+			Address:        tx.Out[outIndex].Address,
+			Coins:          tx.Out[outIndex].Coins,
+			Hours:          tx.Out[outIndex].Hours,
+		},
+	}, nil
 }

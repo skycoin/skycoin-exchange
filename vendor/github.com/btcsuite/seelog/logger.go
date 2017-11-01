@@ -36,53 +36,18 @@ func reportInternalError(err error) {
 
 // LoggerInterface represents structs capable of logging Seelog messages
 type LoggerInterface interface {
-
-	// Tracef formats message according to format specifier
-	// and writes to log with level = Trace.
 	Tracef(format string, params ...interface{})
-
-	// Debugf formats message according to format specifier
-	// and writes to log with level = Debug.
 	Debugf(format string, params ...interface{})
-
-	// Infof formats message according to format specifier
-	// and writes to log with level = Info.
 	Infof(format string, params ...interface{})
-
-	// Warnf formats message according to format specifier
-	// and writes to log with level = Warn.
 	Warnf(format string, params ...interface{}) error
-
-	// Errorf formats message according to format specifier
-	// and writes to log with level = Error.
 	Errorf(format string, params ...interface{}) error
-
-	// Criticalf formats message according to format specifier
-	// and writes to log with level = Critical.
 	Criticalf(format string, params ...interface{}) error
 
-	// Trace formats message using the default formats for its operands
-	// and writes to log with level = Trace
 	Trace(v ...interface{})
-
-	// Debug formats message using the default formats for its operands
-	// and writes to log with level = Debug
 	Debug(v ...interface{})
-
-	// Info formats message using the default formats for its operands
-	// and writes to log with level = Info
 	Info(v ...interface{})
-
-	// Warn formats message using the default formats for its operands
-	// and writes to log with level = Warn
 	Warn(v ...interface{}) error
-
-	// Error formats message using the default formats for its operands
-	// and writes to log with level = Error
 	Error(v ...interface{}) error
-
-	// Critical formats message using the default formats for its operands
-	// and writes to log with level = Critical
 	Critical(v ...interface{}) error
 
 	traceWithCallDepth(callDepth int, message fmt.Stringer)
@@ -92,31 +57,14 @@ type LoggerInterface interface {
 	errorWithCallDepth(callDepth int, message fmt.Stringer)
 	criticalWithCallDepth(callDepth int, message fmt.Stringer)
 
-	// Close flushes all the messages in the logger and closes it. It cannot be used after this operation.
 	Close()
-
-	// Flush flushes all the messages in the logger.
 	Flush()
-
-	// Closed returns true if the logger was previously closed.
 	Closed() bool
-
-	// SetAdditionalStackDepth sets the additional number of frames to skip by runtime.Caller
-	// when getting function information needed to print seelog format identifiers such as %Func or %File.
-	//
-	// This func may be used when you wrap seelog funcs and want to print caller info of you own
-	// wrappers instead of seelog func callers. In this case you should set depth = 1. If you then
-	// wrap your wrapper, you should set depth = 2, etc.
-	//
-	// NOTE: Incorrect depth value may lead to errors in runtime.Caller evaluation or incorrect
-	// function/file names in log files. Do not use it if you are not going to wrap seelog funcs.
-	// You may reset the value to default using a SetAdditionalStackDepth(0) call.
-	SetAdditionalStackDepth(depth int) error
 }
 
 // innerLoggerInterface is an internal logging interface
 type innerLoggerInterface interface {
-	innerLog(level LogLevel, context LogContextInterface, message fmt.Stringer)
+	innerLog(level LogLevel, context logContextInterface, message fmt.Stringer)
 	Flush()
 }
 
@@ -125,13 +73,12 @@ type allowedContextCache map[string]map[string]map[LogLevel]bool
 
 // commonLogger contains all common data needed for logging and contains methods used to log messages.
 type commonLogger struct {
-	config        *logConfig          // Config used for logging
-	contextCache  allowedContextCache // Caches whether log is enabled for specific "full path-func name-level" sets
-	closed        bool                // 'true' when all writers are closed, all data is flushed, logger is unusable.
-	m             sync.Mutex          // Mutex for main operations
-	unusedLevels  []bool
-	innerLogger   innerLoggerInterface
-	addStackDepth int // Additional stack depth needed for correct seelog caller context detection
+	config       *logConfig          // Config used for logging
+	contextCache allowedContextCache // Caches whether log is enabled for specific "full path-func name-level" sets
+	closed       bool                // 'true' when all writers are closed, all data is flushed, logger is unusable.
+	m            sync.Mutex          // Mutex for main operations
+	unusedLevels []bool
+	innerLogger  innerLoggerInterface
 }
 
 func newCommonLogger(config *logConfig, internalLogger innerLoggerInterface) *commonLogger {
@@ -144,16 +91,6 @@ func newCommonLogger(config *logConfig, internalLogger innerLoggerInterface) *co
 	cLogger.innerLogger = internalLogger
 
 	return cLogger
-}
-
-func (cLogger *commonLogger) SetAdditionalStackDepth(depth int) error {
-	if depth < 0 {
-		return fmt.Errorf("negative depth: %d", depth)
-	}
-	cLogger.m.Lock()
-	cLogger.addStackDepth = depth
-	cLogger.m.Unlock()
-	return nil
 }
 
 func (cLogger *commonLogger) Tracef(format string, params ...interface{}) {
@@ -283,7 +220,7 @@ func (cLogger *commonLogger) log(
 		return
 	}
 
-	context, _ := specificContext(stackCallDepth + cLogger.addStackDepth)
+	context, _ := specificContext(stackCallDepth)
 
 	// Context errors are not reported because there are situations
 	// in which context errors are normal Seelog usage cases. For
@@ -300,11 +237,11 @@ func (cLogger *commonLogger) log(
 func (cLogger *commonLogger) processLogMsg(
 	level LogLevel,
 	message fmt.Stringer,
-	context LogContextInterface) {
+	context logContextInterface) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			reportInternalError(fmt.Errorf("recovered from panic during message processing: %s", err))
+			fmt.Println(err)
 		}
 	}()
 
@@ -313,7 +250,7 @@ func (cLogger *commonLogger) processLogMsg(
 	}
 }
 
-func (cLogger *commonLogger) isAllowed(level LogLevel, context LogContextInterface) bool {
+func (cLogger *commonLogger) isAllowed(level LogLevel, context logContextInterface) bool {
 	funcMap, ok := cLogger.contextCache[context.FullPath()]
 	if !ok {
 		funcMap = make(map[string]map[LogLevel]bool, 0)

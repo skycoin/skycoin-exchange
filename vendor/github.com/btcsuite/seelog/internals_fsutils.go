@@ -1,11 +1,8 @@
 package seelog
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,7 +16,7 @@ const (
 
 const (
 	// Max number of directories can be read asynchronously.
-	maxDirNumberReadAsync = 1000
+	maxDirNumberReadAsync = 1e3
 )
 
 type cannotOpenFileError struct {
@@ -166,7 +163,7 @@ L:
 }
 
 func isRegular(m os.FileMode) bool {
-	return m&os.ModeType == 0
+    return m&os.ModeType == 0
 }
 
 // getDirFilePaths return full paths of the files located in the directory.
@@ -182,7 +179,7 @@ func getDirFilePaths(dirPath string, fpFilter filePathFilter, pathIsName bool) (
 	if !filepath.IsAbs(dirPath) {
 		absDirPath, err = filepath.Abs(dirPath)
 		if err != nil {
-			return nil, fmt.Errorf("cannot get absolute path of directory: %s", err.Error())
+			return nil, fmt.Errorf("Cannot get absolute path of directory: %s", err.Error())
 		}
 	} else {
 		absDirPath = dirPath
@@ -239,7 +236,7 @@ func getOpenFilesByDirectoryAsync(
 ) error {
 	n := len(dirPaths)
 	if n > maxDirNumberReadAsync {
-		return fmt.Errorf("number of input directories to be read exceeded max value %d", maxDirNumberReadAsync)
+		return fmt.Errorf("Number of input directories to be read exceeded max value %d", maxDirNumberReadAsync)
 	}
 	type filesInDirResult struct {
 		DirName string
@@ -291,8 +288,9 @@ func fileExists(path string) (bool, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
+		} else {
+			return false, err
 		}
-		return false, err
 	}
 	return true, nil
 }
@@ -329,75 +327,4 @@ func tryRemoveFile(filePath string) (err error) {
 		return
 	}
 	return
-}
-
-// Unzips a specified zip file. Returns filename->filebytes map.
-func unzip(archiveName string) (map[string][]byte, error) {
-	// Open a zip archive for reading.
-	r, err := zip.OpenReader(archiveName)
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-
-	// Files to be added to archive
-	// map file name to contents
-	files := make(map[string][]byte)
-
-	// Iterate through the files in the archive,
-	// printing some of their contents.
-	for _, f := range r.File {
-		rc, err := f.Open()
-		if err != nil {
-			return nil, err
-		}
-
-		bts, err := ioutil.ReadAll(rc)
-		rcErr := rc.Close()
-
-		if err != nil {
-			return nil, err
-		}
-		if rcErr != nil {
-			return nil, rcErr
-		}
-
-		files[f.Name] = bts
-	}
-
-	return files, nil
-}
-
-// Creates a zip file with the specified file names and byte contents.
-func createZip(archiveName string, files map[string][]byte) error {
-	// Create a buffer to write our archive to.
-	buf := new(bytes.Buffer)
-
-	// Create a new zip archive.
-	w := zip.NewWriter(buf)
-
-	// Write files
-	for fpath, fcont := range files {
-		f, err := w.Create(fpath)
-		if err != nil {
-			return err
-		}
-		_, err = f.Write([]byte(fcont))
-		if err != nil {
-			return err
-		}
-	}
-
-	// Make sure to check the error on Close.
-	err := w.Close()
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(archiveName, buf.Bytes(), defaultFilePermissions)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

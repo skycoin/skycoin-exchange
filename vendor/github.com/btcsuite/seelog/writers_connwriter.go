@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,6 @@
 package seelog
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -35,11 +34,9 @@ import (
 type connWriter struct {
 	innerWriter    io.WriteCloser
 	reconnectOnMsg bool
-	reconnect      bool
+	recconect      bool
 	net            string
 	addr           string
-	useTLS         bool
-	configTLS      *tls.Config
 }
 
 // Creates writer to the address addr on the network netName.
@@ -54,19 +51,6 @@ func newConnWriter(netName string, addr string, reconnectOnMsg bool) *connWriter
 	return newWriter
 }
 
-// Creates a writer that uses SSL/TLS
-func newTLSWriter(netName string, addr string, reconnectOnMsg bool, config *tls.Config) *connWriter {
-	newWriter := new(connWriter)
-
-	newWriter.net = netName
-	newWriter.addr = addr
-	newWriter.reconnectOnMsg = reconnectOnMsg
-	newWriter.useTLS = true
-	newWriter.configTLS = config
-
-	return newWriter
-}
-
 func (connWriter *connWriter) Close() error {
 	if connWriter.innerWriter == nil {
 		return nil
@@ -76,7 +60,7 @@ func (connWriter *connWriter) Close() error {
 }
 
 func (connWriter *connWriter) Write(bytes []byte) (n int, err error) {
-	if connWriter.neededConnectOnMsg() {
+	if connWriter.neddedConnectOnMsg() {
 		err = connWriter.connect()
 		if err != nil {
 			return 0, err
@@ -89,7 +73,7 @@ func (connWriter *connWriter) Write(bytes []byte) (n int, err error) {
 
 	n, err = connWriter.innerWriter.Write(bytes)
 	if err != nil {
-		connWriter.reconnect = true
+		connWriter.recconect = true
 	}
 
 	return
@@ -103,16 +87,6 @@ func (connWriter *connWriter) connect() error {
 	if connWriter.innerWriter != nil {
 		connWriter.innerWriter.Close()
 		connWriter.innerWriter = nil
-	}
-
-	if connWriter.useTLS {
-		conn, err := tls.Dial(connWriter.net, connWriter.addr, connWriter.configTLS)
-		if err != nil {
-			return err
-		}
-		connWriter.innerWriter = conn
-
-		return nil
 	}
 
 	conn, err := net.Dial(connWriter.net, connWriter.addr)
@@ -130,9 +104,9 @@ func (connWriter *connWriter) connect() error {
 	return nil
 }
 
-func (connWriter *connWriter) neededConnectOnMsg() bool {
-	if connWriter.reconnect {
-		connWriter.reconnect = false
+func (connWriter *connWriter) neddedConnectOnMsg() bool {
+	if connWriter.recconect {
+		connWriter.recconect = false
 		return true
 	}
 

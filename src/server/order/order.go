@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 type Type uint8
@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	orderDir string = filepath.Join(util.UserHome(), ".skycoin-exchange/orderbook")
+	orderDir string = filepath.Join(file.UserHome(), ".skycoin-exchange/orderbook")
 	orderExt string = "ods"
 	idExt    string = "id"
 )

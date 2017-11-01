@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin/src/visor"
 )
 
+// OutputsResult the output json format
 type OutputsResult struct {
 	Outputs visor.ReadableOutputSet `json:"outputs"`
 }
@@ -34,6 +35,11 @@ func getOutputsHandler(req Request, gateway Gatewayer) Response {
 		}
 	}
 
-	outs := gateway.GetUnspentOutputs(daemon.FbyAddresses(addrs))
+	outs, err := gateway.GetUnspentOutputs(daemon.FbyAddresses(addrs))
+	if err != nil {
+		logger.Error("get unspent outputs failed: %v", err)
+		return makeErrorResponse(errCodeInternalError)
+	}
+
 	return makeSuccessResponse(req.ID, OutputsResult{outs})
 }

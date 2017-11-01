@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -44,13 +44,13 @@ type minMaxConstraints struct {
 // newMinMaxConstraints creates a new minMaxConstraints struct with the specified min and max levels.
 func newMinMaxConstraints(min LogLevel, max LogLevel) (*minMaxConstraints, error) {
 	if min > max {
-		return nil, fmt.Errorf("min level can't be greater than max. Got min: %d, max: %d", min, max)
+		return nil, errors.New(fmt.Sprintf("Min level can't be greater than max. Got min: %d, max: %d", min, max))
 	}
 	if min < TraceLvl || min > CriticalLvl {
-		return nil, fmt.Errorf("min level can't be less than Trace or greater than Critical. Got min: %d", min)
+		return nil, errors.New(fmt.Sprintf("Min level can't be less than Trace or greater than Critical. Got min: %d", min))
 	}
 	if max < TraceLvl || max > CriticalLvl {
-		return nil, fmt.Errorf("max level can't be less than Trace or greater than Critical. Got max: %d", max)
+		return nil, errors.New(fmt.Sprintf("Max level can't be less than Trace or greater than Critical. Got max: %d", max))
 	}
 
 	return &minMaxConstraints{min, max}, nil
@@ -75,7 +75,7 @@ type listConstraints struct {
 // newListConstraints creates a new listConstraints struct with the specified allowed levels.
 func newListConstraints(allowList []LogLevel) (*listConstraints, error) {
 	if allowList == nil {
-		return nil, errors.New("list can't be nil")
+		return nil, errors.New("List can't be nil")
 	}
 
 	allowLevels, err := createMapFromList(allowList)
@@ -113,7 +113,7 @@ func createMapFromList(allowedList []LogLevel) (map[LogLevel]bool, error) {
 	allowedLevels := make(map[LogLevel]bool, 0)
 	for _, level := range allowedList {
 		if level < TraceLvl || level > Off {
-			return nil, fmt.Errorf("level can't be less than Trace or greater than Critical. Got level: %d", level)
+			return nil, errors.New(fmt.Sprintf("Level can't be less than Trace or greater than Critical. Got level: %d", level))
 		}
 		allowedLevels[level] = true
 	}
@@ -121,7 +121,7 @@ func createMapFromList(allowedList []LogLevel) (map[LogLevel]bool, error) {
 }
 func validateOffLevel(allowedLevels map[LogLevel]bool) error {
 	if _, ok := allowedLevels[Off]; ok && len(allowedLevels) > 1 {
-		return errors.New("logLevel Off cant be mixed with other levels")
+		return errors.New("LogLevel Off cant be mixed with other levels")
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func validateOffLevel(allowedLevels map[LogLevel]bool) error {
 // IsAllowed returns true, if log level is in allowed log levels list.
 // If the list contains the only item 'common.Off' then IsAllowed will always return false for any input values.
 func (listConstr *listConstraints) IsAllowed(level LogLevel) bool {
-	for l := range listConstr.allowedLevels {
+	for l, _ := range listConstr.allowedLevels {
 		if l == level && level != Off {
 			return true
 		}

@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,8 +26,9 @@ package seelog
 
 import (
 	"container/list"
-	"fmt"
 	"sync"
+	"fmt"
+	"errors"
 )
 
 // MaxQueueSize is the critical number of messages in the queue that result in an immediate flush.
@@ -37,8 +38,8 @@ const (
 
 type msgQueueItem struct {
 	level   LogLevel
-	context LogContextInterface
-	message fmt.Stringer
+	context logContextInterface
+	message  fmt.Stringer
 }
 
 // asyncLogger represents common data for all asynchronous loggers
@@ -62,7 +63,7 @@ func newAsyncLogger(config *logConfig) *asyncLogger {
 
 func (asnLogger *asyncLogger) innerLog(
 	level LogLevel,
-	context LogContextInterface,
+	context logContextInterface,
 	message fmt.Stringer) {
 
 	asnLogger.addMsgToQueue(level, context, message)
@@ -73,13 +74,9 @@ func (asnLogger *asyncLogger) Close() {
 	defer asnLogger.m.Unlock()
 
 	if !asnLogger.closed {
-		asnLogger.flushQueue(true)
+		asnLogger.flushQueue()
 		asnLogger.config.RootDispatcher.Flush()
-
-		if err := asnLogger.config.RootDispatcher.Close(); err != nil {
-			reportInternalError(err)
-		}
-
+		asnLogger.config.RootDispatcher.Close()
 		asnLogger.queueHasElements.Broadcast()
 	}
 }
@@ -89,16 +86,14 @@ func (asnLogger *asyncLogger) Flush() {
 	defer asnLogger.m.Unlock()
 
 	if !asnLogger.closed {
-		asnLogger.flushQueue(true)
+		asnLogger.flushQueue()
 		asnLogger.config.RootDispatcher.Flush()
 	}
 }
 
-func (asnLogger *asyncLogger) flushQueue(lockNeeded bool) {
-	if lockNeeded {
-		asnLogger.queueHasElements.L.Lock()
-		defer asnLogger.queueHasElements.L.Unlock()
-	}
+func (asnLogger *asyncLogger) flushQueue() {
+	asnLogger.queueHasElements.L.Lock()
+	defer asnLogger.queueHasElements.L.Unlock()
 
 	for asnLogger.msgQueue.Len() > 0 {
 		asnLogger.processQueueElement()
@@ -116,24 +111,24 @@ func (asnLogger *asyncLogger) processQueueElement() {
 
 func (asnLogger *asyncLogger) addMsgToQueue(
 	level LogLevel,
-	context LogContextInterface,
+	context logContextInterface,
 	message fmt.Stringer) {
 
 	if !asnLogger.closed {
-		asnLogger.queueHasElements.L.Lock()
-		defer asnLogger.queueHasElements.L.Unlock()
-
 		if asnLogger.msgQueue.Len() >= MaxQueueSize {
 			fmt.Printf("Seelog queue overflow: more than %v messages in the queue. Flushing.\n", MaxQueueSize)
-			asnLogger.flushQueue(false)
+			asnLogger.flushQueue()
 		}
-
+		
 		queueItem := msgQueueItem{level, context, message}
+
+		asnLogger.queueHasElements.L.Lock()
+		defer asnLogger.queueHasElements.L.Unlock()
 
 		asnLogger.msgQueue.PushBack(queueItem)
 		asnLogger.queueHasElements.Broadcast()
 	} else {
-		err := fmt.Errorf("queue closed! Cannot process element: %d %#v", level, message)
+		err := errors.New(fmt.Sprintf("Queue closed! Cannot process element: %d %#v", level, message))
 		reportInternalError(err)
 	}
 }

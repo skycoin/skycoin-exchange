@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -96,7 +96,7 @@ func TestLoadManager(t *testing.T) {
 	}
 
 	// write book to files.
-	err := util.SaveJSON(filepath.Join(orderDir, strings.Join(coinPair, "_")+"."+orderExt), bk.ToMarshalable(), 0600)
+	err := file.SaveJSON(filepath.Join(orderDir, strings.Join(coinPair, "_")+"."+orderExt), bk.ToMarshalable(), 0600)
 	assert.Nil(t, err)
 	m, err := LoadManager()
 	assert.Nil(t, err)

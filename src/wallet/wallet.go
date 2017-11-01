@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/skycoin/skycoin-exchange/src/coin"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 // Walleter interface, new wallet type can be supported if it fullfills this interface.
@@ -26,7 +26,7 @@ type Walleter interface {
 
 // wltDir default wallet dir, wallet file name sturct: $type_$seed.wlt.
 // example: bitcoin_seed.wlt, skycoin_seed.wlt.
-var wltDir = filepath.Join(util.UserHome(), ".exchange-client/wallet")
+var wltDir = filepath.Join(file.UserHome(), ".exchange-client/wallet")
 
 // Ext wallet file extension name
 var Ext = "wlt"

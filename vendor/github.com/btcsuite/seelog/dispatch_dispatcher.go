@@ -37,7 +37,7 @@ import (
 type dispatcherInterface interface {
 	flusherInterface
 	io.Closer
-	Dispatch(message string, level LogLevel, context LogContextInterface, errorFunc func(err error))
+	Dispatch(message string, level LogLevel, context logContextInterface, errorFunc func(err error))
 }
 
 type dispatcher struct {
@@ -53,7 +53,7 @@ func createDispatcher(formatter *formatter, receivers []interface{}) (*dispatche
 		return nil, errors.New("formatter cannot be nil")
 	}
 	if receivers == nil || len(receivers) == 0 {
-		return nil, errors.New("receivers cannot be nil or empty")
+		return nil, errors.New("Receivers cannot be nil or empty")
 	}
 
 	disp := &dispatcher{formatter, make([]*formattedWriter, 0), make([]dispatcherInterface, 0)}
@@ -80,7 +80,7 @@ func createDispatcher(formatter *formatter, receivers []interface{}) (*dispatche
 			continue
 		}
 
-		return nil, errors.New("method can receive either io.Writer or dispatcherInterface")
+		return nil, errors.New("Method can receive either io.Writer or dispatcherInterface")
 	}
 
 	return disp, nil
@@ -89,7 +89,7 @@ func createDispatcher(formatter *formatter, receivers []interface{}) (*dispatche
 func (disp *dispatcher) Dispatch(
 	message string,
 	level LogLevel,
-	context LogContextInterface,
+	context logContextInterface,
 	errorFunc func(err error)) {
 
 	for _, writer := range disp.writers {

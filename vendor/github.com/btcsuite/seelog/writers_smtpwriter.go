@@ -32,13 +32,10 @@ import (
 	"io/ioutil"
 	"net/smtp"
 	"path/filepath"
-	"strings"
 )
 
 const (
-	// Default subject phrase for sending emails.
-	DefaultSubjectPhrase = "Diagnostic message from server: "
-
+	subjectPhrase = "Diagnostic message from server: "
 	// Message subject pattern composed according to RFC 5321.
 	rfc5321SubjectPattern = "From: %s <%s>\nSubject: %s\n"
 )
@@ -53,12 +50,10 @@ type smtpWriter struct {
 	senderName         string
 	recipientAddresses []string
 	caCertDirPaths     []string
-	mailHeaders        []string
-	subject            string
 }
 
-// newSMTPWriter returns a new SMTP-writer.
-func newSMTPWriter(sa, sn string, ras []string, hn, hp, un, pwd string, cacdps []string, subj string, headers []string) *smtpWriter {
+// newSmtpWriter returns a new SMTP-writer.
+func newSmtpWriter(sa, sn string, ras []string, hn, hp, un, pwd string, cacdps []string) *smtpWriter {
 	return &smtpWriter{
 		auth:               smtp.PlainAuth("", un, pwd, hn),
 		hostName:           hn,
@@ -68,28 +63,19 @@ func newSMTPWriter(sa, sn string, ras []string, hn, hp, un, pwd string, cacdps [
 		senderName:         sn,
 		recipientAddresses: ras,
 		caCertDirPaths:     cacdps,
-		subject:            subj,
-		mailHeaders:        headers,
 	}
 }
 
-func prepareMessage(senderAddr, senderName, subject string, body []byte, headers []string) []byte {
-	headerLines := fmt.Sprintf(rfc5321SubjectPattern, senderName, senderAddr, subject);
-
-	// Build header lines if configured.
-	if headers != nil && len(headers) > 0 {
-		headerLines += strings.Join(headers, "\n")
-		headerLines += "\n"
-	}
-
-	return append([]byte(headerLines), body...)
+func prepareMessage(senderAddr, senderName, subject string, body []byte) []byte {
+	h := []byte(fmt.Sprintf(rfc5321SubjectPattern, senderName, senderAddr, subject))
+	return append(h, body...)
 }
 
 // getTLSConfig gets paths of PEM files with certificates,
 // host server name and tries to create an appropriate TLS.Config.
 func getTLSConfig(pemFileDirPaths []string, hostName string) (config *tls.Config, err error) {
 	if pemFileDirPaths == nil || len(pemFileDirPaths) == 0 {
-		err = errors.New("invalid PEM file paths")
+		err = errors.New("Invalid PEM file paths")
 		return
 	}
 	pemEncodedContent := []byte{}
@@ -116,7 +102,7 @@ func getTLSConfig(pemFileDirPaths []string, hostName string) (config *tls.Config
 			if bytes, e = ioutil.ReadFile(pfp); e == nil {
 				pemEncodedContent = append(pemEncodedContent, bytes...)
 			} else {
-				return nil, fmt.Errorf("cannot read file: %s: %s", pfp, e.Error())
+				return nil, fmt.Errorf("Cannot read file: %s: %s", pfp, e.Error())
 			}
 		}
 	}
@@ -125,7 +111,7 @@ func getTLSConfig(pemFileDirPaths []string, hostName string) (config *tls.Config
 	isAppended := config.RootCAs.AppendCertsFromPEM(pemEncodedContent)
 	if !isAppended {
 		// Extract this into a separate error.
-		err = errors.New("invalid PEM content")
+		err = errors.New("Invalid PEM content")
 		return
 	}
 	return
@@ -182,14 +168,13 @@ func sendMailWithTLSConfig(config *tls.Config, addr string, a smtp.Auth, from st
 // to a post server, which sends it to the recipients.
 func (smtpw *smtpWriter) Write(data []byte) (int, error) {
 	var err error
-
 	if smtpw.caCertDirPaths == nil {
 		err = smtp.SendMail(
 			smtpw.hostNameWithPort,
 			smtpw.auth,
 			smtpw.senderAddress,
 			smtpw.recipientAddresses,
-			prepareMessage(smtpw.senderAddress, smtpw.senderName, smtpw.subject, data, smtpw.mailHeaders),
+			prepareMessage(smtpw.senderAddress, smtpw.senderName, subjectPhrase, data),
 		)
 	} else {
 		config, e := getTLSConfig(smtpw.caCertDirPaths, smtpw.hostName)
@@ -202,7 +187,7 @@ func (smtpw *smtpWriter) Write(data []byte) (int, error) {
 			smtpw.auth,
 			smtpw.senderAddress,
 			smtpw.recipientAddresses,
-			prepareMessage(smtpw.senderAddress, smtpw.senderName, smtpw.subject, data, smtpw.mailHeaders),
+			prepareMessage(smtpw.senderAddress, smtpw.senderName, subjectPhrase, data),
 		)
 	}
 	if err != nil {
@@ -212,7 +197,7 @@ func (smtpw *smtpWriter) Write(data []byte) (int, error) {
 }
 
 // Close closes down SMTP-connection.
-func (smtpw *smtpWriter) Close() error {
+func (smtpWriter *smtpWriter) Close() error {
 	// Do nothing as Write method opens and closes connection automatically
 	return nil
 }

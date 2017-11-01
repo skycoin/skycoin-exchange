@@ -1,16 +1,16 @@
 // Copyright (c) 2012 - Cloud Instruments Co., Ltd.
-//
+// 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
+// modification, are permitted provided that the following conditions are met: 
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
+//    list of conditions and the following disclaimer. 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-//
+//    and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -48,14 +48,14 @@ type bufferedWriter struct {
 func newBufferedWriter(innerWriter io.Writer, bufferSize int, flushPeriod time.Duration) (*bufferedWriter, error) {
 
 	if innerWriter == nil {
-		return nil, errors.New("argument is nil: innerWriter")
+		return nil, errors.New("Argument is nil: innerWriter")
 	}
 	if flushPeriod < 0 {
-		return nil, fmt.Errorf("flushPeriod can not be less than 0. Got: %d", flushPeriod)
+		return nil, errors.New(fmt.Sprintf("flushPeriod can not be less than 0. Got: %d", flushPeriod))
 	}
 
 	if bufferSize <= 0 {
-		return nil, fmt.Errorf("bufferSize can not be less or equal to 0. Got: %d", bufferSize)
+		return nil, errors.New(fmt.Sprintf("bufferSize can not be less or equal to 0. Got: %d", bufferSize))
 	}
 
 	buffer := bufio.NewWriterSize(innerWriter, bufferSize)

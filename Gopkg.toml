@@ -1,0 +1,54 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/btcsuite/btcutil"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/codahale/chacha20"
+
+[[constraint]]
+  name = "github.com/julienschmidt/httprouter"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/op/go-logging"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/tyler-smith/go-bip39"
+
+[[override]]
+  name = "github.com/btcsuite/btcutil"
+  revision = "96e858f48ed95f9245e765d98be0ee01176409c7"
+
+[[override]]
+  name = "github.com/btcsuite/btcd"
+  revision = "d0a9c03844a4a7f4c27e24fdc856333d17ec2f6f"
+
+[[override]]
+  name = "github.com/btcsuite/btclog"
+  revision = "73889fb79bd687870312b6e40effcecffbd57d30"

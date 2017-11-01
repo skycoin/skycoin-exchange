@@ -11,7 +11,7 @@ import (
 
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin/src/cipher"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/file"
 )
 
 var logger = logging.MustGetLogger("client.account")
@@ -33,7 +33,7 @@ type accountJSON struct {
 var gAccounts manager
 
 // account storage dir.
-var acntDir = filepath.Join(util.UserHome(), ".exchange-client/account")
+var acntDir = filepath.Join(file.UserHome(), ".exchange-client/account")
 
 // account file name
 var acntName = "data.act"

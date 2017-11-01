@@ -10,7 +10,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/coin"
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	gui "github.com/skycoin/skycoin-exchange/src/web-app"
-	"github.com/skycoin/skycoin/src/util"
+	"github.com/skycoin/skycoin/src/util/browser"
 )
 
 var logger = logging.MustGetLogger("client.rpclient")
@@ -85,7 +85,7 @@ func (se *Service) Run() {
 		time.Sleep(time.Millisecond * 100)
 		fulladdress := fmt.Sprintf("http://%s", addr)
 		logger.Info("Launching System Browser with %s", fulladdress)
-		if err := util.OpenBrowser(fulladdress); err != nil {
+		if err := browser.Open(fulladdress); err != nil {
 			logger.Error(err.Error())
 		}
 	}()
