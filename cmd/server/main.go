@@ -11,6 +11,8 @@ import (
 	logging "github.com/op/go-logging"
 	"github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/fishercoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/lifecoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/metalicoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
@@ -44,12 +46,14 @@ func registerFlags(cfg *server.Config) {
 	flag.IntVar(&cfg.UtxoPoolSize, "poolsize", 1000, "utxo pool size")
 	flag.StringVar(&cfg.Admins, "admins", "", "admin pubkey list")
 	var (
-		skyNodeAddr    string
-		mzNodeAddr     string
-		shellNodeAddr  string
-		sunNodeAddr    string
-		aynNodeAddr    string
-		metaliNodeAddr string
+		skyNodeAddr        string
+		mzNodeAddr         string
+		shellNodeAddr      string
+		sunNodeAddr        string
+		aynNodeAddr        string
+		metaliNodeAddr     string
+		lifecoinNodeAddr   string
+		fishercoinNodeAddr string
 	)
 	flag.StringVar(&skyNodeAddr, "skycoin-node-addr", "127.0.0.1:6420", "skycoin node address")
 	flag.StringVar(&mzNodeAddr, "mzcoin-node-addr", "127.0.0.1:7420", "mzcoin node address")
@@ -57,6 +61,8 @@ func registerFlags(cfg *server.Config) {
 	flag.StringVar(&sunNodeAddr, "suncoin-node-addr", "127.0.0.1:7620", "suncoin node address")
 	flag.StringVar(&aynNodeAddr, "aynrandcoin-node-addr", "127.0.0.1:7720", "suncoin node address")
 	flag.StringVar(&metaliNodeAddr, "metalicoin-node-addr", "127.0.0.1:7820", "metalicoin node address")
+	flag.StringVar(&lifecoinNodeAddr, "lifecoin-node-addr", "127.0.0.1:8420", "lifecoin node address")
+	flag.StringVar(&fishercoinNodeAddr, "fishercoin-node-addr", "127.0.0.1:8520", "fishercoin node address")
 	flag.BoolVar(&cfg.HTTPProf, "http-prof", false, "enable http profiling")
 	flag.StringVar(&cfg.Seckey, "seckey", "38d010a84c7b9374352468b41b076fa585d7dfac67ac34adabe2bbba4f4f6257", "private key used for encrypting and decryping messages")
 
@@ -68,6 +74,8 @@ func registerFlags(cfg *server.Config) {
 	cfg.NodeAddresses[suncoin.Type] = sunNodeAddr
 	cfg.NodeAddresses[aynrandcoin.Type] = aynNodeAddr
 	cfg.NodeAddresses[metalicoin.Type] = metaliNodeAddr
+	cfg.NodeAddresses[lifecoin.Type] = lifecoinNodeAddr
+	cfg.NodeAddresses[fishercoin.Type] = fishercoinNodeAddr
 }
 
 func main() {
@@ -88,6 +96,8 @@ func main() {
 		shellcoin.New(cfg.NodeAddresses[shellcoin.Type]),
 		aynrandcoin.New(cfg.NodeAddresses[aynrandcoin.Type]),
 		suncoin.New(cfg.NodeAddresses[suncoin.Type]),
+		lifecoin.New(cfg.NodeAddresses[lifecoin.Type]),
+		fishercoin.New(cfg.NodeAddresses[fishercoin.Type]),
 		metalicoin.New(cfg.NodeAddresses[metalicoin.Type]))
 	s.Run()
 }

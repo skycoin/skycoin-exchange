@@ -12,6 +12,8 @@ import (
 	// register coins
 	_ "github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/fishercoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/lifecoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/metalicoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
@@ -46,6 +48,8 @@ func Init(cfg *Config) {
 		newCoin("suncoin", cfg.ServerAddr),
 		newCoin("aynrandcoin", cfg.ServerAddr),
 		newCoin("metalicoin", cfg.ServerAddr),
+		newCoin("lifecoin", cfg.ServerAddr),
+		newCoin("fishercoin", cfg.ServerAddr),
 		newBitcoin(cfg.ServerAddr))
 }
 

@@ -164,6 +164,20 @@ func TestNewWallet(t *testing.T) {
 			nil,
 		},
 		{
+			"create lifecoin wallet",
+			"lifecoin",
+			"abcde",
+			"lifecoin_abcde",
+			nil,
+		},
+		{
+			"create fishercoin wallet",
+			"fishercoin",
+			"abcde",
+			"fishercoin_abcde",
+			nil,
+		},
+		{
 			"create bitcoin wallet",
 			"bitcoin",
 			"abcde",
