@@ -12,6 +12,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/client"
 	"github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	"github.com/skycoin/skycoin-exchange/src/coin/metalicoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
 	"github.com/skycoin/skycoin-exchange/src/coin/skycoin"
@@ -62,6 +63,7 @@ func main() {
 		mzcoin.New(cfg.ServAddr),
 		shellcoin.New(cfg.ServAddr),
 		aynrandcoin.New(cfg.ServAddr),
+		metalicoin.New(cfg.ServAddr),
 		suncoin.New(cfg.ServAddr))
 	c.Run()
 

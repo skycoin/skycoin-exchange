@@ -15,6 +15,7 @@ import (
 	"github.com/skycoin/skycoin-exchange/src/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 //go:generate goautomock -template=testify Coiner
@@ -156,6 +157,13 @@ func TestNewWallet(t *testing.T) {
 			nil,
 		},
 		{
+			"create metalicoin wallet",
+			"metalicoin",
+			"abcde",
+			"metalicoin_abcde",
+			nil,
+		},
+		{
 			"create bitcoin wallet",
 			"bitcoin",
 			"abcde",
@@ -181,8 +189,8 @@ func TestNewWallet(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			id, err := NewWallet(tc.coinType, tc.seed)
-			assert.Equal(t, tc.expectErr, err)
-			assert.Equal(t, tc.expectWltID, id)
+			require.Equal(t, tc.expectErr, err)
+			require.Equal(t, tc.expectWltID, id)
 		})
 	}
 }

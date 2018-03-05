@@ -12,6 +12,7 @@ import (
 	// register coins
 	_ "github.com/skycoin/skycoin-exchange/src/coin/aynrandcoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/bitcoin"
+	_ "github.com/skycoin/skycoin-exchange/src/coin/metalicoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/mzcoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/shellcoin"
 	_ "github.com/skycoin/skycoin-exchange/src/coin/suncoin"
@@ -44,6 +45,7 @@ func Init(cfg *Config) {
 		newCoin("shellcoin", cfg.ServerAddr),
 		newCoin("suncoin", cfg.ServerAddr),
 		newCoin("aynrandcoin", cfg.ServerAddr),
+		newCoin("metalicoin", cfg.ServerAddr),
 		newBitcoin(cfg.ServerAddr))
 }
 
@@ -61,7 +63,8 @@ func initConfig(cfg *Config, coins ...Coiner) {
 	}
 }
 
-// NewWallet create a new wallet base on the wallet type and seed
+// NewWallet create a new wallet base on the wallet type and seed.
+// Returns wallet id and error if any
 func NewWallet(coinType string, seed string) (string, error) {
 	wlt, err := wallet.New(coinType, seed)
 	if err != nil {
