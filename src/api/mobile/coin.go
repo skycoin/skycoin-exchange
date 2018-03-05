@@ -120,9 +120,6 @@ func (cn coinEx) CreateRawTx(txIns []coin.TxIn, getKey coin.GetPrivKey, txOuts i
 
 	for _, o := range outs {
 		out := o.(skycoin.TxOut)
-		if (out.Coins % 1e6) != 0 {
-			return "", fmt.Errorf("%s coins must be multiple of 1e6", cn.Name())
-		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
 

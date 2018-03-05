@@ -164,9 +164,6 @@ func (sky Skycoin) CreateRawTx(txIns []coin.TxIn, txOuts interface{}) (string, e
 
 	for _, o := range outs {
 		out := o.(TxOut)
-		if (out.Coins % 1e6) != 0 {
-			return "", errors.New("skycoin coins must be multiple of 1e6")
-		}
 		tx.PushOutput(out.Address, out.Coins, out.Hours)
 	}
 
